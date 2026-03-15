@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from .client import s3_client
 from .config import ObjectStorageSettings
-from .digests import md5_hex, sha256_hex, verify_etag, verify_sha256
 from .errors import (
     ObjectNotFoundError,
     ObjectStorageChecksumError,
@@ -12,6 +11,7 @@ from .errors import (
     ObjectStorageError,
     ObjectStorageUploadError,
 )
+from .health import ObjectStorageHealthProbe
 from .multipart import MultipartUploader
 from .ports_impl import ObjectStoragePort
 from .reader import ObjectReader
@@ -23,11 +23,8 @@ __all__ = [
     "ObjectReader",
     "ObjectWriter",
     "MultipartUploader",
+    "ObjectStorageHealthProbe",
     "s3_client",
-    "sha256_hex",
-    "md5_hex",
-    "verify_sha256",
-    "verify_etag",
     "ObjectStorageError",
     "ObjectNotFoundError",
     "ObjectStorageUploadError",

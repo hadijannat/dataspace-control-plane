@@ -12,13 +12,27 @@ Rules (adapters/CLAUDE.md):
 """
 from __future__ import annotations
 
+import ipaddress
+import urllib.parse
+from datetime import datetime, timezone
 import logging
 from typing import Any
+
+import httpx
+
+from dataspace_control_plane_core.domains.contracts.model.value_objects import (
+    OfferSnapshot,
+    TransferAuthorization,
+)
+from dataspace_control_plane_core.domains.twins.model.value_objects import (
+    EndpointHealth,
+)
 
 from ..._shared.errors import AdapterNotFoundError
 from .asset_client import EdcAssetClient
 from .errors import EdcAssetNotFoundError, EdcNegotiationError, EdcPolicyNotFoundError
 from .management_client import EdcManagementClient
+from .negotiation_client import EdcNegotiationClient
 from .mappers import map_asset_to_ref
 from .raw_models import EdcAssetRaw, EdcPolicyDefinitionRaw
 
@@ -235,4 +249,169 @@ class EdcConnectorProvisioning:
             tenant_id,
             legal_entity_id,
             connector_url,
+        )
+
+
+class EdcNegotiationPort:
+    """Implements ``NegotiationPort`` by submitting a follow-up EDC request.
+
+    EDC's management API expects a complete offer payload when the consumer
+    responds. The adapter resolves the referenced policy definition locally and
+    creates a new request against the counterparty's DSP endpoint.
+    """
+
+    def __init__(self, management_client: EdcManagementClient) -> None:
+        self._client = management_client
+        self._negotiations = EdcNegotiationClient(management_client)
+
+    async def submit_counter_offer(
+        self,
+        tenant_id: Any,
+        negotiation_id: Any,
+        offer: OfferSnapshot,
+    ) -> None:
+        counter_party_address = offer.provider.connector_url
+        if not counter_party_address:
+            raise EdcNegotiationError(
+                "Cannot submit EDC counter-offer without provider.connector_url"
+            )
+
+        try:
+            raw_policy = await self._client.get(f"/v2/policydefinitions/{offer.policy_id}")
+            policy = EdcPolicyDefinitionRaw.model_validate(raw_policy)
+            await self._negotiations.initiate(
+                counter_party_address=counter_party_address,
+                offer={
+                    "offerId": offer.offer_id,
+                    "assetId": offer.asset.asset_id,
+                    "policy": policy.policy,
+                },
+                connector_id=offer.asset.connector_id or None,
+            )
+        except Exception as exc:
+            logger.error(
+                "Failed to submit EDC counter-offer negotiation=%s tenant=%s offer=%s: %s",
+                negotiation_id,
+                tenant_id,
+                offer.offer_id,
+                exc,
+            )
+            raise EdcNegotiationError(
+                f"Could not submit EDC counter-offer {offer.offer_id}: {exc}"
+            ) from exc
+
+
+class EdcTransferObservation:
+    """Implements ``TransferObservationPort`` with EDC-local tracking assets."""
+
+    def __init__(self, asset_client: EdcAssetClient) -> None:
+        self._assets = asset_client
+
+    async def record_transfer_authorization(
+        self,
+        tenant_id: Any,
+        authorization: TransferAuthorization,
+    ) -> None:
+        tracking_asset_id = f"transfer-authorization:{authorization.authorization_id}"
+        properties: dict[str, Any] = {
+            "name": f"Transfer authorization {authorization.authorization_id}",
+            "authorization_id": authorization.authorization_id,
+            "agreement_id": authorization.agreement_id,
+            "asset_id": authorization.asset_id,
+            "tenant_id": str(tenant_id),
+            "granted_at": authorization.granted_at.isoformat(),
+        }
+        if authorization.valid_until is not None:
+            properties["valid_until"] = authorization.valid_until.isoformat()
+        if authorization.is_revoked:
+            properties["revoked"] = "true"
+
+        try:
+            await self._assets.create_asset(
+                asset_id=tracking_asset_id,
+                properties=properties,
+                data_address={"@type": "DataAddress", "type": "NoOp"},
+                private_properties={"visible_in_catalog": "false"},
+            )
+        except Exception as exc:
+            logger.error(
+                "Failed to record transfer authorization %s for tenant=%s: %s",
+                authorization.authorization_id,
+                tenant_id,
+                exc,
+            )
+            raise EdcNegotiationError(
+                f"Could not record transfer authorization {authorization.authorization_id}: {exc}"
+            ) from exc
+
+
+_SSRF_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),  # link-local / AWS metadata
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+
+def _validate_probe_url(url: str) -> None:
+    """Reject URLs that would allow Server-Side Request Forgery.
+
+    Blocks private/reserved IP ranges and non-http(s) schemes.  DNS-level
+    SSRF mitigation (post-resolution IP check) is the responsibility of the
+    network egress layer in infra/.
+    """
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(
+            f"Probe URL scheme must be http or https, got {parsed.scheme!r}: {url!r}"
+        )
+    hostname = (parsed.hostname or "").lower()
+    if not hostname or hostname == "localhost":
+        raise ValueError(f"Probe URL hostname not allowed: {hostname!r}")
+    try:
+        addr = ipaddress.ip_address(hostname)
+        for net in _SSRF_BLOCKED_NETWORKS:
+            if addr in net:
+                raise ValueError(
+                    f"Probe URL targets private/reserved address {hostname!r}"
+                )
+    except ValueError as exc:
+        if "Probe URL" in str(exc):
+            raise
+        # hostname is a domain name, not an IP literal — allow through.
+
+
+class EdcConnectorAssetProbe:
+    """Implements ``ConnectorAssetPort`` using a lightweight endpoint probe."""
+
+    def __init__(self, timeout_s: float = 5.0) -> None:
+        self._timeout_s = timeout_s
+
+    async def probe(self, endpoint_url: str) -> EndpointHealth:
+        _validate_probe_url(endpoint_url)  # raises ValueError on SSRF-risky URLs
+        is_reachable = False
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout_s) as client:
+                resp = await client.get(endpoint_url)
+            # Treat any HTTP response (including 4xx auth errors) as reachable —
+            # a 401/403 means the endpoint is up but requires credentials, which
+            # is the expected state for a protected connector surface.
+            is_reachable = True
+            if not resp.is_success:
+                logger.debug(
+                    "Probe %s returned HTTP %d (still reachable)",
+                    endpoint_url,
+                    resp.status_code,
+                )
+        except Exception as exc:
+            logger.warning("Probe %s failed: %s: %s", endpoint_url, type(exc).__name__, exc)
+
+        return EndpointHealth(
+            endpoint_url=endpoint_url,
+            is_reachable=is_reachable,
+            last_checked_at=datetime.now(timezone.utc),
         )

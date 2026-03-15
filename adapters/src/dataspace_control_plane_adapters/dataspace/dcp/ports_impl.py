@@ -19,16 +19,17 @@ boundary; adapters catch DcpError subtypes and let them propagate for now
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from dataspace_control_plane_core.canonical_models.identity import (
     DidUri,
     PresentationEnvelope,
 )
+from dataspace_control_plane_core.domains.machine_trust.model.enums import (
+    VerificationResult,
+)
 from dataspace_control_plane_core.domains.machine_trust.model.value_objects import TrustAnchor
 
 from .config import DcpSettings
-from .credential_mapper import map_vc_jwt
 from .issuer_client import DcpIssuerClient
 from .presentation_mapper import map_verification_result
 from .verifier_client import DcpVerifierClient
@@ -50,7 +51,7 @@ class DcpCredentialIssuer:
     async def issue(
         self,
         subject_did: DidUri,
-        claims: dict[str, Any],
+        claims: dict[str, object],
         type_labels: list[str],
     ) -> str:
         """Issue a VC JWT for the given subject DID.
@@ -92,22 +93,8 @@ class DcpPresentationVerifier:
         # If not provided, fall back to credential_service_url (common in test setups).
         self._verifier_url = verifier_url or str(cfg.credential_service_url)
 
-    async def verify(self, presentation: PresentationEnvelope) -> dict[str, Any]:
-        """Verify a canonical PresentationEnvelope via the DCP Verifier.
-
-        Args:
-            presentation: Canonical PresentationEnvelope from core.
-
-        Returns:
-            Canonical verification result dict::
-
-                {
-                    "valid": bool,
-                    "holder_did": str | None,
-                    "credentials": list[dict],
-                    "error": str | None,
-                }
-        """
+    async def verify(self, presentation: PresentationEnvelope) -> VerificationResult:
+        """Verify a canonical PresentationEnvelope via the DCP Verifier."""
         # Extract type labels from the first credential for required_types.
         required_types: list[str] = []
         for cred_env in presentation.credentials:
@@ -156,8 +143,12 @@ class DcpTrustAnchorResolver:
         Returns:
             List of TrustAnchor value objects from core.
         """
+        scoped_urls = _select_trust_anchor_urls(
+            self._cfg.trust_anchor_urls,
+            trust_scope,
+        )
         anchors: list[TrustAnchor] = []
-        for url in self._cfg.trust_anchor_urls:
+        for url in scoped_urls:
             # Each URL represents a trust anchor endpoint.
             # Parse a DID from the URL for the TrustAnchor model.
             did_str = _url_to_did_web(url)
@@ -172,6 +163,23 @@ class DcpTrustAnchorResolver:
             "Resolved %d trust anchors for scope=%s", len(anchors), trust_scope
         )
         return anchors
+
+
+def _select_trust_anchor_urls(urls: list[str], trust_scope: str) -> list[str]:
+    """Select trust-anchor URLs for the requested scope.
+
+    The selection rules remain configuration-driven: if URLs contain a scope
+    token such as ``gaia-x`` or ``catena-x`` they are filtered accordingly.
+    When no configured URL matches, the full configured set is returned so the
+    adapter does not silently drop trust anchors.
+    """
+
+    requested_scope = trust_scope.strip().casefold()
+    if not requested_scope:
+        return urls
+
+    matched = [url for url in urls if requested_scope in url.casefold()]
+    return matched or urls
 
 
 def _url_to_did_web(url: str) -> str:

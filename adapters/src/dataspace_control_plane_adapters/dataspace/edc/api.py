@@ -38,24 +38,16 @@ from .errors import (
 )
 from .health import EdcHealthProbe
 from .management_client import EdcManagementClient
-from .mappers import map_asset_to_ref, map_catalog_to_offer_snapshots, map_negotiation_state
 from .negotiation_client import EdcNegotiationClient
-from .ports_impl import EdcAgreementRegistry, EdcCatalogLookup, EdcConnectorProvisioning
-from .raw_models import (
-    EdcAssetRaw,
-    EdcCatalogRaw,
-    EdcContractAgreementRaw,
-    EdcContractOfferRaw,
-    EdcNegotiationRaw,
-    EdcTransferProcessRaw,
+from .ports_impl import (
+    EdcAgreementRegistry,
+    EdcCatalogLookup,
+    EdcConnectorAssetProbe,
+    EdcConnectorProvisioning,
+    EdcNegotiationPort,
+    EdcTransferObservation,
 )
-from .request_decoration import TransferDecoration
 from .transfer_client import EdcTransferClient
-from .webhook_mappers import (
-    extract_agreement_id,
-    map_negotiation_event,
-    map_transfer_event,
-)
 
 __all__ = [
     # Configuration
@@ -69,26 +61,12 @@ __all__ = [
     # Port implementations
     "EdcAgreementRegistry",
     "EdcCatalogLookup",
+    "EdcNegotiationPort",
+    "EdcTransferObservation",
+    "EdcConnectorAssetProbe",
     "EdcConnectorProvisioning",
     # Health
     "EdcHealthProbe",
-    # Wire models
-    "EdcAssetRaw",
-    "EdcCatalogRaw",
-    "EdcContractAgreementRaw",
-    "EdcContractOfferRaw",
-    "EdcNegotiationRaw",
-    "EdcTransferProcessRaw",
-    # Mappers
-    "map_asset_to_ref",
-    "map_catalog_to_offer_snapshots",
-    "map_negotiation_state",
-    # Webhook mappers
-    "map_negotiation_event",
-    "map_transfer_event",
-    "extract_agreement_id",
-    # Data-plane decoration
-    "TransferDecoration",
     # Errors
     "EdcError",
     "EdcNegotiationError",

@@ -38,17 +38,8 @@ from dataspace_control_plane_adapters.infrastructure.keycloak.oidc_verifier impo
 from dataspace_control_plane_adapters.infrastructure.keycloak.admin_client import (
     KeycloakAdminClient,
 )
-from dataspace_control_plane_adapters.infrastructure.keycloak.role_mapper import (
-    KEYCLOAK_ROLE_MAP,
-    map_roles,
-    map_role,
-)
-from dataspace_control_plane_adapters.infrastructure.keycloak.principal_mapper import (
-    claims_to_principal,
-)
 from dataspace_control_plane_adapters.infrastructure.keycloak.ports_impl import (
     KeycloakAuthorizationPort,
-    ROLE_ACTION_MATRIX,
 )
 from dataspace_control_plane_adapters.infrastructure.keycloak.health import (
     KeycloakHealthProbe,
@@ -70,15 +61,8 @@ __all__ = [
     "OidcVerifier",
     # Admin REST API
     "KeycloakAdminClient",
-    # Role mapping
-    "KEYCLOAK_ROLE_MAP",
-    "map_roles",
-    "map_role",
-    # Principal mapping
-    "claims_to_principal",
     # Authorization port
     "KeycloakAuthorizationPort",
-    "ROLE_ACTION_MATRIX",
     # Health
     "KeycloakHealthProbe",
     # Errors

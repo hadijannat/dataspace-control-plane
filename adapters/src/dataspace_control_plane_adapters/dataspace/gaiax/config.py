@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pydantic import AnyHttpUrl, Field
+from pydantic_settings import SettingsConfigDict
 from dataspace_control_plane_adapters._shared.config import AdapterSettings
 
 
@@ -25,4 +26,9 @@ class GaiaXSettings(AdapterSettings):
     )
     request_timeout_s: float = Field(30.0, description="HTTP request timeout in seconds")
 
-    model_config = {"env_prefix": "GAIAX_"}
+    model_config = SettingsConfigDict(
+        env_prefix="GAIAX_",
+        env_nested_delimiter="__",
+        case_sensitive=False,
+        extra="ignore",
+    )

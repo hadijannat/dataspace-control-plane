@@ -35,7 +35,8 @@ class GaiaXTrustAnchorClient:
         ) as client:
             try:
                 resp = await client.get(
-                    f"/api/v1/trust-anchors?federation={federation_id}"
+                    "/api/v1/trust-anchors",
+                    params={"federation": federation_id},
                 )
                 anchors = resp.json()
                 if isinstance(anchors, list):

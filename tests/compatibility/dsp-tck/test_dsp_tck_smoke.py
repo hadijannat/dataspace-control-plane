@@ -1,15 +1,14 @@
 """
-tests/compatibility/dsp-tck/test_dsp_tck_smoke.py
-DSP TCK smoke tests — verify TCK lock file, run scripts, and SUT configuration.
+DSP TCK smoke tests.
 
-Tests run without requiring the SUT to be live.
-Full TCK run: bash tests/scripts/run_dsp_tck.sh
-
-Marker: compatibility
+These tests validate the pinned wrapper wiring without requiring a live DSP SUT
+or downloading the official runner. Full protocol conformance remains owned by
+the runtime harness outside this directory.
 """
 from __future__ import annotations
 
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -19,78 +18,75 @@ pytestmark = pytest.mark.compatibility
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DSP_TCK_DIR = REPO_ROOT / "tests" / "compatibility" / "dsp-tck"
 LOCK_FILE = DSP_TCK_DIR / "lock.yaml"
+CONFIG_DIR = DSP_TCK_DIR / "config"
+REPORTS_DIR = DSP_TCK_DIR / "reports"
 RUN_SCRIPT = REPO_ROOT / "tests" / "scripts" / "run_dsp_tck.sh"
 
 
-# ---------------------------------------------------------------------------
-# Test 1: lock.yaml exists
-# ---------------------------------------------------------------------------
+def _lock_value(key: str) -> str:
+    for line in LOCK_FILE.read_text().splitlines():
+        if line.strip().startswith(f"{key}:"):
+            return line.split(":", 1)[1].strip().strip('"')
+    return ""
+
+
+def _reset_generated_artifacts() -> None:
+    for generated in (
+        CONFIG_DIR / "sut.env",
+        REPORTS_DIR / "command.txt",
+        REPORTS_DIR / "report.log",
+        REPORTS_DIR / "report.xml",
+    ):
+        generated.unlink(missing_ok=True)
 
 
 @pytest.mark.compatibility
-def test_dsp_tck_lock_yaml_exists() -> None:
-    """tests/compatibility/dsp-tck/lock.yaml must exist to pin the TCK version."""
-    assert LOCK_FILE.exists(), (
-        f"DSP TCK lock.yaml not found: {LOCK_FILE}\n"
-        "Create it with tck_tag and tck_source fields to pin the TCK version."
-    )
-
-
-# ---------------------------------------------------------------------------
-# Test 2: lock.yaml has version
-# ---------------------------------------------------------------------------
+def test_dsp_tck_lock_pins_release_metadata() -> None:
+    assert LOCK_FILE.exists(), f"missing DSP TCK lock file: {LOCK_FILE}"
+    assert _lock_value("tck_tag"), "lock.yaml must pin a non-empty tck_tag"
+    assert _lock_value("tck_artifact") == "dsp-tck-runner"
+    assert _lock_value("tck_source").endswith("/dsp-tck")
 
 
 @pytest.mark.compatibility
-def test_dsp_tck_lock_has_version() -> None:
-    """lock.yaml must contain a tck_tag: field."""
-    if not LOCK_FILE.exists():
-        pytest.skip("lock.yaml not found — skipping version check")
+def test_dsp_tck_wrapper_dry_run_writes_config_and_reports() -> None:
+    _reset_generated_artifacts()
 
-    content = LOCK_FILE.read_text()
-    assert "tck_tag:" in content, (
-        f"lock.yaml must contain 'tck_tag:' field. Contents:\n{content}"
+    env = {
+        **os.environ,
+        "DSP_SUT_BASEURL": "http://sut.example.test:19191",
+        "DSP_SUT_IDENTITY_URL": "http://identity.example.test:18181",
+        "TCK_DRY_RUN": "1",
+    }
+
+    result = subprocess.run(
+        ["bash", str(RUN_SCRIPT)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
     )
 
-    # Extract tag value
-    for line in content.splitlines():
-        if line.strip().startswith("tck_tag:"):
-            tag = line.split(":", 1)[1].strip().strip('"')
-            assert tag, f"tck_tag must have a non-empty value, got: {line!r}"
-            return
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert os.access(RUN_SCRIPT, os.X_OK), f"wrapper must be executable: {RUN_SCRIPT}"
 
-    pytest.fail("Could not find non-empty tck_tag value in lock.yaml")
+    sut_env = (CONFIG_DIR / "sut.env").read_text()
+    assert "DSP_SUT_BASEURL=http://sut.example.test:19191" in sut_env
+    assert "DSP_SUT_IDENTITY_URL=http://identity.example.test:18181" in sut_env
 
+    command_log = (REPORTS_DIR / "command.txt").read_text()
+    assert "dsp-tck-runner" in command_log
+    assert "--sut-base-url" in command_log
+    assert "--identity-url" in command_log
+    assert "http://sut.example.test:19191" in command_log
+    assert "http://identity.example.test:18181" in command_log
 
-# ---------------------------------------------------------------------------
-# Test 3: Run script exists and is executable
-# ---------------------------------------------------------------------------
+    report_xml = (REPORTS_DIR / "report.xml").read_text()
+    assert 'testsuite name="dsp-tck-dry-run"' in report_xml
+    assert f'property name="tck_tag" value="{_lock_value("tck_tag")}"' in report_xml
+    assert 'property name="mode" value="dry-run"' in report_xml
 
-
-@pytest.mark.compatibility
-def test_dsp_tck_run_script_exists() -> None:
-    """tests/scripts/run_dsp_tck.sh must exist and be executable."""
-    assert RUN_SCRIPT.exists(), (
-        f"DSP TCK run script not found: {RUN_SCRIPT}"
-    )
-    assert os.access(RUN_SCRIPT, os.X_OK), (
-        f"DSP TCK run script must be executable: {RUN_SCRIPT}\n"
-        "Run: chmod +x tests/scripts/run_dsp_tck.sh"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Test 4: DSP_SUT_BASEURL configured (skip if not set)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.compatibility
-def test_dsp_sut_url_configured() -> None:
-    """If DSP_SUT_BASEURL env var is set, it must start with 'http'."""
-    sut_url = os.environ.get("DSP_SUT_BASEURL", "")
-    if not sut_url:
-        pytest.skip("DSP_SUT_BASEURL not configured — SUT not available for TCK")
-
-    assert sut_url.startswith("http"), (
-        f"DSP_SUT_BASEURL must be an HTTP/HTTPS URL. Got: {sut_url!r}"
-    )
+    report_log = (REPORTS_DIR / "report.log").read_text()
+    assert "dry-run" in report_log
+    assert "DSP TCK" in report_log

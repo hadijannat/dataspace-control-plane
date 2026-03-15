@@ -5,8 +5,9 @@ Collect test evidence artifacts into a single output directory.
 
 Copies:
   - Playwright traces from tests/e2e/artifacts/
+  - Temporal replay histories from tests/data/temporal_histories/
   - coverage.xml from working directory
-  - JUnit XML from tests/compatibility/*/reports/
+  - TCK reports and raw logs from tests/compatibility/*/reports/
 
 Prints a manifest of collected artifacts.
 
@@ -58,15 +59,26 @@ def collect(output_dir: Path, repo_root: Path) -> list[str]:
                 manifest.append("coverage.xml")
                 break
 
-    # ---- TCK JUnit XML ---------------------------------------------------
+    # ---- Temporal histories ----------------------------------------------
+    temporal_histories_src = repo_root / "tests" / "data" / "temporal_histories"
+    if temporal_histories_src.exists():
+        for history in temporal_histories_src.rglob("*.json"):
+            dest = output_dir / "temporal_histories" / history.name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(history, dest)
+            manifest.append(f"temporal_histories/{history.name}")
+
+    # ---- TCK reports and logs --------------------------------------------
     compat_dir = repo_root / "tests" / "compatibility"
     if compat_dir.exists():
-        for xml_file in compat_dir.rglob("reports/*.xml"):
+        for report_file in compat_dir.rglob("reports/*"):
+            if not report_file.is_file():
+                continue
             # Preserve structure: dsp-tck/reports/report.xml → tck/dsp-tck/report.xml
-            relative = xml_file.relative_to(compat_dir)
+            relative = report_file.relative_to(compat_dir)
             dest = output_dir / "tck" / relative
             dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(xml_file, dest)
+            shutil.copy2(report_file, dest)
             manifest.append(f"tck/{relative}")
 
     return manifest

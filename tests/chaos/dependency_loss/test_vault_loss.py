@@ -25,7 +25,7 @@ pytestmark = pytest.mark.chaos
 
 @pytest.mark.chaos
 def test_signing_fails_gracefully_when_vault_down(
-    toxiproxy_proxy, vault_client, vault_transit_key, add_latency_toxic
+    proxied_vault_client, vault_proxy, vault_transit_key, add_latency_toxic
 ) -> None:
     """
     Add effectively infinite latency on the Vault proxy (99999ms = ~100 seconds).
@@ -33,7 +33,7 @@ def test_signing_fails_gracefully_when_vault_down(
 
     The key invariant: a timeout error, not a crash, and no raw key material in the error.
     """
-    proxy_name = toxiproxy_proxy["name"]
+    proxy_name = vault_proxy["name"]
     # Add very high latency to simulate Vault being unreachable
     add_latency_toxic(proxy_name, latency_ms=99999)
 
@@ -42,12 +42,9 @@ def test_signing_fails_gracefully_when_vault_down(
     error_raised = False
     error_message = ""
 
-    # Note: vault_client is connected directly to Vault (not through the proxy)
-    # In production, the client would use the proxy URL.
-    # We simulate the failure by using a client with a very short timeout.
     import hvac  # type: ignore
 
-    host = vault_client.url
+    host = proxied_vault_client.url
     slow_client = hvac.Client(url=host, token="dev-root-token")
     slow_client.timeout = 1  # 1-second timeout to simulate unreachable Vault
 
@@ -62,11 +59,7 @@ def test_signing_fails_gracefully_when_vault_down(
         error_message = str(exc)
 
     if not error_raised:
-        pytest.skip(
-            "Vault signing succeeded despite timeout setting — "
-            "Vault may be local enough that 1s timeout is sufficient. "
-            "In a real chaos test, Toxiproxy would block the connection."
-        )
+        pytest.fail("Vault signing unexpectedly succeeded while the proxied dependency was degraded")
 
     # Verify no key material in error message
     private_key_indicators = [

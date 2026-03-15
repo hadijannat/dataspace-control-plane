@@ -16,6 +16,7 @@ Marker: unit
 from __future__ import annotations
 
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -182,7 +183,7 @@ def test_compensation_log_pending_is_lifo() -> None:
 
 
 def test_compensation_log_mark_compensated_removes_from_pending() -> None:
-    """mark_compensated() must remove the matching entry from pending()."""
+    """mark_compensated() must remove the matching entry from pending() once completed_at is set."""
     _skip_if_missing()
 
     from dataspace_control_plane_procedures._shared.compensation import CompensationLog
@@ -191,7 +192,7 @@ def test_compensation_log_mark_compensated_removes_from_pending() -> None:
     log.record("step_a", "res-a")
     log.record("step_b", "res-b")
 
-    log.mark_compensated("step_a", "res-a")
+    log.mark_compensated("step_a", "res-a", completed_at=datetime.now(timezone.utc))
 
     pending_actions = {e.action for e in log.pending()}
     assert "step_a" not in pending_actions, (

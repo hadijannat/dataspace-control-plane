@@ -1,15 +1,13 @@
 """
-tests/compatibility/dcp-tck/test_dcp_tck_smoke.py
-DCP TCK smoke tests — verify TCK lock file, run scripts, and actor configuration.
+DCP TCK smoke tests.
 
-Tests run without requiring the SUT actors to be live.
-Full TCK run: bash tests/scripts/run_dcp_tck.sh
-
-Marker: compatibility
+These tests execute the pinned wrapper scripts in dry-run mode so the suite
+verifies actor-specific orchestration without requiring live DCP services.
 """
 from __future__ import annotations
 
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -19,99 +17,104 @@ pytestmark = pytest.mark.compatibility
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DCP_TCK_DIR = REPO_ROOT / "tests" / "compatibility" / "dcp-tck"
 LOCK_FILE = DCP_TCK_DIR / "lock.yaml"
-SCRIPTS_DIR = DCP_TCK_DIR / "scripts"
+CONFIG_DIR = DCP_TCK_DIR / "config"
+REPORTS_DIR = DCP_TCK_DIR / "reports"
+RUN_SCRIPT = REPO_ROOT / "tests" / "scripts" / "run_dcp_tck.sh"
+ACTORS = {
+    "credential-service": {
+        "env_file": CONFIG_DIR / "credential-service.env",
+        "env_var": "DCP_CREDENTIAL_SERVICE_URL",
+        "url": "http://credential.example.test:8090",
+        "report": REPORTS_DIR / "credential-service-report.xml",
+        "command": REPORTS_DIR / "credential-service-command.txt",
+        "log": REPORTS_DIR / "credential-service.log",
+        "flag": "--credential-service-url",
+        "protocols": "vpp,cip",
+    },
+    "issuer": {
+        "env_file": CONFIG_DIR / "issuer.env",
+        "env_var": "DCP_ISSUER_URL",
+        "url": "http://issuer.example.test:8091",
+        "report": REPORTS_DIR / "issuer-report.xml",
+        "command": REPORTS_DIR / "issuer-command.txt",
+        "log": REPORTS_DIR / "issuer.log",
+        "flag": "--issuer-url",
+        "protocols": "cip",
+    },
+    "verifier": {
+        "env_file": CONFIG_DIR / "verifier.env",
+        "env_var": "DCP_VERIFIER_URL",
+        "url": "http://verifier.example.test:8092",
+        "report": REPORTS_DIR / "verifier-report.xml",
+        "command": REPORTS_DIR / "verifier-command.txt",
+        "log": REPORTS_DIR / "verifier.log",
+        "flag": "--verifier-url",
+        "protocols": "vpp",
+    },
+}
 
 
-# ---------------------------------------------------------------------------
-# Test 1: lock.yaml exists
-# ---------------------------------------------------------------------------
+def _lock_value(key: str) -> str:
+    for line in LOCK_FILE.read_text().splitlines():
+        if line.strip().startswith(f"{key}:"):
+            return line.split(":", 1)[1].strip().strip('"')
+    return ""
 
 
-@pytest.mark.compatibility
-def test_dcp_tck_lock_yaml_exists() -> None:
-    """tests/compatibility/dcp-tck/lock.yaml must exist to pin the TCK version."""
-    assert LOCK_FILE.exists(), (
-        f"DCP TCK lock.yaml not found: {LOCK_FILE}\n"
-        "Create it with tck_tag and tck_source fields to pin the TCK version."
-    )
-
-
-# ---------------------------------------------------------------------------
-# Test 2: lock.yaml has version
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.compatibility
-def test_dcp_tck_lock_has_version() -> None:
-    """lock.yaml must contain a tck_tag: field."""
-    if not LOCK_FILE.exists():
-        pytest.skip("lock.yaml not found — skipping version check")
-
-    content = LOCK_FILE.read_text()
-    assert "tck_tag:" in content, (
-        f"lock.yaml must contain 'tck_tag:' field. Contents:\n{content}"
-    )
-
-    for line in content.splitlines():
-        if line.strip().startswith("tck_tag:"):
-            tag = line.split(":", 1)[1].strip().strip('"')
-            assert tag, f"tck_tag must have a non-empty value, got: {line!r}"
-            return
-
-    pytest.fail("Could not find non-empty tck_tag value in lock.yaml")
-
-
-# ---------------------------------------------------------------------------
-# Test 3: DCP actor run scripts exist
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.compatibility
-def test_dcp_tck_scripts_exist() -> None:
-    """All three DCP actor run scripts must exist."""
-    required_scripts = [
-        SCRIPTS_DIR / "run_credential_service.sh",
-        SCRIPTS_DIR / "run_issuer.sh",
-        SCRIPTS_DIR / "run_verifier.sh",
-    ]
-    missing = [s for s in required_scripts if not s.exists()]
-    assert not missing, (
-        f"DCP TCK actor scripts missing ({len(missing)} file(s)):\n"
-        + "\n".join(f"  {s}" for s in missing)
-    )
-
-
-# ---------------------------------------------------------------------------
-# Test 4: DCP actors configured separately
-# ---------------------------------------------------------------------------
+def _reset_generated_artifacts() -> None:
+    for actor in ACTORS.values():
+        actor["env_file"].unlink(missing_ok=True)
+        actor["report"].unlink(missing_ok=True)
+        actor["command"].unlink(missing_ok=True)
+        actor["log"].unlink(missing_ok=True)
 
 
 @pytest.mark.compatibility
-def test_dcp_actors_configured_separately() -> None:
-    """
-    DCP actors must use separate environment variables — they must not be collapsed.
+def test_dcp_tck_lock_pins_release_and_actor_matrix() -> None:
+    lock_text = LOCK_FILE.read_text()
+    assert _lock_value("tck_tag"), "lock.yaml must pin a non-empty tck_tag"
+    assert _lock_value("tck_artifact") == "dcp-tck-runner"
+    assert _lock_value("tck_source").endswith("/dcp-tck")
+    assert "credential_service" in lock_text
+    assert "issuer" in lock_text
+    assert "verifier" in lock_text
 
-    Each actor has its own URL and protocols. Using a single URL for all three actors
-    would violate the DCP architecture (Credential Service, Issuer, Verifier are distinct).
-    """
-    actor_env_vars = [
-        "DCP_CREDENTIAL_SERVICE_URL",
-        "DCP_ISSUER_URL",
-        "DCP_VERIFIER_URL",
-    ]
 
-    # Document: these must be separate env vars (not the same URL for all three)
-    values = {var: os.environ.get(var, "") for var in actor_env_vars}
-    configured = {k: v for k, v in values.items() if v}
+@pytest.mark.compatibility
+def test_dcp_tck_wrapper_dry_run_writes_actor_specific_reports() -> None:
+    _reset_generated_artifacts()
 
-    if not configured:
-        # All three are unset — this is expected in development/unit test runs
-        # The test passes because the env vars are architecturally separate (just not set)
-        return
+    env = {**os.environ, "TCK_DRY_RUN": "1"}
+    for actor in ACTORS.values():
+        env[actor["env_var"]] = actor["url"]
 
-    # If any are set, assert they are distinct URLs
-    urls = list(configured.values())
-    assert len(set(urls)) == len(urls), (
-        f"DCP actor URLs must be distinct — different actors must not share the same URL.\n"
-        f"Found duplicate URLs: {values}"
+    result = subprocess.run(
+        ["bash", str(RUN_SCRIPT)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
     )
+
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert os.access(RUN_SCRIPT, os.X_OK), f"wrapper must be executable: {RUN_SCRIPT}"
+
+    for actor_name, actor in ACTORS.items():
+        env_file = actor["env_file"].read_text()
+        assert f'{actor["env_var"]}={actor["url"]}' in env_file
+
+        command_log = actor["command"].read_text()
+        assert "dcp-tck-runner" in command_log
+        assert actor["flag"] in command_log
+        assert actor["url"] in command_log
+        assert "--protocols" in command_log
+
+        report_xml = actor["report"].read_text()
+        assert f'testsuite name="dcp-tck-{actor_name}-dry-run"' in report_xml
+        assert f'property name="tck_tag" value="{_lock_value("tck_tag")}"' in report_xml
+        assert f'property name="protocols" value="{actor["protocols"]}"' in report_xml
+
+        report_log = actor["log"].read_text()
+        assert "dry-run" in report_log
+        assert actor_name in report_log

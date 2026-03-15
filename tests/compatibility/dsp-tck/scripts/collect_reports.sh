@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tests/compatibility/dsp-tck/scripts/collect_reports.sh
-# Copies DSP TCK JUnit XML reports to $ARTIFACT_DIR.
+# Copies DSP TCK JUnit XML reports and raw logs to $ARTIFACT_DIR.
 
 set -euo pipefail
 
@@ -17,13 +17,13 @@ mkdir -p "${ARTIFACT_DIR}/dsp-tck"
 
 if [[ -d "${REPORTS_DIR}" ]]; then
     count=0
-    for xml_file in "${REPORTS_DIR}"/*.xml; do
-        [[ -f "${xml_file}" ]] || continue
-        cp "${xml_file}" "${ARTIFACT_DIR}/dsp-tck/"
-        echo "Copied: ${xml_file} → ${ARTIFACT_DIR}/dsp-tck/"
+    for report_file in "${REPORTS_DIR}"/*; do
+        [[ -f "${report_file}" ]] || continue
+        cp "${report_file}" "${ARTIFACT_DIR}/dsp-tck/"
+        echo "Copied: ${report_file} → ${ARTIFACT_DIR}/dsp-tck/"
         count=$((count + 1))
     done
-    echo "Collected ${count} DSP TCK report(s) to ${ARTIFACT_DIR}/dsp-tck/"
+    echo "Collected ${count} DSP TCK artifact(s) to ${ARTIFACT_DIR}/dsp-tck/"
 else
     echo "No reports directory found: ${REPORTS_DIR}"
 fi

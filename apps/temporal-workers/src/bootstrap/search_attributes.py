@@ -23,7 +23,9 @@ from src.bootstrap.procedure_catalog import import_procedures_package
 logger = structlog.get_logger(__name__)
 
 # Known TEXT-indexed attribute names — everything else defaults to Keyword.
-_TEXT_ATTR_NAMES: frozenset[str] = frozenset({"external_reference"})
+# external_reference was changed to Keyword in procedures PR #3; the set is
+# kept for future Text attributes but is intentionally empty now.
+_TEXT_ATTR_NAMES: frozenset[str] = frozenset()
 
 
 def _derive_type(key: object) -> str:
@@ -64,7 +66,7 @@ def _build_sa_type_map() -> dict[str, str]:
             "tenant_id": "Keyword",
             "legal_entity_id": "Keyword",
             "procedure_type": "Keyword",
-            "external_reference": "Text",
+            "external_reference": "Keyword",
             "agreement_id": "Keyword",
             "asset_id": "Keyword",
             "status": "Keyword",

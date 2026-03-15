@@ -31,6 +31,7 @@ if str(TOOLS_DIR) not in sys.path:
 
 try:
     import bundle as _bundle_module  # type: ignore
+    import _support as _support_module  # type: ignore
 
     _BUNDLE_AVAILABLE = True
 except ImportError:
@@ -67,7 +68,7 @@ def test_bundle_single_schema_no_refs() -> None:
         tmp_path = Path(tmp.name)
 
     try:
-        result = _bundle_module.bundle(tmp_path)
+        result = _bundle_module.build_bundle(tmp_path)
         assert result["title"] == schema["title"]
         assert result["type"] == schema["type"]
         assert result["properties"]["name"]["type"] == "string"
@@ -91,7 +92,7 @@ def test_bundle_adds_defs_for_local_refs() -> None:
     internal_base = "https://dataspace-control-plane.internal/schemas/"
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_root = Path(tmpdir)
+        tmp_root = Path(tmpdir).resolve()
         schemas_subdir = tmp_root / "test"
         schemas_subdir.mkdir()
 
@@ -119,13 +120,16 @@ def test_bundle_adds_defs_for_local_refs() -> None:
         root_path = schemas_subdir / "root.schema.json"
         root_path.write_text(json.dumps(root_schema))
 
-        # Monkey-patch SCHEMAS_ROOT temporarily
-        original_root = _bundle_module.SCHEMAS_ROOT
+        # Monkey-patch both bundle.py and _support.py roots for internal URI resolution.
+        original_bundle_root = _bundle_module.SCHEMAS_ROOT
+        original_support_root = _support_module.SCHEMAS_ROOT
         _bundle_module.SCHEMAS_ROOT = tmp_root
+        _support_module.SCHEMAS_ROOT = tmp_root
         try:
-            result = _bundle_module.bundle(root_path)
+            result = _bundle_module.build_bundle(root_path)
         finally:
-            _bundle_module.SCHEMAS_ROOT = original_root
+            _bundle_module.SCHEMAS_ROOT = original_bundle_root
+            _support_module.SCHEMAS_ROOT = original_support_root
 
         assert "$defs" in result, "Bundle must have $defs when local $refs are present"
         assert result["$defs"], "Bundle $defs must be non-empty when local $refs are present"
@@ -156,7 +160,7 @@ def test_bundle_leaves_external_http_refs_intact() -> None:
         tmp_path = Path(tmp.name)
 
     try:
-        result = _bundle_module.bundle(tmp_path)
+        result = _bundle_module.build_bundle(tmp_path)
         result_str = json.dumps(result)
         assert external_ref in result_str, (
             f"External $ref {external_ref!r} must be preserved in bundle output"
@@ -186,7 +190,7 @@ def test_bundle_handles_schema_without_id() -> None:
 
     try:
         # Must not raise
-        result = _bundle_module.bundle(tmp_path)
+        result = _bundle_module.build_bundle(tmp_path)
         assert result is not None
         assert result["type"] == "string"
     finally:

@@ -13,11 +13,33 @@ Requirements: referencing (optional — schema_registry returns None if absent)
 from __future__ import annotations
 
 import json
+import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+TESTS_ROOT = Path(__file__).resolve().parent
+
+if str(TESTS_ROOT) not in sys.path:
+    sys.path.insert(0, str(TESTS_ROOT))
+
+pytest_plugins = [
+    "fixtures.apps",
+    "fixtures.artifacts",
+    "fixtures.containers",
+    "fixtures.kafka",
+    "fixtures.keycloak",
+    "fixtures.pack_profiles",
+    "fixtures.postgres",
+    "fixtures.temporal_env",
+    "fixtures.toxiproxy",
+    "fixtures.vault",
+]
+if importlib.util.find_spec("pytest_playwright") is not None:
+    pytest_plugins.append("pytest_playwright.pytest_playwright")
+
+REPO_ROOT = TESTS_ROOT.parent
 SCHEMAS_ROOT = REPO_ROOT / "schemas"
 SCHEMA_FAMILIES = ["_shared", "vc", "odrl", "aas", "dpp", "metering", "enterprise-mapping"]
 
@@ -67,7 +89,7 @@ def pytest_configure(config: pytest.Config) -> None:
 # Autouse enforcement fixture
 # ---------------------------------------------------------------------------
 
-_GUARDED_MARKS = {"integration", "chaos", "tenancy", "crypto"}
+_GUARDED_MARKS = {"integration", "chaos", "tenancy", "crypto", "e2e"}
 
 
 @pytest.fixture(autouse=True)

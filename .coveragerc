@@ -1,0 +1,17 @@
+[run]
+branch = True
+source =
+    core/src
+    adapters/src
+    procedures/src
+    packs/src
+    apps/control-api/app
+    apps/temporal-workers/src
+    apps/provisioning-agent/src
+omit =
+    */tests/*
+    */__pycache__/*
+
+[report]
+show_missing = True
+skip_covered = False

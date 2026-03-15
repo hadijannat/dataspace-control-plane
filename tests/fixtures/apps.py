@@ -4,23 +4,30 @@ Creates TestClient and AsyncClient wrappers with dependency override support.
 """
 from __future__ import annotations
 
+import os
+import sys
+from pathlib import Path
 from typing import Callable
 
 import pytest
 
 
-def _make_minimal_app():
-    """Create a minimal FastAPI app with a health endpoint for test fallback."""
-    fastapi = pytest.importorskip("fastapi")
-    from fastapi import FastAPI
+CONTROL_API_ROOT = Path(__file__).resolve().parents[2] / "apps" / "control-api"
 
-    app = FastAPI(title="Dataspace Control API (test fallback)")
 
-    @app.get("/health")
-    async def health():
-        return {"status": "ok"}
+def _ensure_control_api_import_path() -> None:
+    """Make the control-api package importable without relying on editable installs."""
+    if str(CONTROL_API_ROOT) not in sys.path:
+        sys.path.insert(0, str(CONTROL_API_ROOT))
 
-    return app
+
+def _configure_control_api_env() -> None:
+    """Force the control-api app into test-safe debug mode before import."""
+    os.environ.setdefault("CONTROL_API_DEBUG", "true")
+    os.environ.setdefault(
+        "CONTROL_API_STREAM_TICKET_SECRET",
+        "dev-stream-ticket-secret-dev-stream-ticket-secret",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -33,15 +40,18 @@ def app_factory() -> Callable:
     """
     Session-scoped fixture returning a factory function that creates the app.
 
-    Tries to import apps.control_api.main:create_app; falls back to a minimal
-    FastAPI app with GET /health → {"status": "ok"}.
+    Imports the real control-api factory from apps/control-api/app/main.py.
+    The repo-wide integration spine must never silently fall back to a fake app.
     """
+    _configure_control_api_env()
+    _ensure_control_api_import_path()
     try:
-        from apps.control_api.main import create_app
-
-        return create_app
-    except ImportError:
-        return _make_minimal_app
+        from app.main import create_app
+    except ImportError as exc:  # pragma: no cover - surfaced as fixture setup failure
+        raise RuntimeError(
+            "Could not import the real control-api app factory from apps/control-api/app/main.py"
+        ) from exc
+    return create_app
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +64,17 @@ def test_app(app_factory: Callable):
     """Function-scoped app instance created by app_factory."""
     app = app_factory()
     yield app
+
+
+@pytest.fixture(scope="function")
+def app_dependency_overrides(test_app):
+    """
+    Function-scoped dependency override mapping for narrow integration-test substitutions.
+
+    Tests may mutate the returned mapping; it is always cleared on teardown.
+    """
+    yield test_app.dependency_overrides
+    test_app.dependency_overrides.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +104,6 @@ def test_client(test_app):
 
 
 @pytest.fixture(scope="function")
-@pytest.mark.anyio
 async def async_client(test_app):
     """
     Function-scoped async httpx.AsyncClient backed by ASGITransport.

@@ -16,6 +16,13 @@
 PYTHON ?= python3
 UV     ?= uv
 PNPM   ?= pnpm
+PYTEST ?= pytest
+
+COVERAGE_XML ?= coverage.xml
+PYTEST_COV  ?= --cov --cov-config=.coveragerc --cov-branch --cov-report=xml:$(COVERAGE_XML)
+LOCAL_TEST_PATHS := tests/unit tests/compatibility/test_schema_meta_compliance.py
+GATE_TEST_PATHS  := tests/integration tests/e2e tests/compatibility/dsp-tck tests/compatibility/dcp-tck tests/tenancy tests/crypto-boundaries
+CHAOS_TEST_PATHS := tests/chaos
 
 # ─── Help ─────────────────────────────────────────────────────────────────────
 
@@ -50,8 +57,8 @@ install-node:  ## Install web-console Node dependencies (pnpm)
 test: test-unit  ## Run all tests that do not require live services
 
 .PHONY: test-unit
-test-unit:  ## Run the full unit suite (excludes integration/chaos/tenancy/crypto markers)
-	pytest -m "not (integration or chaos or tenancy or crypto)"
+test-unit:  ## Run the repo-wide default spine (unit + schema compatibility)
+	$(PYTEST) $(LOCAL_TEST_PATHS) $(PYTEST_COV)
 
 .PHONY: test-core
 test-core:  ## Verify core/ semantic layer (unit + tenancy)
@@ -99,14 +106,11 @@ test-docs:  ## Verify docs/ explanation layer (markdownlint + link check)
 
 .PHONY: test-gates
 test-gates:  ## Run all release gate suites (Temporal, Kafka, Vault, Postgres required)
-	pytest tests/compatibility/dsp-tck --live-services
-	pytest tests/compatibility/dcp-tck --live-services
-	pytest tests/tenancy --live-services
-	pytest tests/crypto-boundaries --live-services
+	$(PYTEST) $(GATE_TEST_PATHS) --live-services $(PYTEST_COV)
 
 .PHONY: test-chaos
 test-chaos:  ## Run chaos tests (live services + fault-injection environment required)
-	pytest tests/chaos --live-services
+	$(PYTEST) $(CHAOS_TEST_PATHS) --live-services $(PYTEST_COV)
 
 # ─── Lint ─────────────────────────────────────────────────────────────────────
 

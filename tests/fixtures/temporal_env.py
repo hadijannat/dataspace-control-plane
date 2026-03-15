@@ -14,7 +14,6 @@ import pytest
 
 
 @pytest.fixture(scope="session")
-@pytest.mark.anyio
 async def temporal_env():
     """
     Session-scoped time-skipping Temporal WorkflowEnvironment.
@@ -46,7 +45,6 @@ def temporal_client(temporal_env):
 
 
 @pytest.fixture(scope="function")
-@pytest.mark.anyio
 async def temporal_worker(temporal_client, request: pytest.FixtureRequest):
     """
     Function-scoped Temporal Worker.
@@ -57,12 +55,16 @@ async def temporal_worker(temporal_client, request: pytest.FixtureRequest):
     pytest.importorskip("temporalio", reason="temporalio required for temporal_worker")
     from temporalio.worker import Worker
 
-    task_queue = getattr(request, "param", "test-queue")
+    config = getattr(request, "param", {})
+    if isinstance(config, str):
+        config = {"task_queue": config}
+
+    task_queue = config.get("task_queue", "test-queue")
     worker = Worker(
         client=temporal_client,
         task_queue=task_queue,
-        workflows=[],
-        activities=[],
+        workflows=config.get("workflows", []),
+        activities=config.get("activities", []),
     )
     async with worker:
         yield worker

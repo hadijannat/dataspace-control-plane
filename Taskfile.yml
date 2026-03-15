@@ -14,6 +14,12 @@ vars:
   PYTHON: python3
   UV: uv
   PNPM: pnpm
+  PYTEST: pytest
+  COVERAGE_XML: coverage.xml
+  PYTEST_COV: --cov --cov-config=.coveragerc --cov-branch --cov-report=xml:coverage.xml
+  LOCAL_TEST_PATHS: tests/unit tests/compatibility/test_schema_meta_compliance.py
+  GATE_TEST_PATHS: tests/integration tests/e2e tests/compatibility/dsp-tck tests/compatibility/dcp-tck tests/tenancy tests/crypto-boundaries
+  CHAOS_TEST_PATHS: tests/chaos
 
 # ─── Default ──────────────────────────────────────────────────────────────────
 
@@ -56,9 +62,9 @@ tasks:
       - task: test:unit
 
   test:unit:
-    desc: Run the full unit suite (excludes integration/chaos/tenancy/crypto markers)
+    desc: Run the repo-wide default spine (unit + schema compatibility)
     cmds:
-      - pytest -m "not (integration or chaos or tenancy or crypto)"
+      - "{{.PYTEST}} {{.LOCAL_TEST_PATHS}} {{.PYTEST_COV}}"
 
   test:core:
     desc: Verify core/ semantic layer (unit + tenancy)
@@ -112,15 +118,12 @@ tasks:
   test:gates:
     desc: Run all release gate suites (Temporal, Kafka, Vault, Postgres required)
     cmds:
-      - pytest tests/compatibility/dsp-tck --live-services
-      - pytest tests/compatibility/dcp-tck --live-services
-      - pytest tests/tenancy --live-services
-      - pytest tests/crypto-boundaries --live-services
+      - "{{.PYTEST}} {{.GATE_TEST_PATHS}} --live-services {{.PYTEST_COV}}"
 
   test:chaos:
     desc: Run chaos tests (live services + fault-injection environment required)
     cmds:
-      - pytest tests/chaos --live-services
+      - "{{.PYTEST}} {{.CHAOS_TEST_PATHS}} --live-services {{.PYTEST_COV}}"
 
   # ─── Lint ───────────────────────────────────────────────────────────────────
 

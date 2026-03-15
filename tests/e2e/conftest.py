@@ -2,80 +2,41 @@
 tests/e2e/conftest.py
 Playwright fixtures and E2E suite configuration.
 
-All E2E tests require a running web-console instance. Set WEB_CONSOLE_URL env var.
-Playwright must be installed: playwright install chromium
-
-All E2E tests are skipped unless --live-services is passed.
+The suite prefers the official pytest-playwright plugin when available.
+All E2E tests require --live-services and a running web-console instance.
 """
 from __future__ import annotations
 
+import importlib.util
 import os
 
 import pytest
 
-# Re-export keycloak fixtures so e2e tests can request them
-try:
-    from tests.fixtures.containers import keycloak_container  # noqa: F401
-    from tests.fixtures.keycloak import (  # noqa: F401
-        keycloak_admin_url,
-        keycloak_realm,
-        keycloak_client,
-        keycloak_operator_user,
-    )
-except Exception:
-    pass
-
-
-# ---------------------------------------------------------------------------
-# Web console URL
-# ---------------------------------------------------------------------------
+_HAS_PYTEST_PLAYWRIGHT = importlib.util.find_spec("pytest_playwright") is not None
 
 
 @pytest.fixture(scope="session")
 def web_console_url() -> str:
-    """Session-scoped web console URL, from WEB_CONSOLE_URL env var or default localhost."""
-    return os.environ.get("WEB_CONSOLE_URL", "http://localhost:3000")
-
-
-# ---------------------------------------------------------------------------
-# Browser
-# ---------------------------------------------------------------------------
+    """Session-scoped web-console URL, from WEB_CONSOLE_URL env var or localhost."""
+    return os.environ.get("WEB_CONSOLE_URL", "http://localhost:3000").rstrip("/")
 
 
 @pytest.fixture(scope="session")
-def browser(web_console_url: str):
-    """
-    Session-scoped Playwright Chromium browser instance.
-
-    Skipped if playwright is not installed.
-    """
-    playwright_api = pytest.importorskip("playwright.sync_api")
-    from playwright.sync_api import sync_playwright
-
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        yield browser
-        browser.close()
+def base_url(web_console_url: str) -> str:
+    """Base URL consumed by pytest-playwright when the plugin is installed."""
+    return web_console_url
 
 
-# ---------------------------------------------------------------------------
-# Page
-# ---------------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def browser_context_args(playwright_artifacts_dir):
+    """Store browser traces/screenshots under the repo-wide artifact directory."""
+    return {
+        "ignore_https_errors": True,
+        "record_video_dir": str(playwright_artifacts_dir),
+    }
 
 
-@pytest.fixture(scope="function")
-def page(browser, web_console_url: str):
-    """
-    Function-scoped Playwright page navigated to web_console_url.
-
-    Closes on teardown.
-    """
-    context = browser.new_context()
-    p = context.new_page()
-    try:
-        p.goto(web_console_url, timeout=15000)
-    except Exception:
-        pass  # Navigation may fail if web console is not running — tests will skip
-    yield p
-    p.close()
-    context.close()
+if not _HAS_PYTEST_PLAYWRIGHT:
+    @pytest.fixture(scope="function")
+    def page():
+        pytest.skip("pytest-playwright is not installed in this environment")

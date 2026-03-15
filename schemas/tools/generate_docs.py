@@ -140,6 +140,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     families = [args.family] if args.family else FAMILIES
+
+    # SECURITY: --out-dir must stay inside SCHEMAS_ROOT.
+    try:
+        args.out_dir.resolve().relative_to(SCHEMAS_ROOT.resolve())
+    except ValueError:
+        print(
+            f"ERROR: --out-dir must be inside SCHEMAS_ROOT ({SCHEMAS_ROOT}): {args.out_dir}",
+            file=sys.stderr,
+        )
+        return 1
+
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     errors = 0

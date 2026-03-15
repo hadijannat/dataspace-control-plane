@@ -158,12 +158,20 @@ def _validate_lock_file() -> list[str]:
             continue
 
         local_path = SCHEMAS_ROOT / entry["local_path"]
+        # SECURITY: reject path traversal before reading the file.
+        try:
+            local_path.resolve().relative_to(SCHEMAS_ROOT.resolve())
+        except ValueError:
+            errors.append(
+                f"LOCK ERROR {artifact_id}: local_path escapes SCHEMAS_ROOT: {entry['local_path']}"
+            )
+            continue
         if not local_path.exists():
             errors.append(f"LOCK ERROR {artifact_id}: missing local artifact {entry['local_path']}")
             continue
 
-        actual = local_path.read_bytes()
-        actual_sha = __import__("hashlib").sha256(actual).hexdigest()
+        from _support import sha256_bytes as _sha256_bytes  # noqa: PLC0415
+        actual_sha = _sha256_bytes(local_path.read_bytes())
         if actual_sha != entry["sha256"]:
             errors.append(
                 f"LOCK ERROR {artifact_id}: checksum mismatch expected {entry['sha256']} got {actual_sha}"

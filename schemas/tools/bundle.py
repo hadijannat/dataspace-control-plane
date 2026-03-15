@@ -54,12 +54,21 @@ def _rewrite_document(
                 if target_path == current_path.resolve() and fragment:
                     rewritten[key] = fragment
                     continue
+                # SECURITY: reject $refs that escape SCHEMAS_ROOT (path traversal guard).
+                try:
+                    target_path.relative_to(SCHEMAS_ROOT.resolve())
+                except ValueError:
+                    raise ValueError(
+                        f"$ref '{value}' from {current_path} resolves outside "
+                        f"SCHEMAS_ROOT: {target_path}"
+                    )
                 if not target_path.exists():
                     raise FileNotFoundError(f"Unresolved local ref '{value}' from {current_path}")
                 def_key = def_key_for_path(target_path)
                 if target_path not in embedded:
                     embedded.add(target_path)
-                    target_schema = copy.deepcopy(load_json(target_path))
+                    # load_json returns a fresh tree — deepcopy is unnecessary.
+                    target_schema = load_json(target_path)
                     root_defs[def_key] = _rewrite_document(
                         target_schema,
                         current_path=target_path,
@@ -92,9 +101,10 @@ def _rewrite_document(
 
 def build_bundle(entrypoint: Path, bundle_id: str | None = None) -> dict[str, Any]:
     entrypoint = entrypoint.resolve()
-    root = copy.deepcopy(load_json(entrypoint))
+    # load_json returns a freshly parsed dict — no deepcopy needed.
+    root = load_json(entrypoint)
     existing_defs = root.get("$defs", {})
-    root["$defs"] = copy.deepcopy(existing_defs)
+    root["$defs"] = dict(existing_defs)
     embedded = {entrypoint}
 
     rewritten = _rewrite_document(
@@ -141,6 +151,8 @@ def _write_bundle(source_entry: dict[str, Any]) -> Path:
     bundle_rel = bundle_relpath_for_source(source_rel)
     bundle_path = SCHEMAS_ROOT / bundle_rel
     bundle_id = f"https://dataspace-control-plane.internal/schemas/{bundle_rel.as_posix()}"
+    # Read source schema once — reuse for both build_bundle and provenance.
+    source_schema = load_json(source_path)
     bundle_doc = build_bundle(source_path, bundle_id=bundle_id)
     bundle_path.parent.mkdir(parents=True, exist_ok=True)
     bundle_path.write_text(json.dumps(bundle_doc, indent=2) + "\n")
@@ -148,7 +160,7 @@ def _write_bundle(source_entry: dict[str, Any]) -> Path:
     provenance_rel = provenance_relpath_for_artifact(bundle_rel)
     provenance_path = SCHEMAS_ROOT / provenance_rel
     provenance = _build_provenance(
-        source_schema=load_json(source_path),
+        source_schema=source_schema,
         source_entry=source_entry,
         bundle_artifact_id=artifact_id_from_relpath(bundle_rel),
     )
@@ -169,12 +181,30 @@ def main(argv: list[str] | None = None) -> int:
             print("--out is required with --entrypoint", file=sys.stderr)
             return 2
         entrypoint = args.entrypoint.resolve()
+        # SECURITY: both --entrypoint and --out must stay inside SCHEMAS_ROOT.
+        try:
+            entrypoint.relative_to(SCHEMAS_ROOT.resolve())
+        except ValueError:
+            print(
+                f"ERROR: --entrypoint must be inside SCHEMAS_ROOT ({SCHEMAS_ROOT}): {entrypoint}",
+                file=sys.stderr,
+            )
+            return 1
+        out_resolved = args.out.resolve()
+        try:
+            out_resolved.relative_to(SCHEMAS_ROOT.resolve())
+        except ValueError:
+            print(
+                f"ERROR: --out must be inside SCHEMAS_ROOT ({SCHEMAS_ROOT}): {args.out}",
+                file=sys.stderr,
+            )
+            return 1
         if not entrypoint.exists():
             print(f"Entrypoint not found: {entrypoint}", file=sys.stderr)
             return 1
         bundle_doc = build_bundle(entrypoint)
-        args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(json.dumps(bundle_doc, indent=2) + "\n")
+        out_resolved.parent.mkdir(parents=True, exist_ok=True)
+        out_resolved.write_text(json.dumps(bundle_doc, indent=2) + "\n")
         print(f"Bundle written: {args.out}")
         return 0
 

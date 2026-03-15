@@ -86,3 +86,96 @@ def test_registry_covers_all_source_and_bundle_schema_files() -> None:
         actual.update(str(path.relative_to(SCHEMAS_ROOT)) for path in (SCHEMAS_ROOT / family / "source").rglob("*.schema.json"))
         actual.update(str(path.relative_to(SCHEMAS_ROOT)) for path in (SCHEMAS_ROOT / family / "bundles").glob("*.schema.json"))
     assert actual == registered
+
+
+# ---------------------------------------------------------------------------
+# Additional contract tests
+# ---------------------------------------------------------------------------
+
+def test_lock_sha256_entries_are_valid_hex_strings() -> None:
+    """Every sha256 value in upstream.lock.yaml must be a 64-character lowercase hex string."""
+    lock = _load_yaml(LOCK_PATH)
+    import re
+    hex_re = re.compile(r"^[0-9a-f]{64}$")
+    for entry in lock["upstream"]:
+        sha = entry.get("sha256", "")
+        assert sha != "PENDING", f"Unresolved PENDING sha256 for {entry.get('local_path')}"
+        assert hex_re.match(sha), (
+            f"sha256 for {entry.get('local_path')!r} is not 64 lowercase hex chars: {sha!r}"
+        )
+
+
+def test_bundles_do_not_cross_family_source_boundaries() -> None:
+    """A bundle in family A must not $ref the source/ directory of family B."""
+    for family in FAMILIES:
+        bundle_dir = SCHEMAS_ROOT / family / "bundles"
+        if not bundle_dir.exists():
+            continue
+        for bundle_path in bundle_dir.glob("*.schema.json"):
+            refs = _bundle_refs(_load_json(bundle_path))
+            for ref in refs:
+                for other_family in FAMILIES:
+                    if other_family == family:
+                        continue
+                    cross_source_prefix = f"{INTERNAL_BASE}{other_family}/source/"
+                    assert not ref.startswith(cross_source_prefix), (
+                        f"{bundle_path.name} in '{family}' cross-references source of "
+                        f"'{other_family}': {ref}"
+                    )
+
+
+def test_vc_credential_envelope_has_required_fields() -> None:
+    """Regression anchor: credential-envelope.schema.json must keep its contract fields."""
+    schema_path = (
+        SCHEMAS_ROOT / "vc" / "source" / "envelope" / "credential-envelope.schema.json"
+    )
+    if not schema_path.exists():
+        pytest.skip("credential-envelope.schema.json not present")
+    schema = _load_json(schema_path)
+    required = set(schema.get("required", []))
+    for field in ("@context", "type", "credentialSubject"):
+        assert field in required or field in schema.get("properties", {}), (
+            f"VC credential-envelope missing mandatory field '{field}'"
+        )
+
+
+def test_dpp_passport_envelope_has_required_fields() -> None:
+    """Regression anchor: passport-envelope.schema.json must keep its contract fields.
+
+    DPP is IDTA-based (not JSON-LD), so there is no @context requirement.
+    The core contract fields are passportId, subject, and lifecycle.
+    """
+    schema_path = (
+        SCHEMAS_ROOT / "dpp" / "source" / "base" / "passport-envelope.schema.json"
+    )
+    if not schema_path.exists():
+        pytest.skip("passport-envelope.schema.json not present")
+    schema = _load_json(schema_path)
+    required = set(schema.get("required", []))
+    props = set(schema.get("properties", {}).keys())
+    assert required or props, "passport-envelope schema has no required fields or properties"
+    for field in ("passportId", "subject", "lifecycle"):
+        assert field in required or field in props, (
+            f"DPP passport-envelope missing mandatory contract field '{field}'"
+        )
+
+
+def test_provenance_sidecars_have_non_empty_required_fields() -> None:
+    """All provenance sidecar fields required by the schema must be non-empty strings."""
+    provenance_schema = _load_json(PROVENANCE_SCHEMA_PATH)
+    required_fields = provenance_schema.get("required", [])
+    for family in FAMILIES:
+        bundle_dir = SCHEMAS_ROOT / family / "bundles"
+        if not bundle_dir.exists():
+            continue
+        for sidecar in sorted(bundle_dir.glob("*.provenance.yaml")):
+            data = _load_yaml(sidecar)
+            for field in required_fields:
+                value = data.get(field)
+                assert value is not None, (
+                    f"{sidecar.name}: required provenance field '{field}' is missing"
+                )
+                if isinstance(value, str):
+                    assert value.strip(), (
+                        f"{sidecar.name}: required provenance field '{field}' is empty"
+                    )

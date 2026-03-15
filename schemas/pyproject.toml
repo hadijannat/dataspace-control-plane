@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dataspace-control-plane-schemas"
+version = "1.0.0"
+description = "Machine-readable contract registry — JSON Schema artifacts, bundles, provenance, and tooling."
+requires-python = ">=3.11"
+dependencies = [
+    "jsonschema>=4.21",
+    "referencing>=0.35",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["tools"]
+artifacts = [
+    "*/vendor/**",
+    "*/source/**",
+    "*/bundles/**",
+    "*/examples/**",
+    "*/manifest.yaml",
+    "locks/**",
+    "_shared/**",
+]
+
+[tool.pytest.ini_options]
+testpaths = [".", "_shared/tests", "vc/tests", "odrl/tests", "aas/tests", "dpp/tests", "metering/tests", "enterprise-mapping/tests", "tools/tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

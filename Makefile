@@ -60,6 +60,7 @@ test-core:  ## Verify core/ semantic layer (unit + tenancy)
 
 .PHONY: test-schemas
 test-schemas:  ## Verify schemas/ artifact layer (unit + offline schema validation)
+	pytest schemas/ -q
 	pytest tests/unit -k schemas
 
 .PHONY: test-procedures
@@ -117,7 +118,7 @@ lint-python:  ## Lint Python with ruff
 	ruff check \
 	  core adapters procedures packs \
 	  apps/control-api apps/temporal-workers apps/provisioning-agent \
-	  tests
+	  tests schemas/tools schemas/_shared/tests
 
 .PHONY: lint-node
 lint-node:  ## Lint web-console TypeScript/React with ESLint (via pnpm)

@@ -26,10 +26,8 @@ async def get_stream_principal(
     if ticket:
         return principal_from_stream_ticket(ticket)
 
-    if not ticket:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing stream authentication",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    raise AssertionError("unreachable")
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Missing stream authentication",
+        headers={"WWW-Authenticate": "Bearer"},
+    )

@@ -42,6 +42,9 @@ class DcpHealthProbe:
         )
 
     def capability_descriptor(self) -> dict:
+        # Internal service URLs are deliberately omitted from the capability
+        # descriptor — this object may be surfaced in operator-facing or
+        # inter-service responses and must not leak backend topology.
         return {
             "adapter": self._adapter_name,
             "type": "dcp",
@@ -52,8 +55,6 @@ class DcpHealthProbe:
                 "trust_anchor_resolution",
                 "si_token_builder",
             ],
-            "credential_service_url": str(self._settings.credential_service_url),
-            "issuer_service_url": str(self._settings.issuer_service_url),
             "trust_anchor_count": len(self._settings.trust_anchor_urls),
             "version": "1.0",
         }

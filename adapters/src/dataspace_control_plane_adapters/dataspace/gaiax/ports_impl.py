@@ -32,19 +32,22 @@ class GaiaXTrustAnchorAdapterPort:
     async def list_active(self, trust_scope: str) -> list[TrustAnchor]:
         """Return active trust anchors for the given trust scope.
 
-        trust_scope maps to federation_id in Gaia-X:
-          - "gaia-x" → use configured federation_id
-          - Any other scope string is treated as a direct federation_id override.
+        trust_scope identifies the Gaia-X trust domain (e.g. "gaia-x").
+        The federation_id used for registry lookup is always the one from
+        GaiaXSettings.federation_id — trust_scope is not used as a direct
+        federation identifier to prevent callers from enumerating arbitrary
+        federation endpoints.
 
         Args:
             trust_scope: Trust scope identifier from core/machine_trust/.
         """
 
-        federation_id = (
-            self._cfg.federation_id
-            if trust_scope in ("gaia-x", "gaiax", "")
-            else trust_scope
-        )
+        # federation_id is always taken from configuration.  The trust_scope
+        # argument maps conceptually to the gaia-x trust domain but must never
+        # be used as a direct federation identifier — that would allow callers
+        # to enumerate arbitrary federation endpoints not sanctioned by the
+        # operator.
+        federation_id = self._cfg.federation_id
         anchors = await self._client.list_trust_anchors(federation_id)
         canonical_anchors: list[TrustAnchor] = []
         for anchor in anchors:

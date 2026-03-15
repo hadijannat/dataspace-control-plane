@@ -120,7 +120,12 @@ class TemporalWorkflowGateway:
         from dataspace_control_plane_core.procedure_runtime.contracts import ProcedureHandle
         from dataspace_control_plane_core.domains._shared.ids import WorkflowId
 
-        workflow_id = inp.idempotency_key or str(inp.correlation.correlation_id)
+        # Namespace workflow IDs by tenant to prevent cross-tenant collisions in
+        # a shared Temporal namespace.  Callers that already embed the tenant
+        # prefix (e.g. "{tenant_id}:{procedure_prefix}:{id}") are not re-prefixed.
+        tenant_prefix = f"{inp.tenant_id}:"
+        raw_id = inp.idempotency_key or str(inp.correlation.correlation_id)
+        workflow_id = raw_id if raw_id.startswith(tenant_prefix) else f"{tenant_prefix}{raw_id}"
         task_queue = self._default_task_queue
 
         started_id = await self._helper.start(
@@ -395,10 +400,19 @@ def _infer_procedure_type(workflow_type: str | None, workflow_id: str) -> str:
     Multiple concrete procedures currently collapse into the nearest available
     core runtime category. This keeps the adapter aligned with the current
     core contract without inventing new core semantics in adapters/.
+
+    Workflow IDs are now tenant-prefixed ("{tenant_id}:{procedure_prefix}:…").
+    The prefix map is checked against both the full ID and the ID with the
+    first colon-delimited segment stripped so that existing callers using
+    bare procedure-prefixed IDs continue to resolve correctly.
     """
 
     if workflow_type and workflow_type in _WORKFLOW_TYPE_TO_PROCEDURE_TYPE:
         return _WORKFLOW_TYPE_TO_PROCEDURE_TYPE[workflow_type]
+
+    # Derive a bare ID by stripping the optional tenant prefix segment.
+    _colon = workflow_id.find(":")
+    bare_id = workflow_id[_colon + 1:] if _colon != -1 else workflow_id
 
     prefix_map = {
         "company-onboarding:": "company-onboarding",
@@ -413,7 +427,7 @@ def _infer_procedure_type(workflow_type: str | None, workflow_id: str) -> str:
         "evidence-export:": "compliance-gap-scan",
     }
     for prefix, procedure_type in prefix_map.items():
-        if workflow_id.startswith(prefix):
+        if bare_id.startswith(prefix) or workflow_id.startswith(prefix):
             return procedure_type
 
     raise TemporalRpcError(

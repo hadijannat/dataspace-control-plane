@@ -12,6 +12,8 @@ Rules (adapters/CLAUDE.md):
 """
 from __future__ import annotations
 
+import ipaddress
+import urllib.parse
 from datetime import datetime, timezone
 import logging
 from typing import Any
@@ -343,6 +345,46 @@ class EdcTransferObservation:
             ) from exc
 
 
+_SSRF_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),  # link-local / AWS metadata
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+
+def _validate_probe_url(url: str) -> None:
+    """Reject URLs that would allow Server-Side Request Forgery.
+
+    Blocks private/reserved IP ranges and non-http(s) schemes.  DNS-level
+    SSRF mitigation (post-resolution IP check) is the responsibility of the
+    network egress layer in infra/.
+    """
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(
+            f"Probe URL scheme must be http or https, got {parsed.scheme!r}: {url!r}"
+        )
+    hostname = (parsed.hostname or "").lower()
+    if not hostname or hostname == "localhost":
+        raise ValueError(f"Probe URL hostname not allowed: {hostname!r}")
+    try:
+        addr = ipaddress.ip_address(hostname)
+        for net in _SSRF_BLOCKED_NETWORKS:
+            if addr in net:
+                raise ValueError(
+                    f"Probe URL targets private/reserved address {hostname!r}"
+                )
+    except ValueError as exc:
+        if "Probe URL" in str(exc):
+            raise
+        # hostname is a domain name, not an IP literal — allow through.
+
+
 class EdcConnectorAssetProbe:
     """Implements ``ConnectorAssetPort`` using a lightweight endpoint probe."""
 
@@ -350,6 +392,7 @@ class EdcConnectorAssetProbe:
         self._timeout_s = timeout_s
 
     async def probe(self, endpoint_url: str) -> EndpointHealth:
+        _validate_probe_url(endpoint_url)  # raises ValueError on SSRF-risky URLs
         try:
             async with httpx.AsyncClient(timeout=self._timeout_s) as client:
                 await client.get(endpoint_url)

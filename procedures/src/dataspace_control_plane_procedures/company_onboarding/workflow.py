@@ -12,6 +12,7 @@ Replay safety rules:
 from __future__ import annotations
 
 import asyncio
+from datetime import timedelta
 from typing import Any
 
 from temporalio import workflow
@@ -155,7 +156,13 @@ class CompanyOnboardingWorkflow:
             raise
 
         workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
-        await workflow.wait_condition(workflow.all_handlers_finished)
+        try:
+            await workflow.wait_condition(
+                workflow.all_handlers_finished,
+                timeout=timedelta(seconds=30),
+            )
+        except asyncio.TimeoutError:
+            pass  # Current handlers are synchronous; timeout is a safety net.
 
         return OnboardingResult(
             workflow_id=workflow.info().workflow_id,
@@ -199,6 +206,11 @@ class CompanyOnboardingWorkflow:
     async def missing_info_submitted(self, evt: MissingInfoSubmitted) -> None:
         """Operator has provided missing information to unblock the review."""
         if self._state.dedupe.is_duplicate(evt.submission_id):
+            return
+        # Ignore submissions outside the approval phase; calling request()
+        # after a decision has been recorded would erase the decision field and
+        # re-arm is_pending, corrupting an already-completed approval.
+        if self._state.phase not in ("registration", "awaiting_approval"):
             return
         self._state.dedupe.mark_handled(evt.submission_id)
 
@@ -295,7 +307,13 @@ class CompanyOnboardingWorkflow:
         """Continue-As-New if history is approaching the threshold."""
         info = workflow.info()
         if should_continue_as_new(info.get_current_history_length()):
-            await workflow.wait_condition(workflow.all_handlers_finished)
+            try:
+                await workflow.wait_condition(
+                    workflow.all_handlers_finished,
+                    timeout=timedelta(seconds=30),
+                )
+            except asyncio.TimeoutError:
+                pass  # Proceed with CAN; handlers are synchronous in practice.
             carry = OnboardingCarryState(
                 phase=self._state.phase,
                 registration_ref=self._state.registration_ref,
@@ -345,7 +363,6 @@ class CompanyOnboardingWorkflow:
         self._state.bpnl = reg_result.bpnl
         self._state.compensation.record("register_legal_entity", reg_result.registration_ref)
 
-        self._state.phase = "awaiting_approval"
         approval_result = await workflow.execute_activity(
             request_approval,
             ApprovalRequestInput(
@@ -361,6 +378,10 @@ class CompanyOnboardingWorkflow:
             approval_result.approval_ref,
             requested_at=workflow.now(),
         )
+        # Phase advances only after both activities and all state mutations are
+        # complete.  Moving this earlier would cause a crash mid-_register() to
+        # skip request_approval on replay, leaving approval_ref uninitialised.
+        self._state.phase = "awaiting_approval"
 
     async def _await_approval(self) -> None:
         if not self._approval_received and self._state.manual_review.decision is None:

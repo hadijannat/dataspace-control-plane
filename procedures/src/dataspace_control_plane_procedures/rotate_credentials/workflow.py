@@ -78,10 +78,6 @@ from .input import (
 from .messages import ForceRotate, PauseResult, PauseRotation, ResumeResult, ResumeRotation
 from .state import RotationWorkflowState
 
-# Trigger Continue-As-New after this many rotation iterations to keep history
-# size bounded.  Each iteration emits O(10-20) history events so 80 iterations
-# stays comfortably below the 9,000-event threshold used elsewhere in _shared.
-_CAN_ITERATION_THRESHOLD = 80
 
 
 @workflow.defn
@@ -171,9 +167,17 @@ class RotateCredentialsWorkflow:
             self._state.force_rotate_requested = False
             self._state.iteration += 1
 
-            # Continue-As-New boundary: keep history bounded.
-            if should_continue_as_new(self._state.iteration, threshold=_CAN_ITERATION_THRESHOLD):
-                await workflow.wait_condition(workflow.all_handlers_finished)
+            # Continue-As-New boundary: keep history bounded using the actual
+            # event count rather than an iteration-count proxy.  Iteration cost
+            # varies by cycle (no-op vs full rotation), so the proxy drifts.
+            if should_continue_as_new(workflow.info().get_current_history_length()):
+                try:
+                    await workflow.wait_condition(
+                        workflow.all_handlers_finished,
+                        timeout=timedelta(seconds=30),
+                    )
+                except asyncio.TimeoutError:
+                    pass  # Handlers are synchronous; proceed with CAN.
                 workflow.continue_as_new(
                     CarryEnvelope(
                         start_input=start_input,

@@ -1,16 +1,17 @@
 """DCP presentation mapper.
 
-Translates raw DCP presentation and verification result dicts into
-canonical dict shapes consumed by ports_impl.py. No core domain types
-are imported here — output is plain dicts to avoid creating import chains
-between the adapter and the core at this layer.
-
-The canonical presentation dict shape mirrors PresentationEnvelope fields
-but as plain Python dicts (serialization-safe).
+Translates raw DCP presentation dicts into canonical dict shapes consumed by
+``ports_impl.py``. Verification responses are normalized into the core
+``VerificationResult`` enum so the adapter boundary does not leak DCP-specific
+response keys such as ``valid`` or ``holderDid``.
 """
 from __future__ import annotations
 
 from typing import Any
+
+from dataspace_control_plane_core.domains.machine_trust.model.enums import (
+    VerificationResult,
+)
 
 
 def map_presentation(raw: dict[str, Any]) -> dict[str, Any]:
@@ -58,34 +59,28 @@ def map_presentation(raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def map_verification_result(raw_result: dict[str, Any]) -> dict[str, Any]:
-    """Normalize a raw DCP verifier response to a canonical verification result dict.
+def map_verification_result(raw_result: dict[str, Any]) -> VerificationResult:
+    """Normalize a raw DCP verifier response to the core ``VerificationResult`` enum."""
+    if bool(raw_result.get("valid", False)):
+        return VerificationResult.VALID
 
-    Output shape::
+    error_text = str(
+        raw_result.get("error")
+        or raw_result.get("errorMessage")
+        or raw_result.get("status")
+        or ""
+    ).strip().lower()
 
-        {
-            "valid": bool,
-            "holder_did": str | None,
-            "credentials": list[dict],
-            "error": str | None,
-        }
+    if "signature" in error_text:
+        return VerificationResult.INVALID_SIGNATURE
+    if "revok" in error_text:
+        return VerificationResult.REVOKED
+    if "expir" in error_text:
+        return VerificationResult.EXPIRED
+    if "trust" in error_text or "issuer" in error_text or "anchor" in error_text:
+        return VerificationResult.UNTRUSTED_ISSUER
 
-    Args:
-        raw_result: Raw dict from DcpVerifierClient.verify_presentation().
-
-    Returns:
-        Canonical verification result dict (plain dict).
-    """
-    return {
-        "valid": bool(raw_result.get("valid", False)),
-        "holder_did": (
-            raw_result.get("holder_did")
-            or raw_result.get("holderDid")
-            or None
-        ),
-        "credentials": raw_result.get("credentials") or [],
-        "error": raw_result.get("error") or None,
-    }
+    return VerificationResult.UNKNOWN
 
 
 def map_vc_to_credential_dict(raw_vc: Any) -> dict[str, Any]:

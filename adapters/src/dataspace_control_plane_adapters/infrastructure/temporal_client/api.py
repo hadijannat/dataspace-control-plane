@@ -26,6 +26,7 @@ from .errors import (
     WorkflowNotFoundError,
     ScheduleNotFoundError,
 )
+from .health import TemporalHealthProbe
 from .ports_impl import TemporalWorkflowGateway
 from .queries import QueryExecutor
 from .schedules import ScheduleManager
@@ -43,6 +44,7 @@ __all__ = [
     "WorkflowNotFoundError",
     "WorkflowAlreadyStartedError",
     "ScheduleNotFoundError",
+    "TemporalHealthProbe",
     # Helpers
     "WorkflowHandleHelper",
     "SignalSender",

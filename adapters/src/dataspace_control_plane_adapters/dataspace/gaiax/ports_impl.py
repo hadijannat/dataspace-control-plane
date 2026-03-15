@@ -6,6 +6,11 @@ from __future__ import annotations
 
 import logging
 
+from dataspace_control_plane_core.canonical_models.identity import DidUri
+from dataspace_control_plane_core.domains.machine_trust.model.value_objects import (
+    TrustAnchor,
+)
+
 from .config import GaiaXSettings
 from .trust_anchor_client import GaiaXTrustAnchorClient
 
@@ -24,7 +29,7 @@ class GaiaXTrustAnchorAdapterPort:
         self._cfg = cfg
         self._client = GaiaXTrustAnchorClient(cfg)
 
-    async def list_active(self, trust_scope: str) -> list[dict]:
+    async def list_active(self, trust_scope: str) -> list[TrustAnchor]:
         """Return active trust anchors for the given trust scope.
 
         trust_scope maps to federation_id in Gaia-X:
@@ -33,14 +38,32 @@ class GaiaXTrustAnchorAdapterPort:
 
         Args:
             trust_scope: Trust scope identifier from core/machine_trust/.
-
-        Returns:
-            List of trust anchor dicts: {did, name, public_key_pem, active}.
         """
+
         federation_id = (
             self._cfg.federation_id
             if trust_scope in ("gaia-x", "gaiax", "")
             else trust_scope
         )
         anchors = await self._client.list_trust_anchors(federation_id)
-        return [a for a in anchors if a.get("active", True)]
+        canonical_anchors: list[TrustAnchor] = []
+        for anchor in anchors:
+            if not anchor.get("active", True):
+                continue
+            did = str(anchor.get("did") or "").strip()
+            if not did:
+                logger.debug(
+                    "Skipping Gaia-X trust anchor without DID for federation=%s: %s",
+                    federation_id,
+                    anchor,
+                )
+                continue
+            canonical_anchors.append(
+                TrustAnchor(
+                    name=str(anchor.get("name") or did),
+                    did=DidUri(uri=did),
+                    trust_scope=trust_scope or "gaia-x",
+                    is_active=True,
+                )
+            )
+        return canonical_anchors

@@ -18,11 +18,10 @@ from __future__ import annotations
 
 from .config import TelemetrySettings
 from .errors import TelemetryError, TelemetryExportError, TelemetryInitError
+from .health import TelemetryHealthProbe
 from .logging import OtelLogAdapter
 from .metrics import OtelMetricAdapter
 from .ports_impl import make_telemetry_ports
-from .propagation import configure_propagators, extract_trace_context, inject_trace_context
-from .resource import build_resource
 from .tracing import OtelTracingAdapter
 
 __all__ = [
@@ -32,16 +31,11 @@ __all__ = [
     "TelemetryError",
     "TelemetryExportError",
     "TelemetryInitError",
+    "TelemetryHealthProbe",
     # Concrete adapters
     "OtelTracingAdapter",
     "OtelMetricAdapter",
     "OtelLogAdapter",
-    # Resource builder
-    "build_resource",
-    # Propagation helpers
-    "extract_trace_context",
-    "inject_trace_context",
-    "configure_propagators",
     # Factory
     "make_telemetry_ports",
 ]

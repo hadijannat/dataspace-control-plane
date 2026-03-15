@@ -23,4 +23,8 @@ async def run_publish_compensation(state: PublishAssetWorkflowState, tenant_id: 
                 ),
                 **PROVISIONING_OPTIONS,
             )
-            state.compensation.mark_compensated(marker.action, marker.resource_id)
+            state.compensation.mark_compensated(
+                marker.action,
+                marker.resource_id,
+                completed_at=workflow.now(),
+            )

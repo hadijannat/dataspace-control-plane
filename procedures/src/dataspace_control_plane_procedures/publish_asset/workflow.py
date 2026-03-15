@@ -14,6 +14,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     PROCEDURE_TYPE,
     STATUS,
     ASSET_ID,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures.publish_asset.input import (
     PublishAssetStartInput,
@@ -60,13 +61,13 @@ class PublishAssetWorkflow:
     async def run(self, inp: PublishAssetStartInput) -> PublishAssetResult:
         self._inp = inp
 
-        workflow.upsert_search_attributes({
-            TENANT_ID: [inp.tenant_id],
-            LEGAL_ENTITY_ID: [inp.legal_entity_id],
-            PROCEDURE_TYPE: [MANIFEST.workflow_type],
-            ASSET_ID: [inp.global_asset_id],
-            STATUS: ["running"],
-        })
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: inp.tenant_id,
+            LEGAL_ENTITY_ID: inp.legal_entity_id,
+            PROCEDURE_TYPE: MANIFEST.workflow_type,
+            ASSET_ID: inp.global_asset_id,
+            STATUS: "running",
+        }))
 
         try:
             await self._fetch_snapshot()
@@ -76,11 +77,11 @@ class PublishAssetWorkflow:
             await self._verify_visibility()
             await self._record_evidence()
         except Exception:
-            workflow.upsert_search_attributes({STATUS: ["failed"]})
+            workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "failed"}))
             await run_publish_compensation(self._state, inp.tenant_id)
             raise
 
-        workflow.upsert_search_attributes({STATUS: ["completed"]})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
 
         await workflow.wait_condition(workflow.all_handlers_finished)
 
@@ -143,11 +144,13 @@ class PublishAssetWorkflow:
             self._state.manual_review.request(
                 reason="lossy_policy",
                 review_id=result.policy_id,
+                requested_at=workflow.now(),
             )
             await workflow.wait_condition(lambda: self._force_republish_approved)
             self._state.manual_review.record_decision(
                 decision="approved",
                 reviewer_id="operator_via_force_republish",
+                decided_at=workflow.now(),
             )
 
     async def _publish(self) -> None:
@@ -212,6 +215,7 @@ class PublishAssetWorkflow:
             decision="approved",
             reviewer_id=data.reviewer_id,
             notes=data.reason,
+            decided_at=workflow.now(),
         )
         return ForceRepublishResult(accepted=True)
 

@@ -14,6 +14,12 @@ ALL_ACTIVITIES = [
     upsert_dpp_twin_data, bind_identifier_link, record_dpp_evidence, deregister_dpp,
 ]
 
+WorkflowClass = DppProvisionWorkflow
+StartInput = DppStartInput
+Result = DppResult
+StatusQuery = DppStatusQuery
+manifest = MANIFEST
+
 
 def register() -> None:
     from dataspace_control_plane_procedures.registry import _register
@@ -27,5 +33,6 @@ __all__ = [
     "DppProvisionWorkflow", "MANIFEST", "WORKFLOW_TYPE", "TASK_QUEUE",
     "DppStartInput", "DppResult", "DppStatusQuery",
     "ApproveMandatoryFieldsReview", "ApproveResult",
+    "WorkflowClass", "StartInput", "Result", "StatusQuery", "manifest",
     "ALL_WORKFLOWS", "ALL_ACTIVITIES", "register",
 ]

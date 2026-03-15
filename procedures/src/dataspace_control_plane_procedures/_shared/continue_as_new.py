@@ -1,7 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from typing import TypeVar, cast
+
+from temporalio.converter import value_to_type
 
 HISTORY_THRESHOLD = 9_000   # Warn at 10,240; terminate at 51,200
+
+StartInputT = TypeVar("StartInputT")
+StateSnapshotT = TypeVar("StateSnapshotT")
 
 
 def should_continue_as_new(
@@ -9,6 +15,53 @@ def should_continue_as_new(
     threshold: int = HISTORY_THRESHOLD,
 ) -> bool:
     return event_count >= threshold
+
+
+@dataclass(frozen=True)
+class CarryEnvelope:
+    """Common Continue-As-New wrapper.
+
+    The start input stays stable across runs while the state snapshot carries the
+    minimal durable workflow state needed to resume safely.
+    """
+
+    start_input: object
+    state: object
+
+
+def unwrap_start_input(
+    inp: StartInputT | CarryEnvelope,
+) -> tuple[StartInputT, object | None]:
+    if isinstance(inp, CarryEnvelope):
+        return cast(StartInputT, inp.start_input), inp.state
+    return inp, None
+
+
+def coerce_workflow_input(value: object, target_type: type[StartInputT]) -> StartInputT:
+    if isinstance(value, target_type):
+        return value
+    return value_to_type(target_type, value, [])
+
+
+def decode_start_input(
+    inp: object,
+    *,
+    start_input_type: type[StartInputT],
+    state_type: type[StateSnapshotT],
+) -> tuple[StartInputT, StateSnapshotT | None]:
+    if isinstance(inp, CarryEnvelope):
+        return (
+            coerce_workflow_input(inp.start_input, start_input_type),
+            coerce_workflow_input(inp.state, state_type),
+        )
+
+    if isinstance(inp, dict) and "start_input" in inp and "state" in inp:
+        return (
+            coerce_workflow_input(inp["start_input"], start_input_type),
+            coerce_workflow_input(inp["state"], state_type),
+        )
+
+    return coerce_workflow_input(inp, start_input_type), None
 
 
 @dataclass

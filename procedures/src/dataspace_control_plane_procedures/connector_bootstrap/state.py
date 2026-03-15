@@ -13,6 +13,7 @@ class ConnectorWorkflowState:
     connector_binding_id: str = ""
     dataspace_connector_id: str = ""
     discovery_endpoint: str = ""
+    wallet_ref: str = ""
     plan_ref: str = ""
     infra_apply_ref: str = ""
     wallet_linked: bool = False

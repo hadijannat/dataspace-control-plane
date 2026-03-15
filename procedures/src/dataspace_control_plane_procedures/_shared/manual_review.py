@@ -1,6 +1,7 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+
+from dataclasses import dataclass, replace
+from datetime import datetime
 
 
 @dataclass
@@ -15,20 +16,42 @@ class ManualReviewState:
     decision: str | None = None   # "approved" | "rejected"
     notes: str = ""
 
-    def request(self, reason: str, review_id: str = "") -> None:
+    def request(
+        self,
+        reason: str,
+        review_id: str = "",
+        *,
+        requested_at: datetime | None = None,
+    ) -> None:
         self.is_pending = True
         self.blocking_reason = reason
         self.review_id = review_id
-        self.requested_at = datetime.now(timezone.utc)
+        self.requested_at = requested_at
         self.decision = None
         self.decided_at = None
 
-    def record_decision(self, decision: str, reviewer_id: str, notes: str = "") -> None:
+    def record_decision(
+        self,
+        decision: str,
+        reviewer_id: str,
+        notes: str = "",
+        *,
+        decided_at: datetime | None = None,
+    ) -> None:
         self.is_pending = False
         self.decision = decision
         self.reviewer_id = reviewer_id
         self.notes = notes
-        self.decided_at = datetime.now(timezone.utc)
+        self.decided_at = decided_at
+
+    def snapshot(self) -> "ManualReviewState":
+        return replace(self)
+
+    @classmethod
+    def from_snapshot(cls, snapshot: "ManualReviewState | None") -> "ManualReviewState":
+        if snapshot is None:
+            return cls()
+        return replace(snapshot)
 
     @property
     def is_approved(self) -> bool:

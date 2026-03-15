@@ -9,6 +9,7 @@ from .activities import (
     request_approval,
     bootstrap_wallet,
     bootstrap_connector,
+    bind_hierarchy,
     run_compliance_baseline,
     emit_onboarding_evidence,
     compensate_registration,
@@ -21,10 +22,17 @@ ALL_ACTIVITIES = [
     request_approval,
     bootstrap_wallet,
     bootstrap_connector,
+    bind_hierarchy,
     run_compliance_baseline,
     emit_onboarding_evidence,
     compensate_registration,
 ]
+
+WorkflowClass = CompanyOnboardingWorkflow
+StartInput = OnboardingStartInput
+Result = OnboardingResult
+StatusQuery = OnboardingStatusQuery
+manifest = MANIFEST
 
 
 def register() -> None:
@@ -48,6 +56,11 @@ __all__ = [
     "ExternalApprovalEvent",
     "ApproveCaseInput",
     "RejectCaseInput",
+    "WorkflowClass",
+    "StartInput",
+    "Result",
+    "StatusQuery",
+    "manifest",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

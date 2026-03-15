@@ -11,6 +11,8 @@ Replay safety rules:
 """
 from __future__ import annotations
 
+from typing import Any
+
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError, CancelledError
 
@@ -21,13 +23,18 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     STATUS,
     AGREEMENT_ID,
     ASSET_ID,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     PROVISIONING_OPTIONS,
     EXTERNAL_CALL_OPTIONS,
     RPC_OPTIONS,
 )
-from dataspace_control_plane_procedures._shared.continue_as_new import should_continue_as_new
+from dataspace_control_plane_procedures._shared.continue_as_new import (
+    CarryEnvelope,
+    decode_start_input,
+    should_continue_as_new,
+)
 
 from .input import NegotiationStartInput, NegotiationResult, NegotiationCarryState
 from .state import NegotiationWorkflowState
@@ -83,42 +90,65 @@ class NegotiateContractWorkflow:
     # ------------------------------------------------------------------
 
     @workflow.run
-    async def run(self, inp: NegotiationStartInput) -> NegotiationResult:
-        self._current_offer_id = inp.offer_id
+    async def run(
+        self,
+        inp: Any,
+    ) -> NegotiationResult:
+        start_input, carry = decode_start_input(
+            inp,
+            start_input_type=NegotiationStartInput,
+            state_type=NegotiationCarryState,
+        )
+        if carry is not None:
+            self._restore_from_carry(carry)
+        else:
+            self._current_offer_id = start_input.offer_id
 
-        workflow.upsert_search_attributes({
-            TENANT_ID: inp.tenant_id,
-            LEGAL_ENTITY_ID: inp.legal_entity_id,
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: start_input.tenant_id,
+            LEGAL_ENTITY_ID: start_input.legal_entity_id,
             PROCEDURE_TYPE: "negotiate-contract",
             STATUS: "running",
-            ASSET_ID: inp.asset_id,
-            AGREEMENT_ID: "",
-        })
+            ASSET_ID: start_input.asset_id,
+            AGREEMENT_ID: None,
+        }))
 
         try:
-            # Check continue-as-new at workflow entry (carry state re-entry).
-            await self._check_continue_as_new(inp)
+            if self._state.negotiation_state == "preflight":
+                await self._check_credentials(start_input)
 
-            await self._check_credentials(inp)
-            await self._start_negotiation(inp)
-            await self._await_counterparty_response(inp)
-            await self._conclude_agreement(inp)
-            await self._create_entitlement(inp)
-            await self._issue_transfer_auth(inp)
-            await self._record_evidence(inp, outcome="completed")
+            if self._state.negotiation_state == "credentials_checked":
+                await self._start_negotiation(start_input)
+                await self._checkpoint(start_input)
+
+            if self._state.negotiation_state in ("negotiation_started", "awaiting_counterparty"):
+                await self._await_counterparty_response(start_input)
+                await self._checkpoint(start_input)
+
+            if self._state.negotiation_state == "counterparty_accepted":
+                await self._conclude_agreement(start_input)
+
+            if self._state.negotiation_state == "agreement_concluded":
+                await self._create_entitlement(start_input)
+
+            if self._state.negotiation_state == "entitlement_created":
+                await self._issue_transfer_auth(start_input)
+
+            if self._state.negotiation_state == "transfer_authorized":
+                await self._record_evidence(start_input, outcome="completed")
 
         except CancelledError:
             await run_negotiation_compensation(self._state)
             raise
         except Exception:
             await run_negotiation_compensation(self._state)
-            await self._record_evidence(inp, outcome="failed")
+            await self._record_evidence(start_input, outcome="failed")
             raise
 
-        workflow.upsert_search_attributes({
+        workflow.upsert_search_attributes(build_search_attribute_updates({
             STATUS: "completed",
             AGREEMENT_ID: self._state.agreement_id,
-        })
+        }))
         await workflow.wait_condition(workflow.all_handlers_finished)
 
         return NegotiationResult(
@@ -174,7 +204,11 @@ class NegotiateContractWorkflow:
     @workflow.update
     async def accept_counteroffer(self, cmd: AcceptCounteroffer) -> CounterOfferResult:
         """Human reviewer accepts the pending counteroffer."""
-        self._state.manual_review.record_decision("approved", cmd.reviewer_id)
+        self._state.manual_review.record_decision(
+            "approved",
+            cmd.reviewer_id,
+            decided_at=workflow.now(),
+        )
         self._current_offer_id = cmd.new_offer_id
         return CounterOfferResult(accepted=True)
 
@@ -186,7 +220,12 @@ class NegotiateContractWorkflow:
     @workflow.update
     async def reject_negotiation(self, cmd: RejectNegotiation) -> RejectionResult:
         """Human reviewer rejects the negotiation."""
-        self._state.manual_review.record_decision("rejected", cmd.reviewer_id, cmd.reason)
+        self._state.manual_review.record_decision(
+            "rejected",
+            cmd.reviewer_id,
+            cmd.reason,
+            decided_at=workflow.now(),
+        )
         self._state.negotiation_state = "failed"
         return RejectionResult(accepted=True)
 
@@ -219,18 +258,42 @@ class NegotiateContractWorkflow:
     # Internal phase helpers
     # ------------------------------------------------------------------
 
-    async def _check_continue_as_new(self, inp: NegotiationStartInput) -> None:
+    def _restore_from_carry(self, carry: NegotiationCarryState) -> None:
+        self._state.negotiation_state = carry.negotiation_state
+        self._state.negotiation_ref = carry.negotiation_ref
+        self._state.agreement_id = carry.agreement_id
+        self._state.entitlement_id = carry.entitlement_id
+        self._state.transfer_auth_token = carry.transfer_auth_token
+        self._state.counterparty_response = None
+        self._state.pending_counteroffer_offer_id = carry.pending_counteroffer_offer_id
+        self._state.pending_counteroffer_policy_id = carry.pending_counteroffer_policy_id
+        self._state.manual_review = self._state.manual_review.from_snapshot(carry.manual_review)
+        self._state.compensation = self._state.compensation.from_snapshot(carry.compensation_markers)
+        self._state.dedupe = self._state.dedupe.from_snapshot(carry.dedupe_ids)
+        self._state.is_expired = carry.is_expired
+        self._state.iteration = carry.iteration
+        self._current_offer_id = carry.current_offer_id
+
+    async def _checkpoint(self, inp: NegotiationStartInput) -> None:
         info = workflow.info()
         if should_continue_as_new(info.get_current_history_length()):
+            await workflow.wait_condition(workflow.all_handlers_finished)
             carry = NegotiationCarryState(
                 negotiation_state=self._state.negotiation_state,
                 negotiation_ref=self._state.negotiation_ref,
                 agreement_id=self._state.agreement_id,
                 entitlement_id=self._state.entitlement_id,
+                transfer_auth_token=self._state.transfer_auth_token,
+                current_offer_id=self._current_offer_id,
                 dedupe_ids=self._state.dedupe.snapshot(),
+                manual_review=self._state.manual_review.snapshot(),
+                compensation_markers=self._state.compensation.snapshot(),
+                pending_counteroffer_offer_id=self._state.pending_counteroffer_offer_id,
+                pending_counteroffer_policy_id=self._state.pending_counteroffer_policy_id,
+                is_expired=self._state.is_expired,
                 iteration=self._state.iteration + 1,
             )
-            workflow.continue_as_new(carry)
+            workflow.continue_as_new(CarryEnvelope(start_input=inp, state=carry))
 
     async def _check_credentials(self, inp: NegotiationStartInput) -> None:
         self._state.negotiation_state = "preflight"
@@ -291,6 +354,7 @@ class NegotiateContractWorkflow:
                 self._state.manual_review.request(
                     "counterparty sent counteroffer — awaiting reviewer decision",
                     review_id=self._state.pending_counteroffer_offer_id,
+                    requested_at=workflow.now(),
                 )
 
                 # Wait for human to accept or reject via Update.
@@ -318,9 +382,12 @@ class NegotiateContractWorkflow:
                 # Reset manual_review decision for next round.
                 self._state.manual_review.decision = None
                 self._state.manual_review.is_pending = False
+                self._state.negotiation_state = "negotiation_started"
+                await self._checkpoint(inp)
                 continue
 
             # Response is "accepted" — exit loop.
+            self._state.negotiation_state = "counterparty_accepted"
             break
 
     async def _conclude_agreement(self, inp: NegotiationStartInput) -> None:
@@ -338,7 +405,7 @@ class NegotiateContractWorkflow:
         )
         self._state.agreement_id = result.agreement_id
         self._state.negotiation_state = "agreement_concluded"
-        workflow.upsert_search_attributes({AGREEMENT_ID: self._state.agreement_id})
+        workflow.upsert_search_attributes(build_search_attribute_updates({AGREEMENT_ID: self._state.agreement_id}))
 
     async def _create_entitlement(self, inp: NegotiationStartInput) -> None:
         result = await workflow.execute_activity(
@@ -353,6 +420,7 @@ class NegotiateContractWorkflow:
             **RPC_OPTIONS,
         )
         self._state.entitlement_id = result.entitlement_id
+        self._state.negotiation_state = "entitlement_created"
 
     async def _issue_transfer_auth(self, inp: NegotiationStartInput) -> None:
         result = await workflow.execute_activity(

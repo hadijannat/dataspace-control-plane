@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from dataspace_control_plane_procedures._shared.compensation import CompensationMarker
+from dataspace_control_plane_procedures._shared.manual_review import ManualReviewState
+
 
 @dataclass(frozen=True)
 class ConnectorStartInput:
@@ -43,8 +46,11 @@ class ConnectorCarryState:
     discovery_endpoint: str
     plan_ref: str
     infra_apply_ref: str
+    wallet_ref: str
     wallet_linked: bool
     dataspace_registered: bool
     last_health_check: str
     dedupe_ids: set[str] = field(default_factory=set)
+    manual_review: ManualReviewState = field(default_factory=ManualReviewState)
+    compensation_markers: list[CompensationMarker] = field(default_factory=list)
     iteration: int = 0

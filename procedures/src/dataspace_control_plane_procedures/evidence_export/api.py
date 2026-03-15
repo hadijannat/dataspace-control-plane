@@ -21,6 +21,12 @@ ALL_ACTIVITIES = [
     dry_run_comparison,
 ]
 
+WorkflowClass = EvidenceExportWorkflow
+StartInput = EvidenceExportStartInput
+Result = EvidenceExportResult
+StatusQuery = EvidenceExportStatusQuery
+manifest = MANIFEST
+
 
 def register() -> None:
     from dataspace_control_plane_procedures.registry import _register
@@ -38,6 +44,11 @@ __all__ = [
     "EvidenceExportStartInput",
     "EvidenceExportResult",
     "EvidenceExportStatusQuery",
+    "WorkflowClass",
+    "StartInput",
+    "Result",
+    "StatusQuery",
+    "manifest",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

@@ -36,5 +36,6 @@ class RotationCarryState:
     rotation_state: str
     last_rotation_at: str
     rotated_count_total: int
+    is_paused: bool = False
     dedupe_ids: set[str] = field(default_factory=set)
     iteration: int = 0

@@ -31,6 +31,12 @@ ALL_ACTIVITIES = [
     retire_new_credentials_on_failure,
 ]
 
+WorkflowClass = RotateCredentialsWorkflow
+StartInput = RotationStartInput
+Result = RotationResult
+StatusQuery = RotationStatusQuery
+manifest = MANIFEST
+
 
 def register() -> None:
     """Called by registry.populate_from_procedures() at worker startup.
@@ -59,6 +65,11 @@ __all__ = [
     "PauseResult",
     "ResumeRotation",
     "ResumeResult",
+    "WorkflowClass",
+    "StartInput",
+    "Result",
+    "StatusQuery",
+    "manifest",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

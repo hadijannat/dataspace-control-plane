@@ -22,6 +22,12 @@ ALL_ACTIVITIES = [
     record_revocation_evidence,
 ]
 
+WorkflowClass = RevokeCredentialsWorkflow
+StartInput = RevocationStartInput
+Result = RevocationResult
+StatusQuery = RevocationStatusQuery
+manifest = MANIFEST
+
 
 def register() -> None:
     from dataspace_control_plane_procedures.registry import _register
@@ -40,6 +46,11 @@ __all__ = [
     "RevocationResult",
     "RevocationStatusQuery",
     "ExternalRevocationConfirmed",
+    "WorkflowClass",
+    "StartInput",
+    "Result",
+    "StatusQuery",
+    "manifest",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

@@ -16,6 +16,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     LEGAL_ENTITY_ID,
     PROCEDURE_TYPE,
     STATUS,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures.wallet_bootstrap.input import (
     WalletStartInput,
@@ -73,12 +74,12 @@ class WalletBootstrapWorkflow:
     async def run(self, inp: WalletStartInput) -> WalletResult:
         self._inp = inp
 
-        workflow.upsert_search_attributes({
-            TENANT_ID: [inp.tenant_id],
-            LEGAL_ENTITY_ID: [inp.legal_entity_id],
-            PROCEDURE_TYPE: [MANIFEST.workflow_type],
-            STATUS: ["running"],
-        })
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: inp.tenant_id,
+            LEGAL_ENTITY_ID: inp.legal_entity_id,
+            PROCEDURE_TYPE: MANIFEST.workflow_type,
+            STATUS: "running",
+        }))
 
         try:
             await self._create_wallet()
@@ -89,11 +90,11 @@ class WalletBootstrapWorkflow:
             await self._verify_presentation()
             await self._bind_to_connector()
         except Exception as exc:
-            workflow.upsert_search_attributes({STATUS: ["failed"]})
+            workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "failed"}))
             await run_wallet_compensation(self._state, inp.tenant_id)
             raise
 
-        workflow.upsert_search_attributes({STATUS: ["completed"]})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
 
         await workflow.wait_condition(workflow.all_handlers_finished)
 
@@ -191,6 +192,7 @@ class WalletBootstrapWorkflow:
             self._state.manual_review.request(
                 reason="presentation_verification_failed",
                 review_id=result.verification_report_ref,
+                requested_at=workflow.now(),
             )
             self._paused = True
             await workflow.wait_condition(lambda: not self._paused)
@@ -236,6 +238,7 @@ class WalletBootstrapWorkflow:
         self._state.manual_review.request(
             reason=f"reissue_requested:{data.reason}",
             review_id=data.event_id,
+            requested_at=workflow.now(),
         )
 
     # ── Updates ───────────────────────────────────────────────────────────────
@@ -246,6 +249,7 @@ class WalletBootstrapWorkflow:
         self._state.manual_review.request(
             reason="operator_pause",
             review_id=data.reviewer_id,
+            requested_at=workflow.now(),
         )
         return PauseResult(accepted=True)
 
@@ -265,6 +269,7 @@ class WalletBootstrapWorkflow:
             decision="approved",
             reviewer_id=data.reviewer_id,
             notes=data.notes,
+            decided_at=workflow.now(),
         )
         return ResumeResult(accepted=True)
 

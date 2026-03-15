@@ -5,8 +5,10 @@ its Temporal Worker instances. register() wires entries into the shared registry
 """
 from __future__ import annotations
 
-from .manifest import MANIFEST, TASK_QUEUE
+from .manifest import MANIFEST, TASK_QUEUE, WORKFLOW_TYPE
+from .input import NegotiationCarryState, NegotiationResult, NegotiationStartInput, NegotiationStatusQuery
 from .workflow import NegotiateContractWorkflow
+from .messages import AcceptCounteroffer, CounterOfferResult, RejectNegotiation, RejectionResult
 from .activities import (
     check_credentials_and_offer,
     start_dsp_negotiation,
@@ -31,6 +33,12 @@ ALL_ACTIVITIES = [
     cancel_negotiation,
 ]
 
+WorkflowClass = NegotiateContractWorkflow
+StartInput = NegotiationStartInput
+Result = NegotiationResult
+StatusQuery = NegotiationStatusQuery
+manifest = MANIFEST
+
 
 def register() -> None:
     """Wire this procedure into the shared registry."""
@@ -42,4 +50,25 @@ def register() -> None:
         _register(TASK_QUEUE, activity=act)
 
 
-__all__ = ["NegotiateContractWorkflow", "MANIFEST", "ALL_WORKFLOWS", "ALL_ACTIVITIES", "register"]
+__all__ = [
+    "NegotiateContractWorkflow",
+    "MANIFEST",
+    "WORKFLOW_TYPE",
+    "TASK_QUEUE",
+    "NegotiationStartInput",
+    "NegotiationResult",
+    "NegotiationStatusQuery",
+    "NegotiationCarryState",
+    "AcceptCounteroffer",
+    "CounterOfferResult",
+    "RejectNegotiation",
+    "RejectionResult",
+    "WorkflowClass",
+    "StartInput",
+    "Result",
+    "StatusQuery",
+    "manifest",
+    "ALL_WORKFLOWS",
+    "ALL_ACTIVITIES",
+    "register",
+]

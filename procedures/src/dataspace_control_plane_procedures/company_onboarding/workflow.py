@@ -12,6 +12,7 @@ Replay safety rules:
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError, CancelledError
@@ -21,6 +22,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     LEGAL_ENTITY_ID,
     PROCEDURE_TYPE,
     STATUS,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     PROVISIONING_OPTIONS,
@@ -28,6 +30,8 @@ from dataspace_control_plane_procedures._shared.activity_options import (
     RPC_OPTIONS,
 )
 from dataspace_control_plane_procedures._shared.continue_as_new import (
+    CarryEnvelope,
+    decode_start_input,
     should_continue_as_new,
 )
 from dataspace_control_plane_procedures._shared.versioning import patched
@@ -81,35 +85,67 @@ class CompanyOnboardingWorkflow:
     # ------------------------------------------------------------------
 
     @workflow.run
-    async def run(self, inp: OnboardingStartInput) -> OnboardingResult:
+    async def run(
+        self,
+        inp: Any,
+    ) -> OnboardingResult:
+        start_input, carry = decode_start_input(
+            inp,
+            start_input_type=OnboardingStartInput,
+            state_type=OnboardingCarryState,
+        )
+        if carry is not None:
+            self._restore_from_carry(carry)
+
         # Publish search attributes so the workflow is discoverable.
-        workflow.upsert_search_attributes({
-            TENANT_ID: inp.tenant_id,
-            LEGAL_ENTITY_ID: inp.legal_entity_id,
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: start_input.tenant_id,
+            LEGAL_ENTITY_ID: start_input.legal_entity_id,
             PROCEDURE_TYPE: "company-onboarding",
             STATUS: "running",
-        })
+        }))
 
         try:
-            await self._preflight(inp)
-            await self._register(inp)
-            await self._await_approval()
+            if self._state.phase == "pending":
+                await self._preflight(start_input)
+                await self._checkpoint(start_input)
+
+            if self._state.phase == "preflight_completed":
+                await self._register(start_input)
+                await self._checkpoint(start_input)
+
+            if self._state.phase == "awaiting_approval":
+                await self._await_approval()
+                await self._checkpoint(start_input)
 
             if self._state.is_cancelled:
                 raise ApplicationError("Onboarding cancelled before trust bootstrap")
 
-            await self._trust_bootstrap(inp)
-            await self._technical_integration(inp)
+            if self._state.phase == "approval_completed":
+                await self._trust_bootstrap(start_input)
+                await self._checkpoint(start_input)
+
+            if self._state.phase == "trust_bootstrap_completed":
+                await self._technical_integration(start_input)
+                await self._checkpoint(start_input)
 
             if self._state.is_cancelled:
                 raise ApplicationError("Onboarding cancelled after trust bootstrap")
 
             # v2 patch: run hierarchy binding when enabled.
             if patched("company_onboarding.v2_hierarchy_phase"):
-                await self._bind_hierarchy(inp)
+                if self._state.phase == "technical_integration_completed":
+                    await self._bind_hierarchy(start_input)
+                    await self._checkpoint(start_input)
+            elif self._state.phase == "technical_integration_completed":
+                self._state.phase = "hierarchy_bound"
 
-            await self._compliance_baseline(inp)
-            await self._emit_evidence(inp)
+            if self._state.phase == "hierarchy_bound":
+                await self._compliance_baseline(start_input)
+                await self._checkpoint(start_input)
+
+            if self._state.phase == "compliance_baseline_completed":
+                await self._emit_evidence(start_input)
 
         except CancelledError:
             await run_compensation(self._state)
@@ -118,7 +154,7 @@ class CompanyOnboardingWorkflow:
             await run_compensation(self._state)
             raise
 
-        workflow.upsert_search_attributes({STATUS: "completed"})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
         await workflow.wait_condition(workflow.all_handlers_finished)
 
         return OnboardingResult(
@@ -143,9 +179,19 @@ class CompanyOnboardingWorkflow:
         self._state.dedupe.mark_handled(evt.event_id)
 
         if evt.approved:
-            self._state.manual_review.record_decision("approved", "external", evt.notes)
+            self._state.manual_review.record_decision(
+                "approved",
+                "external",
+                evt.notes,
+                decided_at=workflow.now(),
+            )
         else:
-            self._state.manual_review.record_decision("rejected", "external", evt.notes)
+            self._state.manual_review.record_decision(
+                "rejected",
+                "external",
+                evt.notes,
+                decided_at=workflow.now(),
+            )
 
         self._approval_received = True
 
@@ -160,6 +206,7 @@ class CompanyOnboardingWorkflow:
         self._state.manual_review.request(
             "waiting for additional info review",
             review_id=evt.submission_id,
+            requested_at=workflow.now(),
         )
 
     # ------------------------------------------------------------------
@@ -169,7 +216,12 @@ class CompanyOnboardingWorkflow:
     @workflow.update
     async def approve_case(self, cmd: ApproveCaseInput) -> ApproveCaseResult:
         """Internal reviewer approves the pending case."""
-        self._state.manual_review.record_decision("approved", cmd.reviewer_id, cmd.notes)
+        self._state.manual_review.record_decision(
+            "approved",
+            cmd.reviewer_id,
+            cmd.notes,
+            decided_at=workflow.now(),
+        )
         self._approval_received = True
         return ApproveCaseResult(
             accepted=True,
@@ -184,7 +236,12 @@ class CompanyOnboardingWorkflow:
     @workflow.update
     async def reject_case(self, cmd: RejectCaseInput) -> RejectCaseResult:
         """Internal reviewer rejects the pending case."""
-        self._state.manual_review.record_decision("rejected", cmd.reviewer_id, cmd.reason)
+        self._state.manual_review.record_decision(
+            "rejected",
+            cmd.reviewer_id,
+            cmd.reason,
+            decided_at=workflow.now(),
+        )
         self._state.is_cancelled = True
         self._approval_received = True
         return RejectCaseResult(accepted=True)
@@ -219,10 +276,26 @@ class CompanyOnboardingWorkflow:
     # Internal phase helpers
     # ------------------------------------------------------------------
 
-    async def _check_continue_as_new(self, inp: OnboardingStartInput) -> None:
+    def _restore_from_carry(self, carry: OnboardingCarryState) -> None:
+        self._state.phase = carry.phase
+        self._state.registration_ref = carry.registration_ref
+        self._state.approval_ref = carry.approval_ref
+        self._state.bpnl = carry.bpnl
+        self._state.wallet_ref = carry.wallet_ref
+        self._state.connector_ref = carry.connector_ref
+        self._state.compliance_ref = carry.compliance_ref
+        self._state.manual_review = self._state.manual_review.from_snapshot(carry.manual_review)
+        self._state.compensation = self._state.compensation.from_snapshot(carry.compensation_markers)
+        self._state.dedupe = self._state.dedupe.from_snapshot(carry.dedupe_ids)
+        self._state.iteration = carry.iteration
+        self._state.is_cancelled = carry.is_cancelled
+        self._approval_received = self._state.manual_review.decision is not None
+
+    async def _checkpoint(self, inp: OnboardingStartInput) -> None:
         """Continue-As-New if history is approaching the threshold."""
         info = workflow.info()
         if should_continue_as_new(info.get_current_history_length()):
+            await workflow.wait_condition(workflow.all_handlers_finished)
             carry = OnboardingCarryState(
                 phase=self._state.phase,
                 registration_ref=self._state.registration_ref,
@@ -232,9 +305,12 @@ class CompanyOnboardingWorkflow:
                 connector_ref=self._state.connector_ref,
                 compliance_ref=self._state.compliance_ref,
                 dedupe_ids=self._state.dedupe.snapshot(),
+                manual_review=self._state.manual_review.snapshot(),
+                compensation_markers=self._state.compensation.snapshot(),
+                is_cancelled=self._state.is_cancelled,
                 iteration=self._state.iteration + 1,
             )
-            workflow.continue_as_new(carry)
+            workflow.continue_as_new(CarryEnvelope(start_input=inp, state=carry))
 
     async def _preflight(self, inp: OnboardingStartInput) -> None:
         self._state.phase = "preflight"
@@ -249,6 +325,7 @@ class CompanyOnboardingWorkflow:
         )
         if not result.ok:
             raise PreflightValidationError(result.reason)
+        self._state.phase = "preflight_completed"
 
     async def _register(self, inp: OnboardingStartInput) -> None:
         self._state.phase = "registration"
@@ -282,13 +359,16 @@ class CompanyOnboardingWorkflow:
         self._state.manual_review.request(
             "awaiting operator approval",
             approval_result.approval_ref,
+            requested_at=workflow.now(),
         )
 
     async def _await_approval(self) -> None:
-        await workflow.wait_condition(lambda: self._approval_received)
+        if not self._approval_received and self._state.manual_review.decision is None:
+            await workflow.wait_condition(lambda: self._approval_received)
 
         if self._state.manual_review.is_rejected or self._state.is_cancelled:
             raise RegistrationRejectedError("Onboarding rejected by reviewer")
+        self._state.phase = "approval_completed"
 
     async def _trust_bootstrap(self, inp: OnboardingStartInput) -> None:
         self._state.phase = "trust_bootstrap"
@@ -302,6 +382,7 @@ class CompanyOnboardingWorkflow:
             **PROVISIONING_OPTIONS,
         )
         self._state.wallet_ref = wallet_result.wallet_ref
+        self._state.phase = "trust_bootstrap_completed"
 
     async def _technical_integration(self, inp: OnboardingStartInput) -> None:
         self._state.phase = "technical_integration"
@@ -316,6 +397,7 @@ class CompanyOnboardingWorkflow:
             **PROVISIONING_OPTIONS,
         )
         self._state.connector_ref = connector_result.connector_binding_id
+        self._state.phase = "technical_integration_completed"
 
     async def _bind_hierarchy(self, inp: OnboardingStartInput) -> None:
         """v2 patch: bind entity into the parent/child BPNL topology."""
@@ -328,6 +410,7 @@ class CompanyOnboardingWorkflow:
             ),
             **RPC_OPTIONS,
         )
+        self._state.phase = "hierarchy_bound"
 
     async def _compliance_baseline(self, inp: OnboardingStartInput) -> None:
         self._state.phase = "compliance_baseline"
@@ -340,6 +423,7 @@ class CompanyOnboardingWorkflow:
             **EXTERNAL_CALL_OPTIONS,
         )
         self._state.compliance_ref = result.baseline_ref
+        self._state.phase = "compliance_baseline_completed"
 
     async def _emit_evidence(self, inp: OnboardingStartInput) -> None:
         await workflow.execute_activity(

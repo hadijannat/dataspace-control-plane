@@ -4,12 +4,17 @@ from dataspace_control_plane_procedures._shared.task_queues import TWINS_PUBLICA
 WORKFLOW_TYPE = "RegisterDigitalTwinWorkflow"
 TASK_QUEUE = TWINS_PUBLICATION_QUEUE
 WORKFLOW_ID_TEMPLATE = "register-twin:{tenant_id}:{aas_id}:{revision}"
+SEARCH_ATTRIBUTE_KEYS = ("tenant_id", "legal_entity_id", "procedure_type", "status", "asset_id")
+SUPPORTED_PACKS = ("catena-x", "espr-dpp", "battery-passport")
+VERSION_MARKERS: tuple[str, ...] = ()
 
 MANIFEST = ProcedureManifest(
     workflow_type=WORKFLOW_TYPE,
     task_queue=TASK_QUEUE,
     workflow_id_template=WORKFLOW_ID_TEMPLATE,
-    search_attribute_keys=("tenant_id", "legal_entity_id", "procedure_type", "status", "asset_id"),
+    search_attribute_keys=SEARCH_ATTRIBUTE_KEYS,
+    supported_packs=SUPPORTED_PACKS,
+    version_markers=VERSION_MARKERS,
     lifecycle="one_shot",
     conflict_policy="reject",
     supports_manual_review=True,

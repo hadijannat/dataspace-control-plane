@@ -14,6 +14,8 @@ Replay safety rules:
 """
 from __future__ import annotations
 
+from typing import Any
+
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError, CancelledError
 
@@ -22,6 +24,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     LEGAL_ENTITY_ID,
     PROCEDURE_TYPE,
     STATUS,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     PROVISIONING_OPTIONS,
@@ -30,6 +33,8 @@ from dataspace_control_plane_procedures._shared.activity_options import (
     LONG_POLL_OPTIONS,
 )
 from dataspace_control_plane_procedures._shared.continue_as_new import (
+    CarryEnvelope,
+    decode_start_input,
     should_continue_as_new,
 )
 
@@ -87,40 +92,42 @@ class ConnectorBootstrapWorkflow:
     # ------------------------------------------------------------------
 
     @workflow.run
-    async def run(self, inp: ConnectorStartInput) -> ConnectorResult:
-        # Accept a carry-state on Continue-As-New restarts.
-        if isinstance(inp, ConnectorCarryState):
-            self._restore_from_carry(inp)
-            # Rebuild a synthetic ConnectorStartInput so phase helpers work.
-            # (carry state does not store the original inp; callers must re-pass it.)
-            # In a real implementation the original StartInput would be carried too.
-            # Here we signal that callers should pass ConnectorStartInput always.
+    async def run(
+        self,
+        inp: Any,
+    ) -> ConnectorResult:
+        start_input, carry = decode_start_input(
+            inp,
+            start_input_type=ConnectorStartInput,
+            state_type=ConnectorCarryState,
+        )
+        if carry is not None:
+            self._restore_from_carry(carry)
 
-        workflow.upsert_search_attributes({
-            TENANT_ID: inp.tenant_id,
-            LEGAL_ENTITY_ID: inp.legal_entity_id,
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: start_input.tenant_id,
+            LEGAL_ENTITY_ID: start_input.legal_entity_id,
             PROCEDURE_TYPE: "connector-bootstrap",
             STATUS: "running",
-        })
+        }))
 
         try:
-            await self._check_continue_as_new(inp)
-            await self._plan(inp)
+            await self._plan(start_input)
+            await self._checkpoint(start_input)
 
-            await self._check_continue_as_new(inp)
-            await self._apply(inp)
+            await self._apply(start_input)
+            await self._checkpoint(start_input)
 
-            await self._check_continue_as_new(inp)
-            await self._await_healthy(inp)
+            await self._await_healthy(start_input)
+            await self._checkpoint(start_input)
 
-            await self._check_continue_as_new(inp)
-            await self._link_wallet(inp)
+            await self._link_wallet(start_input)
+            await self._checkpoint(start_input)
 
-            await self._check_continue_as_new(inp)
-            await self._register_dataspace(inp)
+            await self._register_dataspace(start_input)
+            await self._checkpoint(start_input)
 
-            await self._check_continue_as_new(inp)
-            await self._verify_discovery(inp)
+            await self._verify_discovery(start_input)
 
         except CancelledError:
             await run_connector_compensation(self._state)
@@ -129,7 +136,7 @@ class ConnectorBootstrapWorkflow:
             await run_connector_compensation(self._state)
             raise
 
-        workflow.upsert_search_attributes({STATUS: "completed"})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
         self._state.connector_state = "discovery_verified"
 
         await workflow.wait_condition(workflow.all_handlers_finished)
@@ -158,6 +165,7 @@ class ConnectorBootstrapWorkflow:
         self._state.manual_review.request(
             f"Connector degraded: {evt.reason}",
             review_id=evt.event_id,
+            requested_at=workflow.now(),
         )
 
     @workflow.signal
@@ -169,6 +177,7 @@ class ConnectorBootstrapWorkflow:
 
         self._state.wallet_linked = True
         self._wallet_ref = evt.wallet_ref
+        self._state.wallet_ref = evt.wallet_ref
 
     # ------------------------------------------------------------------
     # Updates
@@ -220,19 +229,23 @@ class ConnectorBootstrapWorkflow:
         self._state.connector_binding_id = carry.connector_binding_id
         self._state.dataspace_connector_id = carry.dataspace_connector_id
         self._state.discovery_endpoint = carry.discovery_endpoint
+        self._state.wallet_ref = carry.wallet_ref
         self._state.plan_ref = carry.plan_ref
         self._state.infra_apply_ref = carry.infra_apply_ref
         self._state.wallet_linked = carry.wallet_linked
         self._state.dataspace_registered = carry.dataspace_registered
         self._state.last_health_check = carry.last_health_check
+        self._state.manual_review = self._state.manual_review.from_snapshot(carry.manual_review)
+        self._state.compensation = self._state.compensation.from_snapshot(carry.compensation_markers)
         self._state.iteration = carry.iteration
-        from dataspace_control_plane_procedures._shared.continue_as_new import DedupeState
-        self._state.dedupe = DedupeState.from_snapshot(carry.dedupe_ids)
+        self._state.dedupe = self._state.dedupe.from_snapshot(carry.dedupe_ids)
+        self._wallet_ref = carry.wallet_ref
 
-    async def _check_continue_as_new(self, inp: ConnectorStartInput) -> None:
+    async def _checkpoint(self, inp: ConnectorStartInput) -> None:
         """Continue-As-New if history is approaching the threshold."""
         info = workflow.info()
         if should_continue_as_new(info.get_current_history_length()):
+            await workflow.wait_condition(workflow.all_handlers_finished)
             carry = ConnectorCarryState(
                 connector_state=self._state.connector_state,
                 connector_binding_id=self._state.connector_binding_id,
@@ -240,13 +253,16 @@ class ConnectorBootstrapWorkflow:
                 discovery_endpoint=self._state.discovery_endpoint,
                 plan_ref=self._state.plan_ref,
                 infra_apply_ref=self._state.infra_apply_ref,
+                wallet_ref=self._state.wallet_ref,
                 wallet_linked=self._state.wallet_linked,
                 dataspace_registered=self._state.dataspace_registered,
                 last_health_check=self._state.last_health_check,
                 dedupe_ids=self._state.dedupe.snapshot(),
+                manual_review=self._state.manual_review.snapshot(),
+                compensation_markers=self._state.compensation.snapshot(),
                 iteration=self._state.iteration + 1,
             )
-            workflow.continue_as_new(carry)
+            workflow.continue_as_new(CarryEnvelope(start_input=inp, state=carry))
 
     async def _plan(self, inp: ConnectorStartInput) -> None:
         """Phase: generate an infra plan via the provisioning agent."""
@@ -317,7 +333,7 @@ class ConnectorBootstrapWorkflow:
         if self._state.connector_state not in ("runtime_healthy",):
             return  # Already linked; skip on Continue-As-New restart.
 
-        wallet_ref = self._wallet_ref or inp.wallet_ref
+        wallet_ref = self._wallet_ref or self._state.wallet_ref or inp.wallet_ref
         if wallet_ref:
             result = await workflow.execute_activity(
                 link_wallet_to_connector,
@@ -334,6 +350,7 @@ class ConnectorBootstrapWorkflow:
                     f"Failed to link wallet {wallet_ref} to {self._state.connector_binding_id}"
                 )
             self._state.wallet_linked = True
+            self._state.wallet_ref = wallet_ref
 
         self._state.connector_state = "wallet_linked"
 

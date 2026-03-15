@@ -183,6 +183,11 @@ class CompanyOnboardingWorkflow:
         """External approval callback from the MX portal or registry."""
         if self._state.dedupe.is_duplicate(evt.event_id):
             return
+        # Ignore external callbacks once the approval gate has already been
+        # passed; a late-arriving signal must not overwrite a recorded decision
+        # and corrupt the audit trail.
+        if self._state.phase not in ("registration", "awaiting_approval"):
+            return
         self._state.dedupe.mark_handled(evt.event_id)
 
         if evt.approved:

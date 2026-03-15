@@ -12,5 +12,15 @@ dependencies = [
     "dataspace-control-plane-core",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "temporalio[testserver]>=1.7",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,0 +1,62 @@
+{
+  "mappingId": "crm-to-core-counterparty-v1",
+  "version": "1.0.0",
+  "sourceModelId": "crm-mssql-public",
+  "sourceVersion": "2026-Q1",
+  "targetModelRef": {
+    "targetModelId": "core.Counterparty",
+    "targetModelType": "core_domain_model",
+    "version": "1.0.0"
+  },
+  "fieldMappings": [
+    {
+      "targetField": "counterparty.bpn",
+      "targetType": "string",
+      "sourceFields": [
+        {"entity": "AccountBase", "field": "ExternalId", "alias": "external_id"}
+      ],
+      "transformSteps": [
+        {
+          "stepId": "normalize-bpn",
+          "functionId": "normalize.bpn_identifier",
+          "inputType": "string",
+          "outputType": "string",
+          "params": {"prefix": "BPNL"},
+          "isLossy": false,
+          "errorHandling": "fail"
+        }
+      ],
+      "lineage": {
+        "derivationType": "transformed",
+        "sourceFieldRefs": [{"entity": "AccountBase", "field": "ExternalId", "role": "primary"}],
+        "transformFunctionIds": ["normalize.bpn_identifier"],
+        "rationale": "CRM ExternalId stores the BPN without prefix; we normalize to BPNL format.",
+        "isLossy": false
+      },
+      "confidence": {
+        "score": 0.92,
+        "level": "high",
+        "method": "human_reviewed",
+        "basis": "Confirmed by data owner on 2026-01-15"
+      },
+      "nullable": false
+    }
+  ],
+  "approval": {
+    "status": "approved",
+    "approvedBy": "data-governance-lead",
+    "approvedAt": "2026-01-20T09:00:00Z",
+    "requiredSignoffs": 1,
+    "signoffs": ["data-governance-lead"]
+  },
+  "overallConfidence": {
+    "score": 0.92,
+    "level": "high",
+    "method": "human_reviewed",
+    "assessedAt": "2026-01-20T09:00:00Z"
+  },
+  "description": "Maps CRM Accounts to core Counterparty domain model.",
+  "createdAt": "2026-01-10T10:00:00Z",
+  "updatedAt": "2026-01-20T09:00:00Z",
+  "createdBy": "integration-team"
+}

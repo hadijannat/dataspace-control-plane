@@ -1,0 +1,45 @@
+# Production EU environment overlay for temporal-workers
+# Applied over charts/temporal-workers/values.yaml
+#
+# REQUIRED: Replace image.tag with the real sha256 digest from CI.
+
+replicaCount: 3
+
+image:
+  tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 65
+
+config:
+  logLevel: WARNING
+  temporalHost: "temporal:7233"
+  temporalNamespace: "dataspace"
+  temporalTaskQueue: "dataspace-main"
+  temporalMaxConcurrentActivities: 20
+  temporalMaxConcurrentWorkflows: 10
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - temporal-workers
+          topologyKey: kubernetes.io/hostname

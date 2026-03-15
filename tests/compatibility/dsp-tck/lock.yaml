@@ -1,0 +1,16 @@
+# DSP TCK version lock
+# Update tck_tag to upgrade the TCK version.
+# Run: bash tests/scripts/run_dsp_tck.sh
+
+tck_tag: "0.0.1-SNAPSHOT"
+tck_artifact: "dsp-tck-runner"
+tck_source: "https://github.com/eclipse-dataspacetck/dsp-tck"
+sha256: "PENDING"  # Populated by fetch_tck.sh
+
+# SUT configuration (values from environment at runtime)
+sut:
+  base_url_env: DSP_SUT_BASEURL
+  identity_url_env: DSP_SUT_IDENTITY_URL
+  catalog_enabled: true
+  contract_negotiation_enabled: true
+  transfer_process_enabled: true

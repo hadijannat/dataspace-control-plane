@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/charge-statement.schema.json",
+  "title": "Charge Statement",
+  "description": "Aggregated billing statement for a tenant over a billing period — the sum of rated usage records. Input to the settlement process.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["statementId", "tenantId", "legalEntityId", "billingPeriod", "lineItems", "totalAmount", "currency", "generatedAt"],
+  "additionalProperties": false,
+
+  "properties": {
+    "statementId": {"type": "string", "format": "uuid"},
+    "tenantId":    {"type": "string"},
+    "legalEntityId": {"type": "string"},
+    "billingPeriod": {
+      "type": "object",
+      "required": ["start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "start": {"type": "string", "format": "date"},
+        "end":   {"type": "string", "format": "date"}
+      }
+    },
+    "lineItems": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["lineItemId", "dimensionId", "agreementId", "quantity", "unit", "amount", "currency"],
+        "additionalProperties": false,
+        "properties": {
+          "lineItemId":  {"type": "string"},
+          "dimensionId": {"type": "string"},
+          "agreementId": {"type": "string"},
+          "assetId":     {"type": "string"},
+          "quantity":    {"type": "number", "minimum": 0},
+          "unit":        {"type": "string"},
+          "amount":      {"type": "number"},
+          "currency":    {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "ratedUsageIds": {
+            "type": "array",
+            "items": {"type": "string", "format": "uuid"}
+          }
+        }
+      }
+    },
+    "totalAmount": {"type": "number", "description": "Sum of all line item amounts"},
+    "currency":    {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "status": {
+      "type": "string",
+      "enum": ["draft", "issued", "disputed", "settled", "cancelled"],
+      "default": "draft"
+    },
+    "generatedAt":  {"type": "string", "format": "date-time"},
+    "issuedAt":     {"type": "string", "format": "date-time"},
+    "dueDate":      {"type": "string", "format": "date"}
+  }
+}

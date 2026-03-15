@@ -1,0 +1,80 @@
+groups:
+  - name: temporal-workers
+    interval: 1m
+    rules:
+      - alert: TemporalWorkflowQueueBacklog
+        expr: |
+          temporal_workflow_task_queue_backlog{task_queue="dataspace-main"} > 100
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          service: temporal-workers
+        annotations:
+          summary: "Temporal workflow queue backlog is high"
+          description: >
+            Queue backlog for task queue 'dataspace-main' is {{ $value }} items.
+            Workers may be overloaded or stuck. Check worker pod status and activity logs.
+          runbook: "https://docs.internal/runbooks/temporal-queue-backlog"
+
+      - alert: TemporalActivityFailureRate
+        expr: |
+          rate(temporal_activity_execution_failed_total[5m])
+          /
+          rate(temporal_activity_execution_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+          service: temporal-workers
+        annotations:
+          summary: "Temporal activity failure rate above 10%"
+          description: >
+            Activity failure rate is {{ humanizePercentage $value }} for the last 5m.
+            This may indicate connectivity issues with dependencies (Vault, Postgres, external APIs).
+          runbook: "https://docs.internal/runbooks/temporal-activity-failures"
+
+      - alert: TemporalWorkersDown
+        expr: up{job="temporal-workers"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          team: platform
+          service: temporal-workers
+        annotations:
+          summary: "Temporal workers are down"
+          description: >
+            No temporal-workers instances are being scraped. Workflows will queue
+            but not execute until workers are restored.
+          runbook: "https://docs.internal/runbooks/temporal-workers-down"
+
+      - alert: TemporalWorkflowExecutionTimeout
+        expr: |
+          increase(temporal_workflow_execution_timeout_total[30m]) > 5
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+          service: temporal-workers
+        annotations:
+          summary: "Temporal workflows timing out"
+          description: >
+            {{ $value }} workflow execution timeouts in the last 30 minutes.
+            Check workflow execution time limits and activity retry policies.
+
+      - alert: TemporalScheduleToStartLatencyHigh
+        expr: |
+          histogram_quantile(0.95,
+            rate(temporal_activity_schedule_to_start_latency_bucket{task_queue="dataspace-main"}[5m])
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          service: temporal-workers
+        annotations:
+          summary: "Temporal activity schedule-to-start latency above 30s"
+          description: >
+            P95 schedule-to-start latency is {{ humanizeDuration $value }}.
+            Activities are queuing longer than expected before a worker picks them up.
+            Consider scaling up temporal-workers replicas.

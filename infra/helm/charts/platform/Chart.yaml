@@ -1,0 +1,32 @@
+apiVersion: v2
+name: platform
+description: Umbrella chart composing all dataspace control-plane workloads
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/your-org/dataspace-control-plane
+sources:
+  - https://github.com/your-org/dataspace-control-plane
+maintainers:
+  - name: infra-lead
+keywords:
+  - dataspace
+  - platform
+  - umbrella
+dependencies:
+  - name: control-api
+    version: "0.1.0"
+    repository: "file://../control-api"
+    condition: control-api.enabled
+  - name: temporal-workers
+    version: "0.1.0"
+    repository: "file://../temporal-workers"
+    condition: temporal-workers.enabled
+  - name: web-console
+    version: "0.1.0"
+    repository: "file://../web-console"
+    condition: web-console.enabled
+  - name: provisioning-agent
+    version: "0.1.0"
+    repository: "file://../provisioning-agent"
+    condition: provisioning-agent.enabled

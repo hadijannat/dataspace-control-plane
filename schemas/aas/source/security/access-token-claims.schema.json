@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/source/security/access-token-claims.schema.json",
+  "title": "AAS Access Token Claims",
+  "description": "Claims expected in an OAuth2/JWT access token presented to an AAS API endpoint. Validates the shape of the decoded JWT payload for AAS Part 4 authorization.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 4",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["sub", "iss"],
+  "additionalProperties": true,
+
+  "properties": {
+    "sub": {
+      "type": "string",
+      "description": "Subject — identifier of the token owner (DID, BPN, or opaque ID)"
+    },
+    "iss": {
+      "type": "string",
+      "format": "uri",
+      "description": "Issuer URI of the authorization server"
+    },
+    "aud": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "array", "items": {"type": "string"}}
+      ],
+      "description": "Intended audience — must include the AAS server's resource identifier"
+    },
+    "exp": {
+      "type": "integer",
+      "description": "Expiry time — Unix epoch seconds"
+    },
+    "iat": {
+      "type": "integer",
+      "description": "Issued-at time — Unix epoch seconds"
+    },
+    "roles": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "AAS role claims, e.g. aas:reader, aas:writer, aas:administrator"
+    },
+    "bpn": {
+      "type": "string",
+      "description": "Business Partner Number (Catena-X specific claim)",
+      "pattern": "^BPN[LSA][A-Z0-9]{12}$"
+    },
+    "aas_permissions": {
+      "type": "array",
+      "description": "Fine-grained AAS element-level permission claims",
+      "items": {
+        "type": "object",
+        "required": ["path", "action"],
+        "properties": {
+          "path":   {"type": "string"},
+          "action": {"type": "string", "enum": ["read", "write", "invoke", "delete"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/references/agreement-ref.schema.json",
+  "title": "Agreement Reference",
+  "description": "Reference to the ODRL agreement (contract) that governs a usage event. Every usage record must trace to a valid agreement.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["agreementId"],
+  "additionalProperties": false,
+
+  "properties": {
+    "agreementId":  {"type": "string", "format": "uri", "description": "ODRL agreement UID (policy uid)"},
+    "assetId":      {"type": "string", "description": "Asset governed by this agreement"},
+    "negotiationId":{"type": "string", "description": "DSP negotiation process ID that produced this agreement"}
+  }
+}

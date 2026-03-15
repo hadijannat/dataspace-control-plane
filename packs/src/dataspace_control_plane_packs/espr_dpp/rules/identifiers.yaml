@@ -1,0 +1,4 @@
+scheme: "iso-iec-15459"
+description: "ISO/IEC 15459 compatible unique identifier requirements for DPP"
+pattern: "^[A-Z0-9]{2,8}\\.[A-Z0-9]{6,30}$"
+note: "Actual pattern must be verified against ISO/IEC 15459 specification"

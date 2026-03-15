@@ -1,0 +1,31 @@
+{
+  "@context": "https://w3id.org/dspace/2025/1/context.jsonld",
+  "@type": "dcat:Catalog",
+  "dcat:dataset": [
+    {
+      "@id": "urn:example:asset-001",
+      "@type": "dcat:Dataset",
+      "dct:title": "Example Dataset",
+      "dct:description": "A minimal DSP 2025-1 catalog dataset example",
+      "odrl:hasPolicy": {
+        "@id": "urn:example:offer-001",
+        "@type": "odrl:Offer",
+        "odrl:permission": [
+          {
+            "odrl:action": {
+              "@id": "odrl:use"
+            },
+            "odrl:constraint": []
+          }
+        ]
+      }
+    }
+  ],
+  "dcat:service": {
+    "@id": "urn:example:provider-001",
+    "@type": "dcat:DataService",
+    "dct:title": "Example Provider",
+    "dspace:participantId": "did:web:example.com:provider",
+    "dcat:endpointURL": "https://provider.example.com/dsp"
+  }
+}

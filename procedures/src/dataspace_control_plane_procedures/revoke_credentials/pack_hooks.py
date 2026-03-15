@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class RevocationPackHooks(Protocol):
+    def status_service_endpoint(self, pack_id: str, tenant_id: str) -> str: ...
+    def freeze_dependent_on_revoke(self, pack_id: str) -> bool: ...

@@ -1,0 +1,6 @@
+# namespace             = "dataspace"
+# postgres_storage_size = "100Gi"
+# vault_storage_size    = "50Gi"
+# ingress_class_name    = "nginx"
+# object_storage_bucket = "dataspace-prod-eu-artifacts"
+# object_storage_region = "eu-west-1"

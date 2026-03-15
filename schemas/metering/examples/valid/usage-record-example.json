@@ -1,0 +1,33 @@
+{
+  "recordId": "550e8400-e29b-41d4-a716-446655440000",
+  "tenantId": "tenant-alpha",
+  "legalEntityId": "BPNL000000000001",
+  "agreementRef": {
+    "agreementId": "https://provider.example.org/agreements/agr-001",
+    "assetId": "dataset-manufacturing-001",
+    "negotiationId": "neg-2026-001"
+  },
+  "counterpartyRef": {
+    "counterpartyId": "BPNL000000000002",
+    "counterpartyRole": "provider",
+    "connectorId": "connector-provider-001"
+  },
+  "assetId": "dataset-manufacturing-001",
+  "serviceType": "data_transfer",
+  "dimensions": [
+    {
+      "dimensionId": "bytes_transferred",
+      "quantity": 10485760,
+      "unit": "bytes"
+    }
+  ],
+  "measurementInterval": {
+    "start": "2026-03-14T10:00:00Z",
+    "end":   "2026-03-14T10:05:00Z"
+  },
+  "eventTime": "2026-03-14T10:00:00Z",
+  "reportedAt": "2026-03-14T10:05:01Z",
+  "sourceSystem": "edc-extension",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "correlationId": "transfer-process-001"
+}

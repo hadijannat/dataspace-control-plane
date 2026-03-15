@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/mapping-spec.schema.json",
+  "title": "Mapping Specification",
+  "description": "A complete mapping specification from a source model to a target model. Defines field mappings, transform steps, lineage, approval state, and confidence scores. Immutable once approved.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "$defs": {
+    "fieldMapping": {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/field-mapping.schema.json"},
+    "approval": {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/approval.schema.json"},
+    "confidence": {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/confidence.schema.json"},
+    "targetModelRef": {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/target-model-ref.schema.json"}
+  },
+
+  "type": "object",
+  "required": ["mappingId", "sourceModelId", "targetModelRef", "fieldMappings", "approval", "version"],
+  "additionalProperties": false,
+
+  "properties": {
+    "mappingId":     {"type": "string", "description": "Stable unique identifier for this mapping specification"},
+    "version":       {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "sourceModelId": {"type": "string", "description": "Matches source-model.sourceModelId"},
+    "sourceVersion": {"type": "string", "description": "Source model version this spec was built against"},
+    "targetModelRef":{"$ref": "#/$defs/targetModelRef"},
+    "fieldMappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/fieldMapping"},
+      "description": "One entry per target field. Every target field must have lineage."
+    },
+    "approval":      {"$ref": "#/$defs/approval"},
+    "overallConfidence": {"$ref": "#/$defs/confidence"},
+    "description":   {"type": "string"},
+    "tags":          {"type": "array", "items": {"type": "string"}},
+    "createdAt":     {"type": "string", "format": "date-time"},
+    "updatedAt":     {"type": "string", "format": "date-time"},
+    "createdBy":     {"type": "string"}
+  }
+}

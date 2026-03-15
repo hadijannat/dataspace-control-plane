@@ -1,0 +1,82 @@
+groups:
+  - name: control-api
+    interval: 1m
+    rules:
+      - alert: ControlApiHighErrorRate
+        expr: |
+          rate(http_server_duration_count{job="control-api",http_status_code=~"5.."}[5m])
+          /
+          rate(http_server_duration_count{job="control-api"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+          service: control-api
+        annotations:
+          summary: "Control API error rate above 5%"
+          description: >
+            HTTP 5xx rate is {{ humanizePercentage $value }} for the last 5m.
+            This exceeds the SLO threshold of 5%.
+          runbook: "https://docs.internal/runbooks/control-api-errors"
+
+      - alert: ControlApiHighLatency
+        expr: |
+          histogram_quantile(0.99,
+            rate(http_server_duration_bucket{job="control-api"}[5m])
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: control-api
+        annotations:
+          summary: "Control API P99 latency above 2s"
+          description: >
+            P99 latency is {{ humanizeDuration $value }} for the last 5m.
+            Check for slow database queries, Vault latency, or Temporal connectivity issues.
+          runbook: "https://docs.internal/runbooks/control-api-latency"
+
+      - alert: ControlApiDown
+        expr: up{job="control-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          service: control-api
+        annotations:
+          summary: "Control API is down"
+          description: >
+            No healthy control-api instance has been scraped by Prometheus for 2 minutes.
+            Check pod status: kubectl get pods -n dataspace -l app.kubernetes.io/name=control-api
+          runbook: "https://docs.internal/runbooks/control-api-down"
+
+      - alert: ControlApiPodRestartLooping
+        expr: |
+          increase(kube_pod_container_status_restarts_total{
+            namespace="dataspace",
+            container="control-api"
+          }[15m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+          service: control-api
+        annotations:
+          summary: "Control API pod is restart-looping"
+          description: >
+            Pod {{ $labels.pod }} restarted {{ $value }} times in the last 15 minutes.
+            Check logs: kubectl logs -n dataspace {{ $labels.pod }} --previous
+
+      - alert: ControlApiHighRequestRate
+        expr: |
+          sum(rate(http_server_duration_count{job="control-api"}[5m])) > 1000
+        for: 10m
+        labels:
+          severity: info
+          team: platform
+          service: control-api
+        annotations:
+          summary: "Control API request rate exceeds 1000 req/s"
+          description: >
+            Sustained high request rate ({{ humanize $value }} req/s) for 10m.
+            Verify autoscaling is responding. Consider rate limiting or caching.

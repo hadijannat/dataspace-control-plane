@@ -1,0 +1,66 @@
+# targets/release.hcl — Release build targets.
+# Platforms: linux/amd64 + linux/arm64 (multi-platform).
+# Output: type=registry (push to registry immediately after build).
+# Cache: registry cache backend for persistent layer reuse.
+#
+# REQUIREMENTS:
+#   - REGISTRY env var must be set to the target registry
+#   - TAG env var should be a semantic version or sha256 digest (not 'dev')
+#   - Registry credentials must be configured (docker login or DOCKER_AUTH_CONFIG)
+#
+# Base image pinning:
+#   Set PYTHON_BASE_DIGEST and NODE_BASE_DIGEST to sha256 digests of the base images
+#   to ensure fully reproducible release builds. Leave empty for semver-tagged builds.
+#
+# Example:
+#   TAG=0.1.0 REGISTRY=ghcr.io/your-org/... \
+#     PYTHON_BASE_DIGEST=sha256:abc123... \
+#     docker buildx bake release
+
+target "control-api-release" {
+  inherits   = ["control-api"]
+  platforms  = ["linux/amd64", "linux/arm64"]
+  cache-from = ["type=registry,ref=${REGISTRY}/control-api:buildcache"]
+  cache-to   = ["type=registry,ref=${REGISTRY}/control-api:buildcache,mode=max"]
+  output     = ["type=registry"]
+  args = {
+    PYTHON_VERSION = PYTHON_VERSION
+    PYTHON_DIGEST  = PYTHON_BASE_DIGEST
+  }
+}
+
+target "temporal-workers-release" {
+  inherits   = ["temporal-workers"]
+  platforms  = ["linux/amd64", "linux/arm64"]
+  cache-from = ["type=registry,ref=${REGISTRY}/temporal-workers:buildcache"]
+  cache-to   = ["type=registry,ref=${REGISTRY}/temporal-workers:buildcache,mode=max"]
+  output     = ["type=registry"]
+  args = {
+    PYTHON_VERSION = PYTHON_VERSION
+    PYTHON_DIGEST  = PYTHON_BASE_DIGEST
+  }
+}
+
+target "web-console-release" {
+  inherits   = ["web-console"]
+  platforms  = ["linux/amd64", "linux/arm64"]
+  cache-from = ["type=registry,ref=${REGISTRY}/web-console:buildcache"]
+  cache-to   = ["type=registry,ref=${REGISTRY}/web-console:buildcache,mode=max"]
+  output     = ["type=registry"]
+  args = {
+    NODE_VERSION = NODE_VERSION
+    NODE_DIGEST  = NODE_BASE_DIGEST
+  }
+}
+
+target "provisioning-agent-release" {
+  inherits   = ["provisioning-agent"]
+  platforms  = ["linux/amd64", "linux/arm64"]
+  cache-from = ["type=registry,ref=${REGISTRY}/provisioning-agent:buildcache"]
+  cache-to   = ["type=registry,ref=${REGISTRY}/provisioning-agent:buildcache,mode=max"]
+  output     = ["type=registry"]
+  args = {
+    PYTHON_VERSION = PYTHON_VERSION
+    PYTHON_DIGEST  = PYTHON_BASE_DIGEST
+  }
+}

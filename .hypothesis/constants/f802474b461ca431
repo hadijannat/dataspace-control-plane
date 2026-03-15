@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/packs/src/dataspace_control_plane_packs/_shared/manifest.py
+# hypothesis_version: 6.135.10
+
+[100, '*', 'PackManifest', 'activation_scope', 'capabilities', 'capability', 'compatibility', 'conflicts', 'custom', 'default_priority', 'dependencies', 'description', 'display_name', 'ecosystem', 'effective_from', 'effective_to', 'environment', 'interface_class', 'legal_entity', 'local_filename', 'normative_sources', 'pack_id', 'pack_kind', 'rb', 'regulation', 'required', 'retrieval_date', 'sha256', 'source_uri', 'tenant', 'upstream_license', 'version', 'version_spec']

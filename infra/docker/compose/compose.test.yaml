@@ -1,0 +1,94 @@
+# compose.test.yaml — CI integration test overlay
+#
+# Usage:
+#   docker compose -f compose.yaml -f compose.test.yaml up -d
+#   pytest tests/integration/ --timeout=120
+#   docker compose -f compose.yaml -f compose.test.yaml down -v
+#
+# This overlay:
+#   - Uses pinned image tags (${TAG:-dev}) — not the dev mutable tags
+#   - Disables volume mounts (stateless image content only)
+#   - Adds Toxiproxy for network fault injection (chaos tests)
+#   - Seeds test database via init scripts
+#
+# Toxiproxy proxy ports:
+#   18000 → postgres:5432
+#   18001 → vault:8200
+#   18002 → keycloak:8080
+#   18003 → kafka:9092
+
+version: "3.9"
+
+services:
+  postgres:
+    environment:
+      POSTGRES_DB: dataspace_test
+    # Healthcheck inherited from base compose.yaml
+
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.9.0
+    ports:
+      - "8474:8474"    # Toxiproxy HTTP management API
+      - "18000:18000"  # Postgres proxy
+      - "18001:18001"  # Vault proxy
+      - "18002:18002"  # Keycloak proxy
+      - "18003:18003"  # Kafka proxy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8474/version"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  control-api:
+    image: ghcr.io/your-org/dataspace-control-plane/control-api:${TAG:-dev}
+    environment:
+      LOG_LEVEL: DEBUG
+      TESTING: "1"
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-root-token
+      KEYCLOAK_URL: http://keycloak:8080
+      TEMPORAL_HOST: temporal:7233
+      TEMPORAL_NAMESPACE: dataspace
+      TEMPORAL_TASK_QUEUE: control-api
+    secrets:
+      - postgres_password
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+      toxiproxy:
+        condition: service_healthy
+
+  temporal-workers:
+    image: ghcr.io/your-org/dataspace-control-plane/temporal-workers:${TAG:-dev}
+    environment:
+      LOG_LEVEL: DEBUG
+      TESTING: "1"
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+      TEMPORAL_HOST: temporal:7233
+      TEMPORAL_NAMESPACE: dataspace
+      TEMPORAL_TASK_QUEUE: dataspace-main
+      TEMPORAL_MAX_CONCURRENT_ACTIVITIES: "5"
+      TEMPORAL_MAX_CONCURRENT_WORKFLOWS: "2"
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-root-token
+    secrets:
+      - postgres_password
+    depends_on:
+      temporal:
+        condition: service_started
+      vault:
+        condition: service_healthy
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  keycloak_admin_password:
+    file: ./secrets/keycloak_admin_password.txt

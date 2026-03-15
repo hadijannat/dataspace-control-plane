@@ -1,0 +1,35 @@
+pack_id = "manufacturing_x"
+pack_kind = "ecosystem"
+version = "1.0.0"
+display_name = "Manufacturing-X / Factory-X Ecosystem Pack"
+description = "MX-Port capability graph, Factory-X reference profiles (Leo, Hercules), AAS/DPP4.0 bridge, discovery and access/usage control rules for Manufacturing-X data ecosystems."
+activation_scope = "tenant"
+default_priority = 60
+conflicts = []
+
+[compatibility]
+core = ">=0.1.0"
+
+[[capabilities]]
+capability = "RequirementProvider"
+interface_class = "dataspace_control_plane_packs.manufacturing_x.api.MxRequirementProvider"
+
+[[capabilities]]
+capability = "DataExchangeProfileProvider"
+interface_class = "dataspace_control_plane_packs.manufacturing_x.api.MxDataExchangeProfileProvider"
+
+[[capabilities]]
+capability = "TwinTemplateProvider"
+interface_class = "dataspace_control_plane_packs.manufacturing_x.api.MxTwinTemplateProvider"
+
+[[capabilities]]
+capability = "EvidenceAugmenter"
+interface_class = "dataspace_control_plane_packs.manufacturing_x.api.MxEvidenceAugmenter"
+
+[[normative_sources]]
+source_uri = "https://www.plattform-i40.de/IP/Navigation/EN/Manufacturing-X/Manufacturing-X.html"
+version = "2024"
+retrieval_date = "2026-03-14"
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+local_filename = "rules/requirements.yaml"
+effective_from = "2024-01-01"

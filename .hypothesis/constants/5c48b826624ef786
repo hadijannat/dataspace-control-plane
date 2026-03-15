@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/core/src/dataspace_control_plane_core/audit/record.py
+# hypothesis_version: 6.135.10
+
+['AuditRecord', 'admin', 'compliance', 'contract', 'data_exchange', 'denied', 'failure', 'partial', 'security', 'success', 'tenancy', 'trust']

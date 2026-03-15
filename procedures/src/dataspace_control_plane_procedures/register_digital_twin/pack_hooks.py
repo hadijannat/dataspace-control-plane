@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class TwinRegistrationPackHooks(Protocol):
+    def aas_registry_url(self, pack_id: str, tenant_id: str) -> str: ...
+    def required_submodel_semantic_ids(self, pack_id: str) -> list[str]: ...

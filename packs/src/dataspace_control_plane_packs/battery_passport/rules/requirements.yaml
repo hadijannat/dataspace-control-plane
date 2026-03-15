@@ -1,0 +1,53 @@
+version: "2023/1542"
+source: "Regulation (EU) 2023/1542"
+source_uri: "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L:2023:191:FULL"
+effective_from: "2023-08-17"
+rules:
+  - rule_id: "battery:passport-required-lmt"
+    title: "Battery Passport Required for LMT Batteries"
+    severity: "error"
+    machine_checkable: false
+    effective_from: "2027-02-18"
+    note: "Light means of transport batteries placed on market from 2027-02-18"
+  - rule_id: "battery:passport-required-industrial-2kwh"
+    title: "Battery Passport Required for Industrial Batteries above 2 kWh"
+    severity: "error"
+    machine_checkable: false
+    effective_from: "2027-02-18"
+  - rule_id: "battery:passport-required-ev"
+    title: "Battery Passport Required for EV Batteries"
+    severity: "error"
+    machine_checkable: false
+    effective_from: "2027-02-18"
+  - rule_id: "battery:unique-id-required"
+    title: "Unique Battery Identifier Required"
+    severity: "error"
+    machine_checkable: true
+    description: "Each battery must have a unique identifier accessible via QR code."
+  - rule_id: "battery:qr-access-required"
+    title: "QR/Identifier-Based DPP Access Required"
+    severity: "error"
+    machine_checkable: false
+    effective_from: "2027-02-18"
+    description: "QR code or unique identifier must link directly to the battery passport."
+  - rule_id: "battery:successor-passport-on-repurpose"
+    title: "Successor Passport Required After Repurposing or Remanufacturing"
+    severity: "error"
+    machine_checkable: true
+    description: "A new passport linked to the original must be created after repurposing/remanufacturing."
+  - rule_id: "battery:passport-ceases-on-recycling"
+    title: "Passport Ceases After Recycling"
+    severity: "error"
+    machine_checkable: true
+    description: "A recycled battery's passport reaches terminal state and ceases."
+  - rule_id: "battery:legitimate-interest-implementing-act"
+    title: "Legitimate Interest Access Pending Implementing Act"
+    severity: "warning"
+    machine_checkable: false
+    effective_to: "2026-08-18"
+    note: "Implementing act specifying legitimate-interest access expected by 2026-08-18 per Art. 74 §2"
+  - rule_id: "battery:open-interoperable-machine-readable"
+    title: "Open, Interoperable, Machine-Readable Format Required"
+    severity: "error"
+    machine_checkable: false
+    description: "Battery passport data must use open standards, interoperable formats, machine-readable/searchable data."

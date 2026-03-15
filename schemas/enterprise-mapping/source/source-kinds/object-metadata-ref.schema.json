@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/object-metadata-ref.schema.json",
+  "title": "Object Storage Metadata Reference",
+  "description": "Reference to an object storage source — S3-compatible bucket, container, or prefix — where structured files (Parquet, CSV, JSON Lines) are stored.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["kind", "bucket"],
+  "additionalProperties": false,
+
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "object_storage"
+    },
+    "bucket": {
+      "type": "string",
+      "description": "Bucket or container name"
+    },
+    "prefix": {
+      "type": "string",
+      "description": "Key prefix / folder path"
+    },
+    "fileFormat": {
+      "type": "string",
+      "enum": ["parquet", "csv", "jsonlines", "avro", "orc", "delta"],
+      "description": "File format of objects in this prefix"
+    },
+    "endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "S3-compatible endpoint URL (no credentials)"
+    },
+    "region": {
+      "type": "string",
+      "description": "Storage region, e.g. eu-central-1"
+    },
+    "sampleKeyCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of keys sampled during introspection"
+    },
+    "introspectedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

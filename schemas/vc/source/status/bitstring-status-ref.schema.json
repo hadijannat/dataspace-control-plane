@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/vc/source/status/bitstring-status-ref.schema.json",
+  "title": "Bitstring Status List Entry Reference",
+  "description": "Validates a BitstringStatusListEntry status reference. Identifies the position of this credential in a W3C Bitstring Status List credential.",
+  "x-source-standard": "W3C Bitstring Status List v1.0",
+  "x-source-version": "1.0",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["id", "type", "statusListIndex", "statusListCredential"],
+  "additionalProperties": false,
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI uniquely identifying this status entry within the status list credential"
+    },
+    "type": {
+      "type": "string",
+      "const": "BitstringStatusListEntry",
+      "description": "Fixed type discriminator for this status mechanism"
+    },
+    "statusPurpose": {
+      "type": "string",
+      "description": "The purpose this entry serves",
+      "enum": ["revocation", "suspension", "message"],
+      "default": "revocation"
+    },
+    "statusListIndex": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Non-negative integer (as string) — the bit position in the status list"
+    },
+    "statusListCredential": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI of the Verifiable Credential that contains the status list bitstring"
+    },
+    "statusSize": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "Number of bits allocated per status entry (default 1 for revocation)"
+    },
+    "statusMessage": {
+      "type": "array",
+      "description": "Status value meanings, used when statusSize > 1",
+      "items": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "status":  {"type": "string"},
+          "message": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

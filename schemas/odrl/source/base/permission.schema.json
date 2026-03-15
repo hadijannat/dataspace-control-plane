@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/base/permission.schema.json",
+  "title": "ODRL Permission",
+  "description": "An ODRL Permission — grants the assignee the right to perform an action on an asset, subject to optional constraints and duties.",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["action"],
+  "additionalProperties": true,
+
+  "properties": {
+    "action": {
+      "oneOf": [
+        {"type": "string", "description": "ODRL action IRI or prefixed term, e.g. odrl:use"},
+        {
+          "type": "object",
+          "required": ["@id"],
+          "properties": {
+            "@id":        {"type": "string"},
+            "includedIn": {"type": "string"},
+            "refinement": {}
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "assigner": {
+      "oneOf": [
+        {"type": "string", "format": "uri"},
+        {"type": "object", "properties": {"@id": {"type": "string"}}, "additionalProperties": true}
+      ]
+    },
+    "assignee": {
+      "oneOf": [
+        {"type": "string", "format": "uri"},
+        {"type": "object", "properties": {"@id": {"type": "string"}}, "additionalProperties": true}
+      ]
+    },
+    "target": {
+      "oneOf": [
+        {"type": "string", "format": "uri"},
+        {"type": "object", "properties": {"@id": {"type": "string"}}, "additionalProperties": true}
+      ]
+    },
+    "constraint": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/constraint.schema.json"},
+        {
+          "type": "array",
+          "items": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/constraint.schema.json"}
+        }
+      ]
+    },
+    "duty": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/duty.schema.json"},
+        {
+          "type": "array",
+          "items": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/duty.schema.json"}
+        }
+      ]
+    }
+  }
+}

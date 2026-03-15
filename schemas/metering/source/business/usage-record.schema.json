@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/usage-record.schema.json",
+  "title": "Usage Record",
+  "description": "Immutable record of a single measurable dataspace usage event. Every usage record captures who (tenant, legal entity, counterparty), what (asset, service, API), how much (quantity, unit), when (event time, measurement interval), and under which agreement/policy — sufficient for rating, billing, and compliance audit.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "$defs": {
+    "dimensionRef": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/metering/source/business/usage-dimension.schema.json"
+    },
+    "agreementRef": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/metering/source/references/agreement-ref.schema.json"
+    },
+    "counterpartyRef": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/metering/source/references/counterparty-ref.schema.json"
+    }
+  },
+
+  "type": "object",
+  "required": [
+    "recordId", "tenantId", "legalEntityId",
+    "agreementRef", "counterpartyRef",
+    "dimensions", "eventTime", "reportedAt", "sourceSystem"
+  ],
+  "additionalProperties": false,
+
+  "properties": {
+    "recordId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Globally unique, stable record identifier. Must be deterministic per event for idempotent processing."
+    },
+    "tenantId": {
+      "type": "string",
+      "description": "Tenant scope identifier"
+    },
+    "legalEntityId": {
+      "type": "string",
+      "description": "Legal entity (BPN or internal) that this usage is attributed to"
+    },
+    "agreementRef": {"$ref": "#/$defs/agreementRef"},
+    "counterpartyRef": {"$ref": "#/$defs/counterpartyRef"},
+    "assetId": {
+      "type": "string",
+      "description": "Optional asset identifier (dataset, API, connector, etc.) being consumed"
+    },
+    "serviceType": {
+      "type": "string",
+      "description": "Service or resource type, e.g. data_transfer, api_call, connector_session",
+      "examples": ["data_transfer", "api_call", "connector_session", "storage_gb_day"]
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/dimensionRef"},
+      "description": "Measured quantities — at least one dimension required"
+    },
+    "measurementInterval": {
+      "type": "object",
+      "required": ["start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "start": {"type": "string", "format": "date-time"},
+        "end":   {"type": "string", "format": "date-time"}
+      },
+      "description": "Time window over which the measurement was taken"
+    },
+    "eventTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the usage event occurred (source time, not ingestion time)"
+    },
+    "reportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this record was written (ingestion time)"
+    },
+    "sourceSystem": {
+      "type": "string",
+      "description": "System that generated this record, e.g. edc-extension, control-api",
+      "examples": ["edc-extension", "control-api", "temporal-worker"]
+    },
+    "traceId": {
+      "type": "string",
+      "description": "OpenTelemetry trace ID for correlation with operational spans"
+    },
+    "correlationId": {
+      "type": "string",
+      "description": "Business correlation ID (e.g. negotiation ID, transfer process ID)"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {"type": "string"},
+      "description": "Optional additional key-value metadata for downstream enrichment"
+    }
+  }
+}

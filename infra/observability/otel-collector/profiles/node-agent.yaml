@@ -1,0 +1,83 @@
+# profiles/node-agent.yaml — Host/pod-local collection (DaemonSet mode)
+#
+# Collects host-level metrics (CPU, disk, filesystem, memory, network) and
+# forwards to the gateway collector via OTLP.
+#
+# Does NOT include k8sattributes (the gateway handles K8s enrichment).
+# Does NOT export directly to Tempo/Prometheus/Loki.
+#
+# Deployment mode: DaemonSet — one pod per node.
+# Requires hostPath access for filesystem scraping.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      disk: {}
+      filesystem:
+        exclude_mount_points:
+          mount_points: ["/dev", "/proc", "/sys"]
+          match_type: strict
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      network: {}
+      load: {}
+      processes: {}
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 512
+
+  memory_limiter:
+    limit_mib: 256
+    spike_limit_mib: 64
+    check_interval: 5s
+
+  resource:
+    attributes:
+      - key: host.name
+        from_attribute: host.name
+        action: upsert
+      - key: deployment.environment
+        value: ${DEPLOYMENT_ENVIRONMENT}
+        action: upsert
+
+exporters:
+  # Forward all telemetry to the gateway collector via OTLP
+  otlp/gateway:
+    endpoint: ${GATEWAY_OTLP_ENDPOINT}
+    tls:
+      insecure: false
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 60s
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [hostmetrics, otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/gateway]
+  telemetry:
+    logs:
+      level: warn
+    metrics:
+      address: 0.0.0.0:8888

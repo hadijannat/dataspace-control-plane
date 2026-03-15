@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/base/obligation.schema.json",
+  "title": "ODRL Obligation",
+  "description": "An ODRL Policy Obligation — a mandatory action that must be performed by the assignee (or assigner) regardless of whether a permission is exercised.",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+
+  "allOf": [
+    {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/duty.schema.json"}
+  ],
+
+  "description": "Obligation shares the same shape as Duty but is declared at policy level rather than as a consequence of a permission."
+}

@@ -1,0 +1,7 @@
+"""Task queue family constants — must stay in sync with core.procedure_runtime.task_queues."""
+ONBOARDING_QUEUE = "onboarding"
+MACHINE_TRUST_QUEUE = "machine-trust"
+TWINS_PUBLICATION_QUEUE = "twins-publication"
+CONTRACTS_NEGOTIATION_QUEUE = "contracts-negotiation"
+COMPLIANCE_QUEUE = "compliance"
+MAINTENANCE_QUEUE = "maintenance"

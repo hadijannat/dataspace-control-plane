@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/execution/mapping-run.schema.json",
+  "title": "Mapping Run",
+  "description": "Execution record for a single run of a mapping specification. Immutable audit record capturing when it ran, how many rows were processed, and the overall outcome.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["runId", "mappingId", "mappingVersion", "startedAt", "status"],
+  "additionalProperties": false,
+
+  "properties": {
+    "runId":          {"type": "string", "format": "uuid"},
+    "mappingId":      {"type": "string", "description": "Matches mapping-spec.mappingId"},
+    "mappingVersion": {"type": "string"},
+    "triggeredBy":    {"type": "string", "description": "Actor or system that triggered this run"},
+    "startedAt":      {"type": "string", "format": "date-time"},
+    "completedAt":    {"type": "string", "format": "date-time"},
+    "status": {
+      "type": "string",
+      "enum": ["running", "completed", "failed", "cancelled"]
+    },
+    "rowsRead":       {"type": "integer", "minimum": 0},
+    "rowsWritten":    {"type": "integer", "minimum": 0},
+    "rowsSkipped":    {"type": "integer", "minimum": 0},
+    "rowsFailed":     {"type": "integer", "minimum": 0},
+    "checkpointKey":  {"type": "string", "description": "Watermark or cursor value at end of run"},
+    "errorSummary":   {"type": "string"},
+    "traceId":        {"type": "string"},
+    "resultRef":      {"type": "string", "description": "Reference to the mapping-result artifact"}
+  }
+}

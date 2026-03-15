@@ -1,0 +1,151 @@
+{
+  "version": "2.2.0",
+  "summary": {
+    "title": "Dataspace Control Plane — Contract Negotiation Threat Model",
+    "owner": "docs-lead",
+    "description": "Threat model for the DSP contract negotiation flow: control-api -> ContractNegotiationWorkflow -> EDC connector -> Catena-X partner EDC -> ODRL policy evaluation -> DCP credential exchange -> agreement persistence.",
+    "id": 2
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Contract Negotiation Data Flow",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram",
+        "thumbnail": "./public/content/images/thumbnail.jpg",
+        "version": "2.2.0",
+        "cells": [
+          {
+            "position": {"x": 100, "y": 100},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Operator /\nAPI Client"}},
+            "shape": "actor",
+            "id": "actor-operator",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Actor",
+              "name": "Operator / API Client",
+              "description": "Human operator or machine service initiating a contract negotiation via POST /api/v1/contracts/negotiations",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {"x": 300, "y": 100},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "ContractNegotiation\nWorkflow (Temporal)"}},
+            "shape": "process",
+            "id": "process-negotiation-workflow",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "ContractNegotiationWorkflow",
+              "description": "Temporal durable workflow implementing DSP negotiation state machine. Evaluates ODRL policy, verifies DCP credentials, and finalizes the agreement.",
+              "outOfScope": false,
+              "privilegeLevel": "application",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "threat-cn-01",
+                  "title": "Counterparty impersonation via forged BPN-L in DSP message",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Spoofing",
+                  "description": "A malicious party sends a DSP ContractRequestMessage claiming to be from a legitimate Catena-X participant (e.g., BPNL000000000001) without holding the corresponding DID and membership credential",
+                  "mitigation": "DCP credential presentation is required before agreement is finalized. The MembershipCredential is verified against the issuer's DID (resolved from the Catena-X DID registry). A forged BPN-L without a valid VC from the Catena-X CA fails verification.",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-cn-02",
+                  "title": "ODRL policy manipulation via race condition",
+                  "status": "Mitigated",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "Attacker attempts to modify the ODRL policy offer between the evaluation step and the agreement signing step in the workflow (TOCTOU)",
+                  "mitigation": "The ODRL policy is hashed (SHA-256) at evaluation time and the hash is included in the signed agreement. If the policy bytes change between evaluation and signing, the hash mismatch is detected during the sign-agreement activity. The workflow is deterministic — the policy cannot be substituted mid-execution due to Temporal's activity input/output immutability.",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-cn-03",
+                  "title": "Negotiation replay attack — re-using a finalized agreement ID",
+                  "status": "Mitigated",
+                  "severity": "Medium",
+                  "type": "Repudiation",
+                  "description": "Counterparty denies having agreed to specific policy terms by claiming the agreement ID was replayed from a previous negotiation",
+                  "mitigation": "Each agreement ID is a UUID v4 generated at the start of the workflow (not derived from the policy or asset). The signed agreement record in Postgres includes the agreement ID, the exact ODRL policy JSON, the timestamp, and both parties' identifiers. The Vault Transit signature over all these fields prevents repudiation.",
+                  "modelType": "STRIDE"
+                }
+              ]
+            }
+          },
+          {
+            "position": {"x": 550, "y": 100},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "EDC Connector\n(Internal)"}},
+            "shape": "process",
+            "id": "process-edc-internal",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "EDC Connector (Internal)",
+              "description": "The platform's own EDC connector, extended via apps/edc-extension. Sends DSP messages to external connectors and receives responses.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {"x": 780, "y": 100},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "External Partner\nEDC Connector"}},
+            "shape": "actor",
+            "id": "actor-external-edc",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Actor",
+              "name": "External Partner EDC",
+              "description": "The Catena-X partner's EDC connector. Considered untrusted until DCP credential presentation is verified.",
+              "outOfScope": false,
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "threat-ext-01",
+                  "title": "Malformed DSP message causing parser exception",
+                  "status": "Mitigated",
+                  "severity": "Medium",
+                  "type": "Denial of Service",
+                  "description": "External partner sends a malformed or oversized DSP JSON-LD message designed to cause a parsing exception or memory exhaustion in the DSP adapter",
+                  "mitigation": "DSP adapter enforces maximum payload size (configurable, default 1MB). JSON parsing is sandboxed. JSON-LD compaction uses a time-limited context resolver. Malformed messages are rejected with DSP error response.",
+                  "modelType": "STRIDE"
+                }
+              ]
+            }
+          },
+          {
+            "position": {"x": 300, "y": 280},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "PostgreSQL\n(agreements)"}},
+            "shape": "store",
+            "id": "store-postgres-agreements",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Store",
+              "name": "PostgreSQL (agreements)",
+              "description": "Stores finalized contract agreements and metering contexts. Agreement record includes signed ODRL policy hash.",
+              "isALog": false,
+              "storesCredentials": false,
+              "storesInventory": true,
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

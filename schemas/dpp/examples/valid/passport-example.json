@@ -1,0 +1,33 @@
+{
+  "passportId": "urn:dpp:battery:BAT-2026-001",
+  "passportVersion": "1.0.0",
+  "subject": {
+    "subjectId": "BAT-2026-001",
+    "productClass": "battery",
+    "productModel": "EV-75kWh-NMC-Gen4",
+    "manufacturerId": "BPNL000000000001",
+    "manufacturerName": "Example Battery GmbH",
+    "countryOfManufacture": "DE",
+    "manufacturingDate": "2026-01-15",
+    "qrCodeUri": "https://dpp.example.org/bat/BAT-2026-001"
+  },
+  "lifecycle": {
+    "currentState": "active",
+    "stateChangedAt": "2026-01-15T12:00:00Z",
+    "isCeased": false,
+    "transitions": []
+  },
+  "accessClasses": [
+    {
+      "className": "public",
+      "description": "Anyone scanning the QR code",
+      "readablePaths": ["PublicData.BatteryId", "PublicData.ManufacturerName"],
+      "regulationSource": "Regulation (EU) 2023/1542 Annex XIII",
+      "effectiveFrom": "2027-02-18"
+    }
+  ],
+  "regulationPackIds": ["battery_passport"],
+  "implementationProfile": "aas_dpp4o",
+  "issuedAt": "2026-01-15T12:00:00Z",
+  "lastUpdatedAt": "2026-01-15T12:00:00Z"
+}

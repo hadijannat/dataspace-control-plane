@@ -1,0 +1,61 @@
+# Ecosystem Pack Manifest Template
+# Rename to manifest.toml and fill in your values.
+pack_id = "your_ecosystem_id"
+pack_kind = "ecosystem"   # or "regulation" or "custom"
+version = "1.0.0"
+display_name = "Your Ecosystem Display Name"
+description = "One-paragraph description of what this ecosystem pack provides."
+activation_scope = "tenant"   # or "legal_entity" or "environment"
+default_priority = 100
+conflicts = []   # list pack_ids that this pack is incompatible with
+
+[compatibility]
+core = ">=0.1.0"
+
+# Declare each capability interface you implement.
+# Remove entries for capabilities you do not implement.
+[[capabilities]]
+capability = "RequirementProvider"
+interface_class = "dataspace_control_plane_packs.your_ecosystem_id.api.YourRequirementProvider"
+
+# [[capabilities]]
+# capability = "PolicyDialectProvider"
+# interface_class = "..."
+
+# [[capabilities]]
+# capability = "EvidenceAugmenter"
+# interface_class = "..."
+
+# [[capabilities]]
+# capability = "IdentifierSchemeProvider"
+# interface_class = "..."
+
+# [[capabilities]]
+# capability = "CredentialProfileProvider"
+# interface_class = "..."
+
+# [[capabilities]]
+# capability = "TrustAnchorOverlayProvider"
+# interface_class = "..."
+
+# [[capabilities]]
+# capability = "TwinTemplateProvider"
+# interface_class = "..."
+
+# [[capabilities]]
+# capability = "ProcedureHookProvider"
+# interface_class = "..."
+
+# [[capabilities]]
+# capability = "UiSchemaProvider"
+# interface_class = "..."
+
+# Pin each normative source you consume.
+# Do NOT fetch normative sources at runtime — pin them under vocab/pinned/.
+# [[normative_sources]]
+# source_uri = "https://example.org/your-spec"
+# version = "1.0"
+# retrieval_date = "2026-01-01"
+# sha256 = "..."
+# local_filename = "vocab/pinned/your_spec_v1.0.pdf"
+# effective_from = "2026-01-01"

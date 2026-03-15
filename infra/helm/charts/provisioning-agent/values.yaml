@@ -1,0 +1,84 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/your-org/dataspace-control-plane/provisioning-agent
+  # Use digest in production: sha256:<digest>
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8082"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Provisioning agent is internal — no public ingress
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8082
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+# External secret reference names (never literal values)
+secrets:
+  vaultSecretName: provisioning-agent-vault
+  keycloakAdminSecretName: provisioning-agent-keycloak-admin
+  edcApiKeySecretName: provisioning-agent-edc-api-key
+
+config:
+  logLevel: INFO
+  otlpEndpoint: "http://otel-collector:4317"
+  edcControlUrl: "http://edc-control:9192"
+  edcManagementUrl: "http://edc-control:9193"
+  keycloakAdminUrl: "http://keycloak:8080/admin"
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8082
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 8082
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

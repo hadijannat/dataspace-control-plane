@@ -1,0 +1,27 @@
+# Staging environment overlay for temporal-workers
+# Applied over charts/temporal-workers/values.yaml
+
+replicaCount: 2
+
+image:
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+config:
+  logLevel: INFO
+  temporalHost: "temporal:7233"
+  temporalNamespace: "dataspace"
+  temporalTaskQueue: "dataspace-main"
+  temporalMaxConcurrentActivities: 8
+  temporalMaxConcurrentWorkflows: 4
+
+autoscaling:
+  enabled: false

@@ -1,0 +1,24 @@
+# Copy to staging.backend.hcl (gitignored) and fill in your values.
+# Never commit real backend config with credentials.
+# Usage: terraform init -backend-config=../../../backends/staging.backend.hcl
+
+# Example: S3 backend (AWS)
+# bucket         = "your-org-terraform-state-staging"
+# key            = "dataspace-control-plane/staging/<root>/terraform.tfstate"
+# region         = "eu-west-1"
+# encrypt        = true
+# dynamodb_table = "terraform-locks-staging"
+
+# Example: GCS backend
+# bucket = "your-org-terraform-state-staging"
+# prefix = "dataspace-control-plane/staging"
+
+# Example: Azure Blob
+# resource_group_name  = "terraform-state-rg"
+# storage_account_name = "yourorgterraformstaging"
+# container_name       = "tfstate"
+# key                  = "dataspace-control-plane/staging/<root>.tfstate"
+
+# Example: Kubernetes backend
+# secret_suffix = "staging-<root>"
+# namespace     = "terraform-state"

@@ -1,0 +1,37 @@
+# Dev environment overlay for web-console
+# Applied over charts/web-console/values.yaml
+
+replicaCount: 1
+
+image:
+  tag: "dev"
+  pullPolicy: Always
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: console.dev.dataspace.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+config:
+  apiBaseUrl: "http://control-api"
+  keycloakUrl: "http://keycloak.dev.dataspace.local"
+  keycloakRealm: "dataspace"
+  keycloakClientId: "web-console"
+  nextTelemetryDisabled: "1"
+
+autoscaling:
+  enabled: false

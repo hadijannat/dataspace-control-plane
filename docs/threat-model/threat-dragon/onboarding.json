@@ -1,0 +1,140 @@
+{
+  "version": "2.2.0",
+  "summary": {
+    "title": "Dataspace Control Plane — Company Onboarding Threat Model",
+    "owner": "docs-lead",
+    "description": "Threat model for the company onboarding flow: Operator -> web-console -> control-api -> OnboardingWorkflow (Temporal) -> Keycloak realm + Vault DID signing + Postgres tenant record.",
+    "id": 1
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Company Onboarding Data Flow",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram",
+        "thumbnail": "./public/content/images/thumbnail.jpg",
+        "version": "2.2.0",
+        "cells": [
+          {
+            "position": {"x": 200, "y": 80},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Operator\n(Browser)"}},
+            "shape": "actor",
+            "id": "actor-operator",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Actor",
+              "name": "Operator",
+              "description": "Platform operator initiating company registration via the web-console",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {"x": 200, "y": 220},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "OnboardingWorkflow\n(Temporal)"}},
+            "shape": "process",
+            "id": "process-onboarding-workflow",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "OnboardingWorkflow",
+              "description": "Temporal durable workflow that orchestrates realm creation, DID signing, and tenant record persistence. Workflow history is the audit trail for onboarding.",
+              "outOfScope": false,
+              "privilegeLevel": "application",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "threat-ow-01",
+                  "title": "Duplicate realm creation via workflow replay",
+                  "status": "Mitigated",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "If the OnboardingWorkflow is replayed (e.g., due to a Temporal worker restart mid-execution), the CreateRealm activity could attempt to create a realm that already exists, potentially overwriting its configuration",
+                  "mitigation": "The CreateRealm activity is idempotent: it first checks if the realm exists (GET /realms/{realm}) and returns the existing realm if found. No overwrite occurs on replay.",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-ow-02",
+                  "title": "Workflow history leaks client_secret",
+                  "status": "Mitigated",
+                  "severity": "Critical",
+                  "type": "Information Disclosure",
+                  "description": "The CreateClient activity in Keycloak returns a client_secret. If this is stored as a workflow output or local variable visible in workflow history, it is exposed to anyone with Temporal UI access.",
+                  "mitigation": "The client_secret is written to Vault immediately within the CreateClient activity and is never returned to the workflow as a result. Only the Vault secret path (not the secret value) is stored as the activity result in workflow history.",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-ow-03",
+                  "title": "Partial tenant record leaves orphaned Keycloak realm",
+                  "status": "Mitigated",
+                  "severity": "Low",
+                  "type": "Denial of Service",
+                  "description": "If the workflow fails after realm creation but before Postgres tenant record creation, a Keycloak realm exists without a corresponding tenant record. Re-running onboarding with the same legalEntityId would fail at the idempotency check.",
+                  "mitigation": "Idempotent activity design: CreateRealm returns the existing realm on replay; InsertTenantRecord is guarded by an ON CONFLICT DO UPDATE. Temporal retry resumes from the last successful activity.",
+                  "modelType": "STRIDE"
+                }
+              ]
+            }
+          },
+          {
+            "position": {"x": 500, "y": 160},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Keycloak\n(Realm Admin)"}},
+            "shape": "process",
+            "id": "process-keycloak",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "Keycloak",
+              "description": "Identity provider. Receives realm and client creation requests from the OnboardingWorkflow via the Keycloak Admin REST API.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {"x": 500, "y": 300},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Postgres\n(tenant record)"}},
+            "shape": "store",
+            "id": "store-postgres",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Store",
+              "name": "PostgreSQL",
+              "description": "Receives the final tenant record INSERT after DID signing. RLS enabled.",
+              "isALog": false,
+              "storesCredentials": false,
+              "storesInventory": true,
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {"x": 200, "y": 380},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Vault Transit\n(DID signing)"}},
+            "shape": "process",
+            "id": "process-vault-transit",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "Vault Transit (DID)",
+              "description": "Signs the DID document for the new company. Key created with exportable=false during onboarding.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

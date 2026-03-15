@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/packs/src/dataspace_control_plane_packs/_shared/rule_model.py
+# hypothesis_version: 6.135.10
+
+['error', 'info', 'payload', 'rule_id', 'source_uri', 'source_version', 'warning']

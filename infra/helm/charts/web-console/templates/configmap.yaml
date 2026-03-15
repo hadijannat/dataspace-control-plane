@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "web-console.fullname" . }}-config
+  labels:
+    {{- include "web-console.labels" . | nindent 4 }}
+data:
+  NEXT_PUBLIC_API_URL: {{ .Values.config.apiBaseUrl | quote }}
+  NEXT_PUBLIC_KEYCLOAK_URL: {{ .Values.config.keycloakUrl | quote }}
+  NEXT_PUBLIC_KEYCLOAK_REALM: {{ .Values.config.keycloakRealm | quote }}
+  NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: {{ .Values.config.keycloakClientId | quote }}
+  NEXT_TELEMETRY_DISABLED: {{ .Values.config.nextTelemetryDisabled | quote }}

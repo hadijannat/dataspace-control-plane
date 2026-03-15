@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/source/profiles/aasx-manifest.schema.json",
+  "title": "AASX Package Manifest Reference",
+  "description": "Reference-level schema for an AASX package manifest entry. An AASX file is a ZIP archive (OPC/ECMA-376 format); this schema describes how the package is referenced and labelled, not the full ZIP structure. Full AASX packaging is specified in IDTA AAS Part 5.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 5",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["packageUri", "shellIds"],
+  "additionalProperties": false,
+
+  "properties": {
+    "packageUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI from which the AASX package can be retrieved"
+    },
+    "packageId": {
+      "type": "string",
+      "description": "Optional stable identifier for this package"
+    },
+    "shellIds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"},
+      "description": "AAS IDs contained in this package"
+    },
+    "submodelIds": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Submodel IDs contained in this package"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "packageSize": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Size in bytes"
+    },
+    "contentType": {
+      "type": "string",
+      "const": "application/asset-administration-shell-package+zip",
+      "description": "MIME type for AASX packages"
+    }
+  }
+}

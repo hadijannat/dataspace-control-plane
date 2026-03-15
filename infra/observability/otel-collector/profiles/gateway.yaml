@@ -1,0 +1,137 @@
+# profiles/gateway.yaml — Shared app telemetry ingress (Deployment mode)
+#
+# Receives OTLP from all app pods, enriches with K8s metadata, exports to backends.
+#
+# Deployment mode:
+#   - Run as a Deployment (not DaemonSet) — 2+ replicas for HA
+#   - Service type: ClusterIP, DNS: otel-collector.<namespace>.svc.cluster.local
+#   - Requires ClusterRole binding for k8sattributes ServiceAccount access
+#
+# This is the standard production collector profile for Kubernetes.
+# Deploy via: infra/observability/otel-collector/helm/values.prod-eu.yaml
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 16
+      http:
+        endpoint: 0.0.0.0:4318
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: otel-collector-gateway
+          scrape_interval: 30s
+          static_configs:
+            - targets: [localhost:8888]
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 4096
+
+  memory_limiter:
+    limit_mib: 1024
+    spike_limit_mib: 256
+    check_interval: 5s
+
+  resource:
+    attributes:
+      - key: deployment.environment
+        from_attribute: DEPLOYMENT_ENVIRONMENT
+        action: upsert
+
+  k8sattributes:
+    auth_type: serviceAccount
+    passthrough: false
+    extract:
+      metadata:
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.namespace.name
+        - k8s.node.name
+        - k8s.deployment.name
+        - k8s.replicaset.name
+      labels:
+        - tag_name: app
+          key: app.kubernetes.io/name
+          from: pod
+        - tag_name: version
+          key: app.kubernetes.io/version
+          from: pod
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+      - sources:
+          - from: connection
+
+  redaction:
+    allow_all_keys: true
+    blocked_values:
+      - "(?i)password"
+      - "(?i)token"
+      - "(?i)secret"
+      - "(?i)private.key"
+      - "(?i)authorization"
+      - "(?i)api.key"
+    summary: debug
+
+exporters:
+  otlp/tempo:
+    endpoint: ${TEMPO_ENDPOINT}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${TEMPO_TOKEN}
+
+  prometheusremotewrite:
+    endpoint: ${PROMETHEUS_REMOTE_WRITE_URL}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${PROMETHEUS_TOKEN}
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  loki:
+    endpoint: ${LOKI_ENDPOINT}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${LOKI_TOKEN}
+    default_labels_enabled:
+      exporter: false
+      job: true
+      instance: true
+      level: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  memory_ballast:
+    size_mib: 256
+
+service:
+  extensions: [health_check, memory_ballast]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, k8sattributes, redaction, batch]
+      exporters: [otlp/tempo]
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, k8sattributes, batch]
+      exporters: [prometheusremotewrite]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, k8sattributes, redaction, batch]
+      exporters: [loki]
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

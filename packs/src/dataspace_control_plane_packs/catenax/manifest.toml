@@ -1,0 +1,55 @@
+pack_id = "catenax"
+pack_kind = "ecosystem"
+version = "4.0.0"
+display_name = "Catena-X Ecosystem Pack"
+description = "Operating-model rules, BPN identity scheme, governance acceptance, and ODRL policy profile for the Catena-X data space."
+activation_scope = "tenant"
+default_priority = 50
+conflicts = []
+
+[compatibility]
+core = ">=0.1.0"
+
+[[capabilities]]
+capability = "RequirementProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxRequirementProvider"
+
+[[capabilities]]
+capability = "PolicyDialectProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxPolicyDialectProvider"
+
+[[capabilities]]
+capability = "PurposeCatalogProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxPurposeCatalogProvider"
+
+[[capabilities]]
+capability = "IdentifierSchemeProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.BpnlSchemeProvider"
+
+[[capabilities]]
+capability = "CredentialProfileProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxCredentialProfileProvider"
+
+[[capabilities]]
+capability = "ProcedureHookProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxProcedureHooks"
+
+[[capabilities]]
+capability = "EvidenceAugmenter"
+interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxEvidenceAugmenter"
+
+[[normative_sources]]
+source_uri = "https://catenax-ev.github.io/docs/operating-model/how-data-space-operations"
+version = "4.0"
+retrieval_date = "2026-03-14"
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+local_filename = "vocab/pinned/cx_operating_model_4.0.html"
+effective_from = "2024-01-01"
+
+[[normative_sources]]
+source_uri = "https://github.com/catenax-eV/cx-odrl-profile"
+version = "24.05"
+retrieval_date = "2026-03-14"
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+local_filename = "policy_profile/vendor/cx_odrl_profile.ttl"
+effective_from = "2024-05-01"

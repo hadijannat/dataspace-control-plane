@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/packs/src/dataspace_control_plane_packs/_shared/provenance.py
+# hypothesis_version: 6.135.10
+
+['ArtifactProvenance', 'activation_scope', 'generated_at', 'pack_id', 'pack_version', 'rule_bundle_hash', 'rule_ids', 'rules', 'source_uris', 'source_versions', 'uris']

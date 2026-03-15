@@ -1,0 +1,44 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/odrl.jsonld",
+    {"cx-policy": "https://w3id.org/catenax/policy/v1/"}
+  ],
+  "@type": "odrl:Offer",
+  "uid": "https://provider.example.org/policies/offer-001",
+  "assigner": "https://provider.example.org",
+  "target": "https://provider.example.org/assets/dataset-001",
+  "permission": [
+    {
+      "action": "odrl:use",
+      "constraint": [
+        {
+          "leftOperand": "cx-policy:UsagePurpose",
+          "operator": "odrl:isAnyOf",
+          "rightOperand": [
+            "cx-policy:ResearchAndDevelopment",
+            "cx-policy:SupplyChainManagement"
+          ]
+        }
+      ],
+      "duty": [
+        {
+          "action": "odrl:inform",
+          "assignee": "https://provider.example.org",
+          "constraint": [
+            {
+              "leftOperand": "odrl:event",
+              "operator": "odrl:lt",
+              "rightOperand": "odrl:policyUsage"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "prohibition": [
+    {
+      "action": "odrl:reproduce",
+      "constraint": []
+    }
+  ]
+}

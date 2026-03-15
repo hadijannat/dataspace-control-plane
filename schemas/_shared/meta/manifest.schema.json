@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/_shared/meta/manifest.schema.json",
+  "title": "Schema Family Manifest",
+  "description": "Validates the manifest.yaml file found in every schema family directory.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["family", "version", "description", "upstream_standards", "artifact_classes", "validation_dialect"],
+  "additionalProperties": false,
+
+  "properties": {
+    "family": {
+      "type": "string",
+      "description": "Schema family identifier, matches top-level directory name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semver for this manifest"
+    },
+    "description": {
+      "type": "string",
+      "description": "One-sentence purpose of this schema family"
+    },
+    "upstream_standards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "version", "source_uri"],
+        "additionalProperties": false,
+        "properties": {
+          "name":       {"type": "string"},
+          "version":    {"type": "string"},
+          "source_uri": {"type": "string", "format": "uri"}
+        }
+      },
+      "description": "Normative upstream standards pinned by this family"
+    },
+    "validation_dialect": {
+      "type": "string",
+      "description": "Primary validation dialect for local-authored schemas",
+      "enum": [
+        "https://json-schema.org/draft/2020-12/schema",
+        "https://json-schema.org/draft/2019-09/schema",
+        "mixed"
+      ]
+    },
+    "artifact_classes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["vendor", "source", "derived", "bundles", "examples"]
+      },
+      "description": "Artifact class subdirectories present in this family"
+    },
+    "ci_gates": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "CI gate commands that must pass for this family"
+    },
+    "downstream_consumers": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Directories that import from this schema family"
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

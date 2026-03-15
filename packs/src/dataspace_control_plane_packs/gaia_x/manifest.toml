@@ -1,0 +1,43 @@
+pack_id = "gaia_x"
+pack_kind = "ecosystem"
+version = "22.10.0"
+display_name = "Gaia-X Trust Framework Pack"
+description = "Gaia-X baseline trust framework, self-description requirements, versioned compliance rules, and federation overlay support. Does not represent any single federation as universal."
+activation_scope = "tenant"
+default_priority = 55
+conflicts = []
+
+[compatibility]
+core = ">=0.1.0"
+
+[[capabilities]]
+capability = "RequirementProvider"
+interface_class = "dataspace_control_plane_packs.gaia_x.api.GaiaXRequirementProvider"
+
+[[capabilities]]
+capability = "CredentialProfileProvider"
+interface_class = "dataspace_control_plane_packs.gaia_x.api.GaiaXCredentialProfileProvider"
+
+[[capabilities]]
+capability = "TrustAnchorOverlayProvider"
+interface_class = "dataspace_control_plane_packs.gaia_x.api.GaiaXBaselineTrustAnchorOverlay"
+
+[[capabilities]]
+capability = "PolicyDialectProvider"
+interface_class = "dataspace_control_plane_packs.gaia_x.api.GaiaXPolicyDialectProvider"
+
+[[capabilities]]
+capability = "DataExchangeProfileProvider"
+interface_class = "dataspace_control_plane_packs.gaia_x.api.GaiaXDataExchangeProfileProvider"
+
+[[capabilities]]
+capability = "EvidenceAugmenter"
+interface_class = "dataspace_control_plane_packs.gaia_x.api.GaiaXEvidenceAugmenter"
+
+[[normative_sources]]
+source_uri = "https://docs.gaia-x.eu/policy-rules-committee/trust-framework/22.10/"
+version = "22.10"
+retrieval_date = "2026-03-14"
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+local_filename = "rules/compliance_baseline.yaml"
+effective_from = "2022-10-01"

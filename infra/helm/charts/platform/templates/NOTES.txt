@@ -1,0 +1,63 @@
+Dataspace Control Plane — Platform Release
+==========================================
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Chart version: {{ .Chart.Version }}
+App version: {{ .Chart.AppVersion }}
+
+Enabled components:
+{{- if index .Values "control-api" "enabled" }}
+  [x] control-api
+{{- else }}
+  [ ] control-api (disabled)
+{{- end }}
+{{- if index .Values "temporal-workers" "enabled" }}
+  [x] temporal-workers
+{{- else }}
+  [ ] temporal-workers (disabled)
+{{- end }}
+{{- if index .Values "web-console" "enabled" }}
+  [x] web-console
+{{- else }}
+  [ ] web-console (disabled)
+{{- end }}
+{{- if index .Values "provisioning-agent" "enabled" }}
+  [x] provisioning-agent
+{{- else }}
+  [ ] provisioning-agent (disabled)
+{{- end }}
+
+------------------------------------------------------------
+Get the web-console URL:
+------------------------------------------------------------
+{{- if index .Values "web-console" "enabled" }}
+{{- $ingress := index .Values "web-console" "ingress" }}
+{{- if and $ingress (index $ingress "enabled") }}
+{{- range (index $ingress "hosts") }}
+  https://{{ .host }}
+{{- end }}
+{{- else }}
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Release.Name }}-web-console 3000:80
+  Then open: http://localhost:3000
+{{- end }}
+{{- end }}
+
+------------------------------------------------------------
+Check worker status:
+------------------------------------------------------------
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name=temporal-workers
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name=temporal-workers --tail=50
+
+------------------------------------------------------------
+Run Helm tests:
+------------------------------------------------------------
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+------------------------------------------------------------
+Upgrade to a new version:
+------------------------------------------------------------
+  helm upgrade {{ .Release.Name }} infra/helm/charts/platform \
+    --namespace {{ .Release.Namespace }} \
+    -f infra/helm/values/<env>/platform.yaml \
+    --atomic --timeout 5m

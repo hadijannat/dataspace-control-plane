@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dataspace-control-plane-packs"
+version = "0.1.0"
+description = "Ecosystem and regulatory overlay packs for the dataspace control-plane"
+requires-python = ">=3.12"
+dependencies = [
+    "dataspace-control-plane-core",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "tomllib; python_version < '3.11'",
+    "pyyaml>=6.0",
+    "semver>=3.0",
+    "jsonschema>=4.22",
+    "python-dateutil>=2.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dataspace_control_plane_packs"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["src/dataspace_control_plane_packs"]

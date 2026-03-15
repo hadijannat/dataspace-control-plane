@@ -1,0 +1,18 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  memory_ballast:
+    # Size is 40% of memory_limiter.limit_mib — reduces GC pressure.
+    # Adjust if memory_limiter is changed.
+    size_mib: 128
+
+  # pprof and zpages are available but DISABLED by default.
+  # Enable ONLY in the debug profile for local troubleshooting.
+  # NEVER enable in staging or production — they expose internal state.
+  #
+  # pprof:
+  #   endpoint: localhost:1777
+  #
+  # zpages:
+  #   endpoint: localhost:55679

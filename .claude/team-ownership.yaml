@@ -1,0 +1,253 @@
+# Machine-readable ownership map for dataspace-control-plane agent teams.
+# Consumed by hook scripts and wave skills.
+# Source of truth: docs/agents/ownership-map.md
+
+directories:
+  core-lead:
+    root: core/
+    upstream_deps:
+      - schemas/
+      - docs/
+    downstream_deps:
+      - procedures/
+      - adapters/
+      - apps/
+      - tests/
+      - packs/
+    forbidden:
+      - apps/
+      - procedures/
+      - adapters/
+      - packs/
+      - tests/
+      - infra/
+      - docs/
+    handoff_file: .claude/handoffs/core.md
+
+  schemas-lead:
+    root: schemas/
+    upstream_deps:
+      - core/
+      - packs/
+      - pinned-upstream-standards
+    downstream_deps:
+      - adapters/
+      - procedures/
+      - apps/
+      - tests/
+      - docs/api
+    forbidden:
+      - core/
+      - procedures/
+      - adapters/
+      - apps/
+      - packs/
+      - infra/
+      - docs/
+    handoff_file: .claude/handoffs/schemas.md
+
+  adapters-lead:
+    root: adapters/
+    upstream_deps:
+      - core/
+      - schemas/
+      - packs/
+    downstream_deps:
+      - procedures/
+      - apps/
+      - tests/
+      - infra/
+    forbidden:
+      - core/
+      - procedures/
+      - apps/
+      - packs/
+      - schemas/
+      - tests/
+      - infra/
+      - docs/
+    handoff_file: .claude/handoffs/adapters.md
+
+  procedures-lead:
+    root: procedures/
+    upstream_deps:
+      - core/
+      - packs/
+      - docs/
+    downstream_deps:
+      - adapters/
+      - apps/temporal-workers
+      - tests/
+      - docs/runbooks
+    forbidden:
+      - core/
+      - adapters/
+      - apps/
+      - packs/
+      - schemas/
+      - infra/
+      - docs/
+    handoff_file: .claude/handoffs/procedures.md
+
+  apps-lead:
+    root: apps/
+    upstream_deps:
+      - core/
+      - procedures/
+      - adapters/
+      - packs/
+      - schemas/
+    downstream_deps:
+      - infra/
+      - tests/
+      - docs/
+    forbidden:
+      - core/
+      - procedures/
+      - adapters/
+      - packs/
+      - schemas/
+      - infra/
+      - tests/
+      - docs/
+    handoff_file: .claude/handoffs/apps.md
+
+  packs-lead:
+    root: packs/
+    upstream_deps:
+      - core/
+      - schemas/
+      - docs/compliance-mappings
+    downstream_deps:
+      - procedures/
+      - apps/
+      - tests/
+      - docs/
+    forbidden:
+      - core/
+      - procedures/
+      - adapters/
+      - apps/
+      - schemas/
+      - infra/
+      - tests/
+      - docs/
+    handoff_file: .claude/handoffs/packs.md
+
+  tests-lead:
+    root: tests/
+    upstream_deps:
+      - apps/
+      - core/
+      - procedures/
+      - adapters/
+      - packs/
+      - schemas/
+      - infra/
+    downstream_deps:
+      - release-decisions
+      - docs/runbooks
+    forbidden:
+      - apps/
+      - core/
+      - procedures/
+      - adapters/
+      - packs/
+      - schemas/
+      - infra/
+      - docs/
+    handoff_file: .claude/handoffs/tests.md
+
+  infra-lead:
+    root: infra/
+    upstream_deps:
+      - apps/
+      - adapters/
+      - tests/
+      - docs/runbooks
+    downstream_deps:
+      - deployment-environments
+      - operator-workflows
+      - observability-consumers
+    forbidden:
+      - apps/
+      - core/
+      - procedures/
+      - adapters/
+      - packs/
+      - schemas/
+      - tests/
+      - docs/
+    handoff_file: .claude/handoffs/infra.md
+
+  docs-lead:
+    root: docs/
+    upstream_deps:
+      - apps/
+      - core/
+      - procedures/
+      - adapters/
+      - packs/
+      - schemas/
+      - tests/
+      - infra/
+    downstream_deps:
+      - operators
+      - reviewers
+      - security
+      - compliance
+      - future-agents
+    forbidden:
+      - apps/
+      - core/
+      - procedures/
+      - adapters/
+      - packs/
+      - schemas/
+      - tests/
+      - infra/
+    handoff_file: .claude/handoffs/docs.md
+
+waves:
+  - id: wave-0
+    name: foundation-planning
+    purpose: >
+      Establish semantic foundation, schema registry, infrastructure substrate,
+      and governance docs. No procedure or app code yet.
+    teammates:
+      - core-lead
+      - schemas-lead
+      - infra-lead
+      - docs-lead
+
+  - id: wave-1
+    name: platform-foundation
+    purpose: >
+      Build canonical models, full schema families, adapter stubs and
+      integrations, and infrastructure packaging.
+    teammates:
+      - core-lead
+      - schemas-lead
+      - adapters-lead
+      - infra-lead
+
+  - id: wave-2
+    name: execution-layer
+    purpose: >
+      Implement durable workflow procedures, runtime app surfaces,
+      integration verification, and adapter completion.
+    teammates:
+      - procedures-lead
+      - apps-lead
+      - tests-lead
+      - adapters-lead
+
+  - id: wave-3
+    name: overlays-hardening
+    purpose: >
+      Apply ecosystem and regulatory overlays, harden release gates,
+      and complete governance documentation.
+    teammates:
+      - packs-lead
+      - tests-lead
+      - docs-lead

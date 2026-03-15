@@ -1,0 +1,3 @@
+# Ecosystem ODRL profile artifacts — pinned by schemas/tools/pin_upstream.py
+# Run: python schemas/tools/pin_upstream.py --family odrl
+# Includes: Catena-X ODRL profile 24.05

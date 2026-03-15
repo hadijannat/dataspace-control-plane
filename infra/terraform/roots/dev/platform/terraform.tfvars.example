@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (gitignored) and adjust values.
+
+# namespace            = "dataspace"
+# postgres_storage_size = "5Gi"
+# vault_storage_size    = "5Gi"
+# ingress_class_name    = "nginx"

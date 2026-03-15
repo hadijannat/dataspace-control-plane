@@ -1,0 +1,15 @@
+{
+  "recordId": "550e8400-e29b-41d4-a716-446655440001",
+  "agreementRef": {
+    "agreementId": "https://provider.example.org/agreements/agr-002"
+  },
+  "counterpartyRef": {
+    "counterpartyId": "BPNL000000000002"
+  },
+  "dimensions": [
+    {"dimensionId": "bytes_transferred", "quantity": 1024, "unit": "bytes"}
+  ],
+  "eventTime": "2026-03-14T11:00:00Z",
+  "reportedAt": "2026-03-14T11:00:01Z",
+  "sourceSystem": "test"
+}

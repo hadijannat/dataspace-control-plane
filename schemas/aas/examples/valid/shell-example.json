@@ -1,0 +1,29 @@
+{
+  "modelType": "AssetAdministrationShell",
+  "id": "urn:example:aas:shell-001",
+  "idShort": "BatteryShell001",
+  "description": [
+    {"language": "en", "text": "AAS shell for battery BAT-2026-001"}
+  ],
+  "assetInformation": {
+    "assetKind": "Instance",
+    "globalAssetId": "urn:example:asset:battery:BAT-2026-001",
+    "specificAssetIds": [
+      {
+        "name": "BatchId",
+        "value": "BATCH-2026-Q1-042"
+      }
+    ]
+  },
+  "submodels": [
+    {
+      "type": "ModelReference",
+      "keys": [
+        {
+          "type": "Submodel",
+          "value": "urn:battery-passport:BAT-2026-001"
+        }
+      ]
+    }
+  ]
+}

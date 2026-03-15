@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/usage-dimension.schema.json",
+  "title": "Usage Dimension",
+  "description": "A single measurable quantity within a usage record — e.g. bytes transferred, API calls made, CPU seconds consumed. Named and typed for rating rule lookup.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["dimensionId", "quantity", "unit"],
+  "additionalProperties": false,
+
+  "properties": {
+    "dimensionId": {
+      "type": "string",
+      "description": "Stable identifier for this usage dimension type, e.g. bytes_transferred, api_calls",
+      "examples": ["bytes_transferred", "api_calls", "connector_sessions", "cpu_seconds", "storage_gb_day"]
+    },
+    "quantity": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Non-negative measured quantity"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit of measurement",
+      "examples": ["bytes", "count", "seconds", "gb_day", "request"]
+    },
+    "precision": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Decimal precision of the quantity measurement"
+    },
+    "rawValue": {
+      "type": "string",
+      "description": "Original string representation before numeric conversion, for audit"
+    }
+  }
+}

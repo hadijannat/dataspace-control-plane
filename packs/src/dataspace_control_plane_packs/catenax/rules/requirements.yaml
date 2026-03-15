@@ -1,0 +1,23 @@
+version: "4.0"
+source: "Catena-X Operating Model v4.0"
+rules:
+  - rule_id: "catenax:bpnl-required"
+    title: "BPNL Required"
+    severity: "error"
+    machine_checkable: true
+    description: "Every Catena-X participant must have a registered BPNL."
+  - rule_id: "catenax:connector-required"
+    title: "Connector Required"
+    severity: "error"
+    machine_checkable: true
+    description: "At least one connector must be registered per legal entity."
+  - rule_id: "catenax:deg-acceptance-required"
+    title: "Data Exchange Governance Acceptance Required"
+    severity: "error"
+    machine_checkable: false
+    description: "Participant must have accepted the Catena-X Data Exchange Governance."
+  - rule_id: "catenax:governance-framework-accepted"
+    title: "Governance Framework Acceptance"
+    severity: "error"
+    machine_checkable: false
+    description: "Participant must have accepted the current Catena-X Governance Framework."

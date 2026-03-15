@@ -1,0 +1,20 @@
+{
+  "mappingId": "bad-mapping-no-lineage",
+  "version": "1.0.0",
+  "sourceModelId": "crm-mssql-public",
+  "targetModelRef": {
+    "targetModelId": "core.Counterparty",
+    "targetModelType": "core_domain_model"
+  },
+  "fieldMappings": [
+    {
+      "targetField": "counterparty.bpn",
+      "sourceFields": [
+        {"entity": "AccountBase", "field": "ExternalId"}
+      ]
+    }
+  ],
+  "approval": {
+    "status": "draft"
+  }
+}

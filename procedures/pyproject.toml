@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "dataspace-control-plane-procedures"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "temporalio>=1.7",
+    "pydantic>=2.7",
+    "dataspace-control-plane-core",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

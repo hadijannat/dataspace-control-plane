@@ -1,0 +1,92 @@
+profile:
+  uuid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  metadata:
+    title: "Catena-X Dataspace Participation Profile"
+    last-modified: "2026-03-14T00:00:00Z"
+    version: "0.1.0"
+    oscal-version: "1.1.2"
+    remarks: |
+      This OSCAL profile selects and tailors the controls required for participation
+      in the Catena-X industrial dataspace. Controls are derived from the Catena-X
+      Operating Model 4.0, the DSP protocol specification, and the DCP protocol
+      specification. This profile is consumed by the platform-component.yaml component
+      definition to document which platform components implement each control.
+    links:
+      - href: "https://catena-x.net/operating-model"
+        rel: "reference"
+        media-type: "text/html"
+      - href: "https://eclipse-edc.github.io/connector/"
+        rel: "reference"
+        media-type: "text/html"
+    parties:
+      - uuid: "party-platform-team"
+        type: organization
+        name: Dataspace Platform Team
+        remarks: "The team responsible for implementing and operating the dataspace control plane"
+    roles:
+      - id: "control-owner"
+        title: "Control Owner"
+        description: "The lead responsible for ensuring a specific control is implemented and maintained"
+  imports:
+    - href: "#"
+      include-controls:
+        - with-ids:
+            - cx-membership-01
+            - cx-dsp-01
+            - cx-dsp-02
+            - cx-dcp-01
+            - cx-odrl-01
+            - cx-vc-01
+            - cx-audit-01
+  merge:
+    combine:
+      method: merge
+  modify:
+    set-parameters:
+      - param-id: "token-ttl-human"
+        values:
+          - "300"
+        remarks: "JWT TTL for human operator tokens: 5 minutes"
+      - param-id: "token-ttl-machine"
+        values:
+          - "900"
+        remarks: "JWT TTL for machine service account tokens: 15 minutes"
+      - param-id: "vault-signing-key-rotation-interval-days"
+        values:
+          - "90"
+        remarks: "Vault Transit signing key must be rotated at least every 90 days"
+    alter:
+      - control-id: cx-vc-01
+        add:
+          position: ending
+          parts:
+            - id: cx-vc-01_stmt_platform
+              name: statement
+              prose: "The platform issues W3C VC 2.0 credentials with Data Integrity proofs signed via Vault Transit. Keys are created with exportable=false. All signing operations are logged to the Vault audit backend."
+  back-matter:
+    resources:
+      - uuid: "res-catena-x-opmodel"
+        title: "Catena-X Operating Model 4.0"
+        rlinks:
+          - href: "https://catena-x.net/operating-model-4.0"
+            media-type: "application/pdf"
+      - uuid: "res-dsp-spec"
+        title: "Dataspace Protocol Specification"
+        rlinks:
+          - href: "https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol"
+            media-type: "text/html"
+      - uuid: "res-dcp-spec"
+        title: "Dataspace Connect Protocol Specification"
+        rlinks:
+          - href: "https://eclipse-edc.github.io/connector/dcp/"
+            media-type: "text/html"
+      - uuid: "res-adr-0004"
+        title: "ADR-0004: Vault Transit for Signing Keys"
+        rlinks:
+          - href: "../../../adr/0004-vault-transit-for-signing-keys.md"
+            media-type: "text/markdown"
+      - uuid: "res-adr-0005"
+        title: "ADR-0005: Packs as Pure Overlays"
+        rlinks:
+          - href: "../../../adr/0005-packs-as-pure-overlay.md"
+            media-type: "text/markdown"

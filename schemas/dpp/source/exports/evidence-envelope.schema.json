@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/exports/evidence-envelope.schema.json",
+  "title": "DPP Evidence Export Envelope",
+  "description": "Envelope for exporting evidence associated with a Digital Product Passport — test reports, declarations of conformity, supply chain attestations. Used by procedures/ for evidence emission and by apps/ for evidence download endpoints.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["passportId", "evidenceType", "evidencePayload", "emittedAt", "emittedBy"],
+  "additionalProperties": false,
+
+  "properties": {
+    "passportId":  {"type": "string"},
+    "evidenceType": {
+      "type": "string",
+      "description": "Type of evidence artifact",
+      "examples": [
+        "declaration_of_conformity",
+        "test_report",
+        "supply_chain_attestation",
+        "carbon_footprint_calculation",
+        "recycled_content_claim",
+        "repair_record",
+        "repurposing_record"
+      ]
+    },
+    "evidencePayload": {
+      "type": "object",
+      "description": "Pack-specific evidence content (structured by the pack's EvidenceAugmenter)",
+      "additionalProperties": true
+    },
+    "evidenceVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "emittedAt":  {"type": "string", "format": "date-time"},
+    "emittedBy":  {"type": "string", "description": "BPN or DID of the evidence emitter"},
+    "packId":     {"type": "string", "description": "Pack that generated this evidence"},
+    "sourceRuleIds": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Rule IDs from the pack that this evidence satisfies"
+    },
+    "provenanceHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of sorted rule_ids + source_uris (from ArtifactProvenance)"
+    },
+    "attachmentUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional link to a binary attachment (PDF, signed document, etc.)"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars (gitignored) and adjust values.
+# Run `terraform init` then `terraform plan -var-file=terraform.tfvars`
+
+# cluster_name = "dev"
+
+# Dev registry has smaller storage than staging/prod
+# registry_storage_gb = 20

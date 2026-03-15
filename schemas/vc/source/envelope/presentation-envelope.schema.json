@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/vc/source/envelope/presentation-envelope.schema.json",
+  "title": "Verifiable Presentation Envelope",
+  "description": "Structural shape of a W3C Verifiable Presentation (VC Data Model 2.0). Wraps one or more Verifiable Credentials for selective disclosure. Does not validate holder binding or credential-specific fields.",
+  "x-source-standard": "W3C Verifiable Credentials Data Model 2.0",
+  "x-source-version": "2.0",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["@context", "type"],
+  "additionalProperties": true,
+
+  "properties": {
+    "@context": {
+      "description": "JSON-LD context. First value must be the W3C VC v2 context URI.",
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "format": "uri"},
+          "prefixItems": [
+            {"const": "https://www.w3.org/ns/credentials/v2"}
+          ]
+        },
+        {"type": "string", "const": "https://www.w3.org/ns/credentials/v2"}
+      ]
+    },
+    "id": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional stable URI for this presentation instance"
+    },
+    "type": {
+      "type": "array",
+      "minItems": 1,
+      "contains": {"const": "VerifiablePresentation"},
+      "items": {"type": "string"},
+      "description": "Type array. Must include 'VerifiablePresentation'."
+    },
+    "holder": {
+      "oneOf": [
+        {"type": "string", "format": "uri"},
+        {
+          "type": "object",
+          "required": ["id"],
+          "properties": {
+            "id": {"type": "string", "format": "uri"}
+          },
+          "additionalProperties": true
+        }
+      ],
+      "description": "Optional holder DID or identifier"
+    },
+    "verifiableCredential": {
+      "description": "One or more embedded or referenced Verifiable Credentials.",
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/vc/source/envelope/credential-envelope.schema.json"},
+        {
+          "type": "array",
+          "items": {
+            "$ref": "https://dataspace-control-plane.internal/schemas/vc/source/envelope/credential-envelope.schema.json"
+          }
+        }
+      ]
+    },
+    "proof": {
+      "description": "Optional holder proof over the presentation.",
+      "$ref": "https://dataspace-control-plane.internal/schemas/vc/source/integrity/proof-metadata.schema.json"
+    }
+  }
+}

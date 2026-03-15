@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/field-mapping.schema.json",
+  "title": "Field Mapping",
+  "description": "A mapping from one or more source fields (with optional transforms) to a single target field. Lineage is mandatory — every target field must declare its source fields and transform function.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["targetField", "sourceFields", "lineage"],
+  "additionalProperties": false,
+
+  "properties": {
+    "targetField": {
+      "type": "string",
+      "description": "Target field path, e.g. manufacturer.name or subject.subjectId"
+    },
+    "targetType": {
+      "type": "string",
+      "description": "Expected type at the target (canonical type)"
+    },
+    "sourceFields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["entity", "field"],
+        "additionalProperties": false,
+        "properties": {
+          "entity": {"type": "string", "description": "Source entity name"},
+          "field":  {"type": "string", "description": "Source field name"},
+          "alias":  {"type": "string", "description": "Alias used in the transform expression"}
+        }
+      }
+    },
+    "transformSteps": {
+      "type": "array",
+      "items": {
+        "$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/transform-step.schema.json"
+      },
+      "description": "Optional ordered sequence of transforms applied before the target assignment"
+    },
+    "lineage": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/lineage-graph.schema.json"
+    },
+    "confidence": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/confidence.schema.json"
+    },
+    "humanOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overrideValue": {"description": "Manually-specified target value if transform is bypassed"},
+        "overriddenAt":  {"type": "string", "format": "date-time"},
+        "overriddenBy":  {"type": "string"},
+        "reason":        {"type": "string"}
+      },
+      "description": "Optional human override — bypasses the transform and sets a fixed target value"
+    },
+    "nullable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the target field may be null if source is missing"
+    }
+  }
+}

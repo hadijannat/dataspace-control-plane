@@ -1,0 +1,36 @@
+# Staging environment umbrella overlay
+# Applied over charts/platform/values.yaml
+
+global:
+  imageRegistry: ghcr.io/your-org/dataspace-control-plane
+  imagePullPolicy: IfNotPresent
+  otelEndpoint: "http://otel-collector:4317"
+
+control-api:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "0.1.0"
+  config:
+    logLevel: INFO
+
+temporal-workers:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "0.1.0"
+  config:
+    logLevel: INFO
+    temporalMaxConcurrentActivities: 8
+    temporalMaxConcurrentWorkflows: 4
+
+web-console:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "0.1.0"
+  config:
+    keycloakUrl: "https://keycloak.staging.dataspace.example.com"
+
+provisioning-agent:
+  enabled: false

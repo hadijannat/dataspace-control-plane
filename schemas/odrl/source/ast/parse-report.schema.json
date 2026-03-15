@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/ast/parse-report.schema.json",
+  "title": "Policy Parse Report",
+  "description": "Result of parsing an ODRL document into the canonical AST. Records both the successful AST output and any lossy clauses that could not be canonicalized (unknown profile terms, unrecognised actions, etc.).",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["success", "policy_id"],
+  "additionalProperties": false,
+
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "True if the policy was fully parsed; false if lossy clauses were encountered"
+    },
+    "policy_id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "ast": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/ast/canonical-policy-ast.schema.json"},
+        {"type": "null"}
+      ],
+      "description": "Canonical AST output, or null if parsing failed entirely"
+    },
+    "lossy_clauses": {
+      "type": "array",
+      "description": "Clauses that could not be fully represented in the canonical AST",
+      "items": {
+        "type": "object",
+        "required": ["location", "reason", "raw"],
+        "additionalProperties": false,
+        "properties": {
+          "location": {"type": "string", "description": "JSON pointer to the source clause"},
+          "reason":   {"type": "string", "description": "Why this clause could not be canonicalized"},
+          "raw":      {"description": "Original clause value"}
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Hard parse errors that prevented AST generation"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Non-fatal warnings about the input document"
+    },
+    "parsed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "parser_version": {
+      "type": "string",
+      "description": "Version of the policy parser that generated this report"
+    }
+  }
+}

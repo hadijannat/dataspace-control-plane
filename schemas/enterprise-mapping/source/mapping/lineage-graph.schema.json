@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/lineage-graph.schema.json",
+  "title": "Field Lineage Graph",
+  "description": "Lineage record for a target field — captures the source fields, transform function chain, and derivation rationale. Every target field must have a lineage entry.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["derivationType", "sourceFieldRefs"],
+  "additionalProperties": false,
+
+  "properties": {
+    "derivationType": {
+      "type": "string",
+      "enum": ["direct", "transformed", "computed", "constant", "lookup", "human_provided"],
+      "description": "How the target field was derived"
+    },
+    "sourceFieldRefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entity", "field"],
+        "additionalProperties": false,
+        "properties": {
+          "entity":     {"type": "string"},
+          "field":      {"type": "string"},
+          "role":       {"type": "string", "description": "Role of this field in the derivation, e.g. primary, filter, lookup_key"}
+        }
+      },
+      "description": "Source fields contributing to this target field"
+    },
+    "transformFunctionIds": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Ordered list of transform function IDs applied"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Human-readable explanation of the derivation decision"
+    },
+    "isLossy": {
+      "type": "boolean",
+      "default": false
+    },
+    "lineageVersion": {
+      "type": "string",
+      "description": "Version of the lineage record (increments on correction)"
+    }
+  }
+}

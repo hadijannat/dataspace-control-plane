@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/rating-rule.schema.json",
+  "title": "Rating Rule",
+  "description": "Defines how a usage dimension is priced — flat rate, tiered, or formula-based — and which agreement, tenant, or dimension scope it applies to.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["ruleId", "dimensionId", "ruleType", "currency"],
+  "additionalProperties": false,
+
+  "properties": {
+    "ruleId":      {"type": "string"},
+    "dimensionId": {"type": "string", "description": "Matches usage-dimension.dimensionId"},
+    "agreementId": {"type": "string", "description": "Agreement this rule applies to, or null for default"},
+    "tenantId":    {"type": "string"},
+    "ruleType": {
+      "type": "string",
+      "enum": ["flat", "tiered", "formula", "free"],
+      "description": "Pricing model"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 currency code, e.g. EUR, USD"
+    },
+    "flatRate": {
+      "type": "number",
+      "description": "Price per unit (for ruleType=flat)"
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Tiered pricing bands (for ruleType=tiered)",
+      "items": {
+        "type": "object",
+        "required": ["upTo", "pricePerUnit"],
+        "additionalProperties": false,
+        "properties": {
+          "upTo":         {"oneOf": [{"type": "number"}, {"type": "null"}], "description": "Upper bound of tier (null = unlimited)"},
+          "pricePerUnit": {"type": "number"}
+        }
+      }
+    },
+    "formula": {
+      "type": "string",
+      "description": "Expression for formula-based rating (for ruleType=formula). Must be safe to evaluate with quantity as input."
+    },
+    "effectiveFrom": {"type": "string", "format": "date"},
+    "effectiveTo":   {"oneOf": [{"type": "string", "format": "date"}, {"type": "null"}]},
+    "description":   {"type": "string"}
+  }
+}

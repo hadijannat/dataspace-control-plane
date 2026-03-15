@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/source/security/access-rule.schema.json",
+  "title": "AAS Access Rule",
+  "description": "AAS Part 4 ABAC access rule. Rules can target registries, repositories, full submodels, or individual submodel elements. Captures the combination of subject attributes, object attributes, and the access permission (allow/deny).",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 4",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["ruleId", "subjectAttributes", "objectAttributes", "permission"],
+  "additionalProperties": false,
+
+  "properties": {
+    "ruleId": {
+      "type": "string",
+      "description": "Unique identifier for this access rule within a policy set"
+    },
+    "description": {
+      "type": "string"
+    },
+    "subjectAttributes": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/aas/source/security/subject-attributes.schema.json",
+      "description": "Who this rule applies to"
+    },
+    "objectAttributes": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/aas/source/security/object-attributes.schema.json",
+      "description": "What resource this rule targets"
+    },
+    "permission": {
+      "type": "string",
+      "enum": ["allow", "deny"],
+      "description": "Access decision"
+    },
+    "effectiveFrom": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO-8601 date when this rule becomes effective"
+    },
+    "effectiveTo": {
+      "oneOf": [{"type": "string", "format": "date"}, {"type": "null"}],
+      "description": "ISO-8601 date when this rule expires, or null for indefinite"
+    },
+    "conditions": {
+      "type": "array",
+      "description": "Additional runtime conditions that must be satisfied",
+      "items": {
+        "type": "object",
+        "required": ["conditionType", "value"],
+        "additionalProperties": false,
+        "properties": {
+          "conditionType": {"type": "string"},
+          "value":         {}
+        }
+      }
+    }
+  }
+}

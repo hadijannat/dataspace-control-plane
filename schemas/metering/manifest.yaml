@@ -1,0 +1,37 @@
+family: metering
+version: "1.0.0"
+description: "Business-usage event, rated usage, charge statement, and settlement schemas — independent of transport. CloudEvents envelope for event-bus delivery."
+effective_from: "2026-03-14"
+
+upstream_standards:
+  - name: "CloudEvents 1.0"
+    version: "1.0"
+    source_uri: "https://cloudevents.io/spec/cloudevents/"
+  - name: "OpenTelemetry Semantic Conventions"
+    version: "1.24.0"
+    source_uri: "https://opentelemetry.io/docs/specs/semconv/"
+
+validation_dialect: "https://json-schema.org/draft/2020-12/schema"
+
+artifact_classes:
+  - source
+  - bundles
+  - examples
+
+downstream_consumers:
+  - adapters
+  - procedures
+  - apps
+  - core
+
+ci_gates:
+  - "python schemas/tools/validate.py --family metering"
+  - "pytest tests/unit -k metering_schemas"
+
+notes: |
+  Metering is billable/compliance evidence — NOT operational telemetry.
+  Business record must be independent of transport envelope.
+  All usage records are append-only and immutable.
+  Do not confuse metering schemas with observability schemas.
+  Align telemetry attribute names (trace_id, messaging.system) with OTel conventions
+  but keep commercial fields under the platform's own namespace.

@@ -1,0 +1,27 @@
+# Copy to prod-eu.backend.hcl (gitignored) and fill in your values.
+# Never commit real backend config with credentials.
+# Usage: terraform init -backend-config=../../../backends/prod-eu.backend.hcl
+#
+# PRODUCTION REQUIREMENT: Backend access requires a separate IAM role with MFA
+# or OIDC-based authentication. Never use developer credentials for prod state.
+# Treat state files as sensitive — they may contain resource IDs and derived values.
+
+# Example: S3 backend (AWS) — recommended for prod-eu
+# bucket         = "your-org-terraform-state-prod-eu"
+# key            = "dataspace-control-plane/prod-eu/<root>/terraform.tfstate"
+# region         = "eu-west-1"
+# encrypt        = true
+# kms_key_id     = "arn:aws:kms:eu-west-1:ACCOUNT:key/KEY-ID"
+# dynamodb_table = "terraform-locks-prod"
+# role_arn       = "arn:aws:iam::ACCOUNT:role/terraform-state-access"
+
+# Example: GCS backend (GCP)
+# bucket = "your-org-terraform-state-prod-eu"
+# prefix = "dataspace-control-plane/prod-eu"
+# impersonate_service_account = "terraform-prod@your-project.iam.gserviceaccount.com"
+
+# Example: Azure Blob
+# resource_group_name  = "terraform-state-prod-rg"
+# storage_account_name = "yourorgterraformprodeu"
+# container_name       = "tfstate"
+# key                  = "dataspace-control-plane/prod-eu/<root>.tfstate"

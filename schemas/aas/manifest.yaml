@@ -1,0 +1,47 @@
+family: aas
+version: "1.0.0"
+description: "AAS implementation profile schemas for shell, submodel, descriptor, security, and value-only payloads — derived from IDTA Release 25-01."
+effective_from: "2026-03-14"
+
+upstream_standards:
+  - name: "IDTA AAS Part 1 Metamodel"
+    version: "25-01"
+    source_uri: "https://industrialdigitaltwin.io/aas-specifications/IDTA-01001-3-0"
+  - name: "IDTA AAS Part 2 APIs"
+    version: "25-01"
+    source_uri: "https://industrialdigitaltwin.io/aas-specifications/IDTA-01002-3-0"
+  - name: "IDTA AAS Part 4 Security"
+    version: "25-01"
+    source_uri: "https://industrialdigitaltwin.io/aas-specifications/IDTA-01004-1-0"
+  - name: "admin-shell-io AAS JSON Schema"
+    version: "25-01"
+    source_uri: "https://github.com/admin-shell-io/aas-specs-antora/releases/tag/v25-01"
+
+validation_dialect: "https://json-schema.org/draft/2020-12/schema"
+
+artifact_classes:
+  - vendor
+  - source
+  - derived
+  - bundles
+  - examples
+
+downstream_consumers:
+  - adapters
+  - procedures
+  - packs
+  - apps
+
+ci_gates:
+  - "python schemas/tools/validate.py --family aas"
+  - "python schemas/tools/pin_upstream.py --dry-run --family aas"
+  - "pytest tests/unit -k aas_schemas"
+  - "pytest tests/compatibility -k aas"
+
+notes: |
+  Do NOT create one giant aas.schema.json — keep profiles split by artifact class.
+  Never encode pack-specific semantics (e.g. Catena-X DPP purpose codes) here.
+  Local source/profiles/ defines implementation profiles, not AAS semantics rewrites.
+  Keep source/security/ separate from shell/submodel schemas.
+  AAS Part 4 ABAC access rules can apply to registries, repositories,
+  full submodels, or individual submodel elements.

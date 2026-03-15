@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/source/profiles/submodel.schema.json",
+  "title": "AAS Submodel Instance",
+  "description": "Implementation profile for an AAS Submodel instance per IDTA Release 25-01. Validates the submodel envelope (id, idShort, kind, semanticId, submodelElements) without enforcing element-type-specific constraints, which are validated by semantic ID resolution.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 1",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "required": ["type", "keys"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"type": "string", "enum": ["ExternalReference", "ModelReference"]},
+        "keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["type", "value"],
+            "additionalProperties": false,
+            "properties": {
+              "type":  {"type": "string"},
+              "value": {"type": "string"}
+            }
+          }
+        },
+        "referredSemanticId": {"$ref": "#/$defs/reference"}
+      }
+    },
+    "langStringSet": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["language", "text"],
+        "additionalProperties": false,
+        "properties": {
+          "language": {"type": "string", "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$"},
+          "text":     {"type": "string"}
+        }
+      }
+    },
+    "submodelElement": {
+      "type": "object",
+      "required": ["modelType", "idShort"],
+      "additionalProperties": true,
+      "properties": {
+        "modelType": {
+          "type": "string",
+          "enum": [
+            "Property", "MultiLanguageProperty", "Range", "File", "Blob",
+            "ReferenceElement", "RelationshipElement", "AnnotatedRelationshipElement",
+            "SubmodelElementCollection", "SubmodelElementList",
+            "Operation", "Capability", "Entity", "BasicEventElement", "Extension"
+          ]
+        },
+        "idShort": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,127}$"},
+        "semanticId": {"$ref": "#/$defs/reference"},
+        "description": {"$ref": "#/$defs/langStringSet"},
+        "displayName": {"$ref": "#/$defs/langStringSet"},
+        "category":    {"type": "string"},
+        "kind":        {"type": "string", "enum": ["Instance", "Template"]}
+      }
+    }
+  },
+
+  "type": "object",
+  "required": ["id", "modelType"],
+  "additionalProperties": true,
+
+  "properties": {
+    "modelType": {
+      "type": "string",
+      "const": "Submodel"
+    },
+    "id": {
+      "type": "string",
+      "description": "Globally unique Submodel identifier (IRI or opaque URN)"
+    },
+    "idShort": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,127}$",
+      "description": "Short name for human display and path navigation"
+    },
+    "semanticId": {
+      "$ref": "#/$defs/reference",
+      "description": "Semantic ID defining the submodel's meaning"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["Instance", "Template"],
+      "default": "Instance"
+    },
+    "description": {"$ref": "#/$defs/langStringSet"},
+    "displayName":  {"$ref": "#/$defs/langStringSet"},
+    "administration": {
+      "type": "object",
+      "properties": {
+        "version":  {"type": "string"},
+        "revision": {"type": "string"},
+        "creator":  {"$ref": "#/$defs/reference"},
+        "templateId": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "submodelElements": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/submodelElement"}
+    }
+  }
+}

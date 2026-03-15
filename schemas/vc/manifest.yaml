@@ -1,0 +1,45 @@
+family: vc
+version: "1.0.0"
+description: "Verifiable Credential and Presentation envelope schemas, pinned W3C contexts, integrity proof metadata, and status references."
+effective_from: "2026-03-14"
+
+upstream_standards:
+  - name: "W3C Verifiable Credentials Data Model 2.0"
+    version: "2.0"
+    source_uri: "https://www.w3.org/TR/vc-data-model-2.0/"
+  - name: "W3C Data Integrity 1.0"
+    version: "1.0"
+    source_uri: "https://www.w3.org/TR/vc-data-integrity/"
+  - name: "W3C Bitstring Status List v1.0"
+    version: "1.0"
+    source_uri: "https://www.w3.org/TR/vc-bitstring-status-list/"
+  - name: "W3C Controlled Identifiers"
+    version: "1.0"
+    source_uri: "https://www.w3.org/TR/cid-1.0/"
+
+validation_dialect: "https://json-schema.org/draft/2020-12/schema"
+
+artifact_classes:
+  - vendor
+  - source
+  - derived
+  - bundles
+  - examples
+
+downstream_consumers:
+  - adapters
+  - procedures
+  - packs
+
+ci_gates:
+  - "python schemas/tools/validate.py --family vc"
+  - "python schemas/tools/pin_upstream.py --dry-run --family vc"
+  - "pytest tests/unit -k vc_schemas"
+  - "pytest tests/compatibility -k vc"
+
+notes: |
+  Context resolution must work offline using vendor/ artifacts.
+  Proof verification logic belongs in core/ and adapters/, not here.
+  Do not mix DID exchange choreography into this family.
+  W3C explicitly publishes both contexts/vocabularies AND JSON Schema resources —
+  maintain both rather than flattening to JSON Schema only.

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/execution/mapping-result.schema.json",
+  "title": "Mapping Result",
+  "description": "Detailed result of a mapping run execution — per-field error rates, transform failures, and data quality metrics.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["runId", "mappingId", "summary"],
+  "additionalProperties": false,
+
+  "properties": {
+    "runId":     {"type": "string", "format": "uuid"},
+    "mappingId": {"type": "string"},
+    "summary": {
+      "type": "object",
+      "required": ["rowsRead", "rowsWritten", "rowsFailed"],
+      "additionalProperties": false,
+      "properties": {
+        "rowsRead":    {"type": "integer", "minimum": 0},
+        "rowsWritten": {"type": "integer", "minimum": 0},
+        "rowsFailed":  {"type": "integer", "minimum": 0},
+        "rowsSkipped": {"type": "integer", "minimum": 0},
+        "successRate": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+      }
+    },
+    "fieldResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["targetField", "nullRate", "errorRate"],
+        "additionalProperties": false,
+        "properties": {
+          "targetField":     {"type": "string"},
+          "nullRate":        {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "errorRate":       {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "sampleErrors":    {"type": "array", "items": {"type": "string"}, "maxItems": 5},
+          "transformErrors": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": ["rowRef", "fieldPath", "errorMessage"],
+        "additionalProperties": false,
+        "properties": {
+          "rowRef":       {"type": "string", "description": "Row identifier (pk value or offset)"},
+          "fieldPath":    {"type": "string"},
+          "errorMessage": {"type": "string"},
+          "rawValue":     {}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "modelType": "AssetAdministrationShell",
+  "idShort": "BrokenShell",
+  "assetInformation": {
+    "assetKind": "Instance",
+    "globalAssetId": "urn:example:asset:broken"
+  }
+}

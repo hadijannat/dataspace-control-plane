@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "temporal-workers Helm values schema",
+  "type": "object",
+  "required": ["image", "secrets", "config", "resources"],
+  "additionalProperties": true,
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Number of temporal-workers pod replicas"
+    },
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag"],
+      "additionalProperties": true,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Container image repository"
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(sha256:[a-f0-9]{64}|[0-9]+\\.[0-9]+\\.[0-9]+.*)$",
+          "description": "Image tag — semver or sha256 digest"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "required": ["vaultSecretName", "postgresSecretName"],
+      "additionalProperties": true,
+      "properties": {
+        "vaultSecretName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the K8s Secret containing Vault credentials (signing keys, transit)"
+        },
+        "postgresSecretName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the K8s Secret containing Postgres credentials"
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "logLevel": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]
+        },
+        "otlpEndpoint": {
+          "type": "string"
+        },
+        "temporalHost": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Temporal server address (host:port)"
+        },
+        "temporalNamespace": {
+          "type": "string"
+        },
+        "temporalTaskQueue": {
+          "type": "string"
+        },
+        "temporalMaxConcurrentActivities": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Max concurrent activity executions per worker pod"
+        },
+        "temporalMaxConcurrentWorkflows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Max concurrent workflow executions per worker pod"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "requests": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "cpu": { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "cpu": { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

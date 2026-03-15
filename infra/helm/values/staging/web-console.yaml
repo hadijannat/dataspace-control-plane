@@ -1,0 +1,39 @@
+# Staging environment overlay for web-console
+# Applied over charts/web-console/values.yaml
+
+replicaCount: 2
+
+image:
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  hosts:
+    - host: console.staging.dataspace.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: web-console-staging-tls
+      hosts:
+        - console.staging.dataspace.example.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+config:
+  apiBaseUrl: "http://control-api"
+  keycloakUrl: "https://keycloak.staging.dataspace.example.com"
+  keycloakRealm: "dataspace"
+
+autoscaling:
+  enabled: false

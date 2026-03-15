@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/transport/cloudevents-envelope.schema.json",
+  "title": "CloudEvents Metering Envelope",
+  "description": "CloudEvents 1.0 wrapper for a metering usage-record payload. Wraps the business record for event-bus delivery without changing the record schema. The 'data' field contains the usage-record payload.",
+  "x-source-standard": "CloudEvents 1.0",
+  "x-source-version": "1.0",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["specversion", "id", "source", "type", "datacontenttype", "data"],
+  "additionalProperties": true,
+
+  "properties": {
+    "specversion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "CloudEvents specification version"
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique event ID — should match usage-record.recordId for metering events"
+    },
+    "source": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI identifying the event producer (e.g. /apps/edc-extension)"
+    },
+    "type": {
+      "type": "string",
+      "description": "Event type, e.g. com.dataspace.metering.usage.v1",
+      "examples": [
+        "com.dataspace.metering.usage.v1",
+        "com.dataspace.metering.rated.v1",
+        "com.dataspace.metering.settled.v1"
+      ]
+    },
+    "subject": {
+      "type": "string",
+      "description": "Subject of the event — tenantId or agreementId"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event time (matches usage-record.eventTime)"
+    },
+    "datacontenttype": {
+      "type": "string",
+      "const": "application/json"
+    },
+    "dataschema": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional URI of the schema validating 'data'"
+    },
+    "data": {
+      "description": "The metering payload — must be a valid usage-record or rated-usage document",
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/metering/source/business/usage-record.schema.json"},
+        {"type": "object", "additionalProperties": true}
+      ]
+    },
+    "traceparent": {
+      "type": "string",
+      "description": "W3C trace context (OTel propagation)"
+    },
+    "tracestate": {
+      "type": "string",
+      "description": "W3C trace state"
+    }
+  }
+}

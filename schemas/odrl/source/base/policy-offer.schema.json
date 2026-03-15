@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/base/policy-offer.schema.json",
+  "title": "ODRL Policy Offer",
+  "description": "An ODRL Policy Offer — a unilateral proposal from an assigner granting or denying usage rights for an asset. The offered party can accept, reject, or counter. Validates the structural shape per W3C ODRL Information Model 2.2; does not enforce semantic rules.",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+
+  "$defs": {
+    "permission": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/permission.schema.json"},
+    "prohibition": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/prohibition.schema.json"},
+    "obligation":  {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/obligation.schema.json"}
+  },
+
+  "type": "object",
+  "required": ["@context", "@type", "uid"],
+  "additionalProperties": true,
+
+  "properties": {
+    "@context": {
+      "description": "JSON-LD context. Must include ODRL 2.2 base context. Items may be strings or inline context objects.",
+      "oneOf": [
+        {"type": "string"},
+        {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "object"}]}}
+      ]
+    },
+    "@type": {
+      "type": "string",
+      "const": "odrl:Offer",
+      "description": "ODRL policy type discriminator"
+    },
+    "uid": {
+      "type": "string",
+      "format": "uri",
+      "description": "Globally unique URI identifying this offer"
+    },
+    "assigner": {
+      "oneOf": [
+        {"type": "string", "format": "uri"},
+        {"type": "object", "properties": {"@id": {"type": "string"}}, "additionalProperties": true}
+      ],
+      "description": "The entity making the offer"
+    },
+    "target": {
+      "oneOf": [
+        {"type": "string", "format": "uri"},
+        {"type": "object", "properties": {"@id": {"type": "string"}}, "additionalProperties": true}
+      ],
+      "description": "The asset this offer applies to"
+    },
+    "permission": {
+      "oneOf": [
+        {"$ref": "#/$defs/permission"},
+        {"type": "array", "items": {"$ref": "#/$defs/permission"}}
+      ]
+    },
+    "prohibition": {
+      "oneOf": [
+        {"$ref": "#/$defs/prohibition"},
+        {"type": "array", "items": {"$ref": "#/$defs/prohibition"}}
+      ]
+    },
+    "obligation": {
+      "oneOf": [
+        {"$ref": "#/$defs/obligation"},
+        {"type": "array", "items": {"$ref": "#/$defs/obligation"}}
+      ]
+    }
+  }
+}

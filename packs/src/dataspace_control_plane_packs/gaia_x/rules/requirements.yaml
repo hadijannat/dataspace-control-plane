@@ -1,0 +1,30 @@
+version: "22.10"
+source: "Gaia-X Trust Framework 22.10"
+source_uri: "https://docs.gaia-x.eu/policy-rules-committee/trust-framework/22.10/"
+effective_from: "2022-10-01"
+rules:
+  - rule_id: "gaiax:legal-address-required"
+    title: "Legal Address Required"
+    severity: "error"
+    machine_checkable: true
+    description: "Participant must provide a legal address in their self-description."
+  - rule_id: "gaiax:legal-registration-required"
+    title: "Legal Registration Number Required"
+    severity: "error"
+    machine_checkable: true
+    description: "Participant must provide a verifiable legal registration number."
+  - rule_id: "gaiax:self-description-required"
+    title: "Self-Description Required"
+    severity: "error"
+    machine_checkable: true
+    description: "All participants must provide a Gaia-X self-description."
+  - rule_id: "gaiax:compliance-credential-recommended"
+    title: "Compliance Credential Recommended"
+    severity: "warning"
+    machine_checkable: true
+    description: "Participants should obtain a Gaia-X Compliance Credential from a notary."
+  - rule_id: "gaiax:vc-linked-data-required"
+    title: "Verifiable Credential Linked-Data Format Required"
+    severity: "error"
+    machine_checkable: false
+    description: "Credentials must use Gaia-X ontology in linked-data (JSON-LD) format."

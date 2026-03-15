@@ -1,0 +1,107 @@
+# compose.dev.yaml — development overlay
+# Adds app services with hot-reload volume mounts and dev-mode configuration.
+#
+# Usage:
+#   docker compose -f compose.yaml -f compose.dev.yaml up
+#   docker compose -f compose.yaml -f compose.dev.yaml watch   # Enable file-watch hot reload
+#
+# Prerequisites:
+#   - Build images: docker buildx bake (from repo root)
+#   - Create secrets: see compose.yaml header
+
+services:
+  control-api:
+    image: ghcr.io/your-org/dataspace-control-plane/control-api:dev
+    build:
+      context: ../../../
+      dockerfile: infra/docker/images/control-api/Dockerfile
+      target: runtime
+    volumes:
+      - ../../../apps/control-api/src:/app/src:ro
+    environment:
+      LOG_LEVEL: DEBUG
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-root-token
+      KEYCLOAK_URL: http://keycloak:8080
+      TEMPORAL_HOST: temporal:7233
+      TEMPORAL_NAMESPACE: dataspace
+      TEMPORAL_TASK_QUEUE: control-api
+    secrets:
+      - postgres_password
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ../../../apps/control-api/src
+          target: /app/src
+          ignore:
+            - "**/__pycache__"
+            - "**/*.pyc"
+
+  temporal-workers:
+    image: ghcr.io/your-org/dataspace-control-plane/temporal-workers:dev
+    build:
+      context: ../../../
+      dockerfile: infra/docker/images/temporal-workers/Dockerfile
+    volumes:
+      - ../../../apps/temporal-workers/src:/app/src:ro
+    environment:
+      LOG_LEVEL: DEBUG
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      TEMPORAL_HOST: temporal:7233
+      TEMPORAL_NAMESPACE: dataspace
+      TEMPORAL_TASK_QUEUE: dataspace-main
+      TEMPORAL_MAX_CONCURRENT_ACTIVITIES: "5"
+      TEMPORAL_MAX_CONCURRENT_WORKFLOWS: "2"
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: dev-root-token
+    secrets:
+      - postgres_password
+    depends_on:
+      temporal:
+        condition: service_started
+      vault:
+        condition: service_healthy
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ../../../apps/temporal-workers/src
+          target: /app/src
+          ignore:
+            - "**/__pycache__"
+            - "**/*.pyc"
+
+  web-console:
+    image: ghcr.io/your-org/dataspace-control-plane/web-console:dev
+    build:
+      context: ../../../
+      dockerfile: infra/docker/images/web-console/Dockerfile
+      target: runtime
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8180
+      NEXT_PUBLIC_KEYCLOAK_REALM: dataspace
+      NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: web-console
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - control-api
+    restart: unless-stopped
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  keycloak_admin_password:
+    file: ./secrets/keycloak_admin_password.txt

@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/core/src/dataspace_control_plane_core/canonical_models/enums.py
+# hypothesis_version: 6.135.10
+
+['ACCEPTED', 'AGREED', 'FINALIZED', 'OFFERED', 'REQUESTED', 'TERMINATED', 'VERIFIED', 'archived', 'custom', 'draft', 'full', 'indefinite', 'jwt_vc', 'jwt_vc_json', 'ld_proof', 'none', 'obligate', 'partial', 'permit', 'prohibit', 'published', 'retracted', 'sd_jwt', 'seven_years', 'ten_years']

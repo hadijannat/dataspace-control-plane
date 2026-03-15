@@ -1,0 +1,56 @@
+exporters:
+  # OTLP export to Tempo (traces)
+  # Endpoints and auth tokens are injected via environment variables.
+  # In Kubernetes, tokens sourced from Vault Agent Injector — never hardcoded.
+  otlp/tempo:
+    endpoint: ${TEMPO_ENDPOINT}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${TEMPO_TOKEN}
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+
+  # Prometheus remote write (metrics)
+  prometheusremotewrite:
+    endpoint: ${PROMETHEUS_REMOTE_WRITE_URL}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${PROMETHEUS_TOKEN}
+    resource_to_telemetry_conversion:
+      enabled: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+
+  # Loki (logs)
+  loki:
+    endpoint: ${LOKI_ENDPOINT}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${LOKI_TOKEN}
+    default_labels_enabled:
+      exporter: false
+      job: true
+      instance: true
+      level: true
+    retry_on_failure:
+      enabled: true
+
+  # Debug exporter — local troubleshooting ONLY.
+  # NEVER configure in staging or production pipelines.
+  # Verbosity: basic (prints signal type and attribute count, not full payloads).
+  debug:
+    verbosity: basic
+    sampling_initial: 5
+    sampling_thereafter: 200

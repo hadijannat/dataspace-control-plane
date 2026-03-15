@@ -1,0 +1,898 @@
+openapi: "3.1.0"
+info:
+  title: Dataspace Control Plane — Control API
+  description: |
+    The Control API is the primary HTTP interface for the Dataspace Control Plane.
+    It provides endpoints for company onboarding, usage event recording, contract negotiation,
+    and Digital Product Passport lifecycle management.
+
+    ## Authentication
+
+    All endpoints under `/api/v1/` require a Bearer JWT issued by Keycloak.
+    Use the `client_credentials` grant for service-to-service calls.
+    Use the Authorization Code flow for human operator sessions.
+
+    ## Idempotency
+
+    All mutation endpoints (`POST`, `PATCH`, `DELETE`) accept an `Idempotency-Key` header
+    containing a UUID v4. Duplicate requests with the same key from the same tenant
+    within a 24-hour window receive the cached response without re-executing the operation.
+
+    ## Long-Running Operations
+
+    Endpoints that start Temporal workflows return `202 Accepted` immediately with a
+    workflow handle `{workflowId, runId, statusUrl}`. Poll `statusUrl` or subscribe
+    to the SSE stream at `/api/v1/workflows/{workflowId}/events`.
+
+    ## Error Model
+
+    All error responses use RFC 7807 Problem Details format with an additional `traceId` field.
+  version: "0.1.0"
+  contact:
+    name: Dataspace Platform Team
+    url: https://github.com/your-org/dataspace-control-plane
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: /api/v1
+    description: Control API v1
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Liveness and readiness probes (no authentication required)
+  - name: Companies
+    description: Company registration, tenant provisioning, and DID management
+  - name: Usage Events
+    description: Agreement-bound data consumption metering events
+  - name: Contracts
+    description: DSP contract negotiation workflows
+  - name: Passports
+    description: Digital Product Passport (DPP) lifecycle management
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: health_check
+      summary: Liveness probe
+      description: 'Returns `{"status": "ok"}` if the API process is running. No authentication required.'
+      security: []
+      servers:
+        - url: /api
+          description: Health endpoints (no version prefix)
+      responses:
+        "200":
+          description: API process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+              example:
+                status: ok
+
+  /health/ready:
+    get:
+      tags: [Health]
+      operationId: health_readiness_check
+      summary: Readiness probe
+      description: |
+        Returns status "ready" if the API is ready to serve traffic.
+        Checks: Postgres connectivity, Temporal connectivity, Vault reachability.
+        Returns 503 if any dependency is unreachable.
+      security: []
+      servers:
+        - url: /api
+          description: Health endpoints (no version prefix)
+      responses:
+        "200":
+          description: API is ready to serve requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+              example:
+                status: ready
+        "503":
+          description: One or more dependencies are unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /companies:
+    post:
+      tags: [Companies]
+      operationId: register_company
+      summary: Register a new company
+      description: |
+        Registers a new company and starts the `OnboardingWorkflow` in Temporal.
+        The workflow provisions: a Keycloak realm, a DID document (signed via Vault Transit),
+        and the tenant record in Postgres (with RLS enabled).
+
+        Returns `202 Accepted` immediately with a workflow handle. The onboarding
+        workflow typically completes within 30 seconds.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyRegistrationRequest"
+            example:
+              legalEntityId: "BPNL000000000001"
+              displayName: "Acme Industrial GmbH"
+              tenantId: "tenant-acme-001"
+      responses:
+        "202":
+          description: Company onboarding workflow started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowHandle"
+              example:
+                workflowId: "tenant-acme-001:onboarding:BPNL000000000001"
+                runId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                statusUrl: "/api/v1/companies/BPNL000000000001"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /companies/{companyId}:
+    get:
+      tags: [Companies]
+      operationId: get_company
+      summary: Get company details
+      description: Returns the company record including DID, Keycloak realm, and onboarding status.
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The legal entity identifier (e.g., BPN-L for Catena-X participants)
+          example: "BPNL000000000001"
+      responses:
+        "200":
+          description: Company found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /usage-events:
+    post:
+      tags: [Usage Events]
+      operationId: record_usage_event
+      summary: Record a usage event
+      description: |
+        Records a metering usage event for an active contract agreement.
+        The event is validated against `schemas/metering/source/business/usage-record.schema.json`
+        and published to Kafka after Postgres persistence.
+
+        This endpoint is called by the EDC data plane extension after each successful data transfer.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsageEventRequest"
+      responses:
+        "202":
+          description: Usage event accepted and queued for Kafka publication
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageEvent"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Agreement not found or not active
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    get:
+      tags: [Usage Events]
+      operationId: list_usage_events
+      summary: List usage events
+      description: Returns a paginated list of usage events for the authenticated tenant.
+      parameters:
+        - name: agreementId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by agreement ID
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of usage events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUsageEvents"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /contracts/negotiations:
+    post:
+      tags: [Contracts]
+      operationId: start_contract_negotiation
+      summary: Start a contract negotiation
+      description: |
+        Starts the `ContractNegotiationWorkflow` for the specified asset and counterparty.
+        The workflow implements the DSP negotiation state machine:
+        offer → agreed → verified → finalized.
+
+        ODRL policy validation is performed by the Catena-X pack. DCP credential presentation
+        from the counterparty is required before the agreement is finalized.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractNegotiationRequest"
+            example:
+              assetId: "urn:uuid:asset-battery-data-001"
+              counterpartyId: "BPNL000000000002"
+              counterpartyConnectorUrl: "https://partner-edc.example.com/api/v1/dsp"
+              policyOffer:
+                "@type": "odrl:Offer"
+                "odrl:permission":
+                  - "odrl:action": "odrl:use"
+                    "odrl:constraint":
+                      "odrl:leftOperand": "cx:BPN"
+                      "odrl:operator": "odrl:eq"
+                      "odrl:rightOperand": "BPNL000000000001"
+      responses:
+        "202":
+          description: Contract negotiation workflow started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowHandle"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /contracts/negotiations/{negotiationId}:
+    get:
+      tags: [Contracts]
+      operationId: get_contract_negotiation
+      summary: Get negotiation status
+      description: Returns the current state of a contract negotiation workflow.
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The negotiation identifier returned when the negotiation was started
+      responses:
+        "200":
+          description: Negotiation found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractNegotiation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /passports:
+    post:
+      tags: [Passports]
+      operationId: create_passport
+      summary: Create a new Digital Product Passport
+      description: |
+        Creates a new DPP in `draft` lifecycle state. The passport is validated against the
+        relevant pack schemas (Battery Passport or ESPR DPP depending on `passportType`).
+
+        The passport is not published to the EU DPP registry at this point — use the
+        lifecycle-transitions endpoint to transition to `published`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PassportCreateRequest"
+      responses:
+        "201":
+          description: Passport created in draft state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Passport"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /passports/{passportId}:
+    get:
+      tags: [Passports]
+      operationId: get_passport
+      summary: Get passport details
+      description: Returns the passport record including current lifecycle state, registry ID (if published), and evidence references.
+      parameters:
+        - name: passportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Passport found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Passport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /passports/{passportId}/lifecycle-transitions:
+    post:
+      tags: [Passports]
+      operationId: transition_passport_lifecycle
+      summary: Transition passport lifecycle state
+      description: |
+        Transitions a passport to a new lifecycle state. The following transitions are supported:
+
+        - `draft` → `under_review`: triggers pack validation
+        - `under_review` → `approved`: operator approval
+        - `approved` → `published`: starts `DPPExportWorkflow` (AAS serialization, registry submission, evidence emission)
+        - `published` → `recalled`: starts `DPPRecallWorkflow`
+
+        Transitions that start Temporal workflows return `202 Accepted` with a workflow handle.
+      parameters:
+        - name: passportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PassportLifecycleTransitionRequest"
+            example:
+              targetState: published
+              reason: "Approved by quality manager — all Annex XIII fields verified"
+      responses:
+        "200":
+          description: Synchronous transition completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Passport"
+        "202":
+          description: Asynchronous workflow started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowHandle"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Invalid lifecycle transition from current state
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Keycloak-issued JWT. Obtain via:
+        - Human operators: Keycloak Authorization Code flow (PKCE)
+        - Machine services: `client_credentials` grant
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+        description: UUID v4 idempotency key. Requests with the same key from the same tenant within 24 hours receive the cached response.
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, ready, degraded]
+          description: Health status indicator
+
+    CompanyRegistrationRequest:
+      type: object
+      required: [legalEntityId, displayName]
+      properties:
+        legalEntityId:
+          type: string
+          description: Legal entity identifier (e.g., BPN-L for Catena-X participants)
+          pattern: "^BPNL[0-9A-Z]{12}$"
+          example: "BPNL000000000001"
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Human-readable company display name
+          example: "Acme Industrial GmbH"
+        tenantId:
+          type: string
+          description: Optional explicit tenant ID. If omitted, derived from legalEntityId.
+          example: "tenant-acme-001"
+
+    Company:
+      type: object
+      required: [companyId, legalEntityId, displayName, status, did, realm]
+      properties:
+        companyId:
+          type: string
+          format: uuid
+          description: Internal platform company identifier
+        legalEntityId:
+          type: string
+          description: Legal entity identifier used in the dataspace
+        displayName:
+          type: string
+          description: Human-readable company name
+        status:
+          $ref: "#/components/schemas/CompanyStatus"
+        did:
+          type: string
+          description: Decentralized Identifier for this company's platform identity
+          example: "did:web:api.your-org.internal:participants:BPNL000000000001"
+        realm:
+          type: string
+          description: Keycloak realm name for this tenant
+          example: "tenant-BPNL000000000001"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CompanyStatus:
+      type: string
+      enum:
+        - provisioning
+        - provisioned
+        - failed
+        - suspended
+      description: |
+        - `provisioning`: OnboardingWorkflow is running
+        - `provisioned`: Onboarding complete — realm, DID, and tenant record created
+        - `failed`: Onboarding failed — see workflow history for details
+        - `suspended`: Tenant suspended by platform operator
+
+    WorkflowHandle:
+      type: object
+      required: [workflowId, runId, statusUrl]
+      properties:
+        workflowId:
+          type: string
+          description: "Temporal workflow ID (format: {tenant_id}:{workflow_type}:{entity_id})"
+          example: "tenant-acme-001:onboarding:BPNL000000000001"
+        runId:
+          type: string
+          format: uuid
+          description: Temporal run ID for this specific workflow execution
+        statusUrl:
+          type: string
+          description: URL to poll for workflow completion status
+          example: "/api/v1/companies/BPNL000000000001"
+
+    UsageEventRequest:
+      type: object
+      required: [agreementId, assetId, eventType, timestamp]
+      properties:
+        agreementId:
+          type: string
+          format: uuid
+          description: The contract agreement this usage event is associated with
+        assetId:
+          type: string
+          description: The data asset that was consumed
+        eventType:
+          type: string
+          enum: [transfer_completed, access_granted, download_completed]
+          description: The type of consumption event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the consumption event occurred (ISO 8601)
+        bytesTransferred:
+          type: integer
+          minimum: 0
+          description: Volume transferred in bytes (if applicable)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Optional event-specific metadata
+
+    UsageEvent:
+      type: object
+      required: [eventId, agreementId, assetId, eventType, timestamp, status]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        agreementId:
+          type: string
+          format: uuid
+        assetId:
+          type: string
+        eventType:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [accepted, published, failed]
+        bytesTransferred:
+          type: integer
+
+    PaginatedUsageEvents:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UsageEvent"
+        total:
+          type: integer
+          description: Total number of matching events across all pages
+        page:
+          type: integer
+          description: Current page number (1-indexed)
+        pageSize:
+          type: integer
+          description: Number of items per page
+
+    ContractNegotiationRequest:
+      type: object
+      required: [assetId, counterpartyId, counterpartyConnectorUrl, policyOffer]
+      properties:
+        assetId:
+          type: string
+          description: The asset ID to negotiate access to
+          example: "urn:uuid:asset-battery-data-001"
+        counterpartyId:
+          type: string
+          description: The counterparty's legal entity ID (BPN-L)
+          example: "BPNL000000000002"
+        counterpartyConnectorUrl:
+          type: string
+          format: uri
+          description: The counterparty's DSP connector endpoint URL
+          example: "https://partner-edc.example.com/api/v1/dsp"
+        policyOffer:
+          type: object
+          description: ODRL policy offer JSON-LD object to propose to the counterparty
+
+    ContractNegotiation:
+      type: object
+      required: [negotiationId, assetId, counterpartyId, status, createdAt]
+      properties:
+        negotiationId:
+          type: string
+          format: uuid
+        assetId:
+          type: string
+        counterpartyId:
+          type: string
+        status:
+          $ref: "#/components/schemas/NegotiationStatus"
+        agreementId:
+          type: string
+          format: uuid
+          description: Present when status is `finalized`
+        policyAgreed:
+          type: object
+          description: The ODRL policy agreement JSON-LD (present when finalized)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        workflowId:
+          type: string
+
+    NegotiationStatus:
+      type: string
+      enum:
+        - requested
+        - offered
+        - agreed
+        - verified
+        - finalized
+        - terminated
+      description: |
+        DSP contract negotiation state machine:
+        - `requested`: ContractRequest sent to counterparty
+        - `offered`: CounterOffer received from counterparty
+        - `agreed`: Both parties agreed on policy
+        - `verified`: DCP credential presentation verified
+        - `finalized`: Agreement persisted and signed
+        - `terminated`: Negotiation terminated (by either party or due to error)
+
+    PassportCreateRequest:
+      type: object
+      required: [passportType, productIdentifier, ownerId]
+      properties:
+        passportType:
+          type: string
+          enum: [battery_passport, espr_dpp]
+          description: Which regulatory framework applies to this passport
+        productIdentifier:
+          type: string
+          description: The product's unique identifier (e.g., BattID for batteries, EAN/GTIN for ESPR)
+          example: "BATT-20240101-ACME-001"
+        ownerId:
+          type: string
+          description: The company ID of the passport owner (must be a registered company in this tenant)
+        fields:
+          type: object
+          additionalProperties: true
+          description: Initial field values for the passport. Validated against the relevant pack schema.
+
+    Passport:
+      type: object
+      required: [passportId, passportType, productIdentifier, ownerId, lifecycleState, createdAt]
+      properties:
+        passportId:
+          type: string
+          format: uuid
+        passportType:
+          type: string
+          enum: [battery_passport, espr_dpp]
+        productIdentifier:
+          type: string
+        ownerId:
+          type: string
+        lifecycleState:
+          $ref: "#/components/schemas/PassportLifecycleState"
+        registryId:
+          type: string
+          description: EU DPP registry submission ID (present when lifecycleState is `published`)
+        evidenceRef:
+          type: string
+          description: Reference to the evidence envelope record (present when lifecycleState is `published`)
+        fields:
+          type: object
+          additionalProperties: true
+          description: Current passport field values
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PassportLifecycleState:
+      type: string
+      enum:
+        - draft
+        - under_review
+        - approved
+        - published
+        - recalled
+      description: |
+        DPP lifecycle state machine:
+        - `draft`: Initial state after creation. Pack validation not yet run.
+        - `under_review`: Pack validation triggered. Validation errors block transition to approved.
+        - `approved`: Operator has reviewed and approved the passport.
+        - `published`: AAS serialized, DPP registry submitted, evidence emitted.
+        - `recalled`: Published passport recalled (starts DPPRecallWorkflow).
+
+    PassportLifecycleTransitionRequest:
+      type: object
+      required: [targetState]
+      properties:
+        targetState:
+          $ref: "#/components/schemas/PassportLifecycleState"
+        reason:
+          type: string
+          maxLength: 1000
+          description: Human-readable reason for the lifecycle transition (required for approval and recall)
+
+    Error:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type
+          example: "/errors/validation-failed"
+        title:
+          type: string
+          description: Short human-readable summary of the problem type
+          example: "Validation Failed"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 422
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence of the problem
+          example: "Field 'legalEntityId' is required."
+        instance:
+          type: string
+          description: URI reference identifying the specific occurrence of the problem
+          example: "/api/v1/companies"
+        traceId:
+          type: string
+          description: OpenTelemetry trace ID for correlating with distributed traces
+          example: "4bf92f3577b34da6a3ce929d0e0e4736"
+        code:
+          type: string
+          description: Platform-specific error code for programmatic handling
+        validationErrors:
+          type: array
+          description: Field-level validation errors (present on 422 responses)
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field:
+                type: string
+                description: JSON path of the field that failed validation
+                example: "legalEntityId"
+              message:
+                type: string
+                description: Validation error message for this field
+                example: "Field is required"
+              value:
+                description: The invalid value (may be omitted for security-sensitive fields)
+
+  responses:
+    ValidationError:
+      description: Request body or parameters failed basic validation
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            type: "/errors/validation-failed"
+            title: "Validation Failed"
+            status: 400
+            detail: "The request body does not match the required schema."
+            instance: "/api/v1/companies"
+
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            type: "/errors/authentication-required"
+            title: "Authentication Required"
+            status: 401
+            detail: "A valid Bearer JWT is required."
+            instance: "/api/v1/companies"
+
+    Forbidden:
+      description: Authenticated but not authorized for this resource
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            type: "/errors/authorization-denied"
+            title: "Authorization Denied"
+            status: 403
+            detail: "The operator role is required for this operation."
+            instance: "/api/v1/companies/BPNL000000000001"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            type: "/errors/not-found"
+            title: "Not Found"
+            status: 404
+            detail: "Company BPNL000000000001 not found in this tenant."
+            instance: "/api/v1/companies/BPNL000000000001"
+
+    Conflict:
+      description: Request conflicts with current resource state
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            type: "/errors/conflict"
+            title: "Conflict"
+            status: 409
+            detail: "A company with legalEntityId BPNL000000000001 already exists."
+            instance: "/api/v1/companies"
+
+    UnprocessableEntity:
+      description: Request is syntactically valid but semantically invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            type: "/errors/validation-failed"
+            title: "Validation Failed"
+            status: 422
+            detail: "Field 'legalEntityId' must match pattern '^BPNL[0-9A-Z]{12}$'."
+            instance: "/api/v1/companies"
+            validationErrors:
+              - field: "legalEntityId"
+                message: "Must match pattern '^BPNL[0-9A-Z]{12}$'"
+                value: "INVALID"

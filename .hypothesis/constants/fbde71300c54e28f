@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/schemas/tools/diff_schema.py
+# hypothesis_version: 6.135.10
+
+['#', '--json', 'Output as JSON.', '__main__', 'added', 'additionalProperties', 'as_json', 'breaking', 'decrease', 'enum', 'enum_values_added', 'enum_values_removed', 'field', 'has_breaking_changes', 'increase', 'kind', 'maxLength', 'maximum', 'minLength', 'minimum', 'new', 'new_schema', 'non_breaking', 'old', 'old_schema', 'path', 'pattern', 'pattern_changed', 'properties', 'property_added', 'property_removed', 'removed', 'required', 'required_added', 'required_removed', 'store_true', 'type', 'type_change', 'type_narrowed', 'value_change']

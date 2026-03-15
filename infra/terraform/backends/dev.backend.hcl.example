@@ -1,0 +1,24 @@
+# Copy to dev.backend.hcl (gitignored) and fill in your values.
+# Never commit real backend config with credentials.
+# Usage: terraform init -backend-config=../../../backends/dev.backend.hcl
+
+# Example: S3 backend (AWS)
+# bucket         = "your-org-terraform-state-dev"
+# key            = "dataspace-control-plane/dev/<root>/terraform.tfstate"
+# region         = "eu-west-1"
+# encrypt        = true
+# dynamodb_table = "terraform-locks"
+
+# Example: GCS backend
+# bucket = "your-org-terraform-state-dev"
+# prefix = "dataspace-control-plane/dev"
+
+# Example: Azure Blob
+# resource_group_name  = "terraform-state-rg"
+# storage_account_name = "yourorgterraformdev"
+# container_name       = "tfstate"
+# key                  = "dataspace-control-plane/dev/<root>.tfstate"
+
+# Example: Kubernetes backend (default for dev)
+# secret_suffix = "dev-<root>"
+# namespace     = "terraform-state"

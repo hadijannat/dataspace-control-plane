@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-envelope.schema.json",
+  "title": "Digital Product Passport Envelope",
+  "description": "Technology-neutral envelope for a Digital Product Passport. Captures the passport identity, subject reference, lifecycle state, access class, and predecessor/successor links. Does not contain regulation-specific field lists — those are added by packs/.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+
+  "$defs": {
+    "subject":   {"$ref": "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-subject.schema.json"},
+    "lifecycle": {"$ref": "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-lifecycle.schema.json"},
+    "link":      {"$ref": "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-link.schema.json"},
+    "accessClass":{"$ref": "https://dataspace-control-plane.internal/schemas/dpp/source/base/access-class.schema.json"}
+  },
+
+  "type": "object",
+  "required": ["passportId", "subject", "lifecycle"],
+  "additionalProperties": true,
+
+  "properties": {
+    "passportId": {
+      "type": "string",
+      "description": "Globally unique passport identifier — typically a URN. Must be stable across lifecycle transitions."
+    },
+    "passportVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semver of this passport instance (increments on regulated data updates)"
+    },
+    "subject": {"$ref": "#/$defs/subject"},
+    "lifecycle": {"$ref": "#/$defs/lifecycle"},
+    "accessClasses": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/accessClass"},
+      "description": "Access class definitions for this passport. Regulation packs inject their Annex XIII or ESPR-specific access tiers."
+    },
+    "predecessorLinks": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/link"},
+      "description": "Links to original passports this passport was derived from (repurposing, remanufacturing)"
+    },
+    "successorLinks": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/link"},
+      "description": "Links to passports created from this one (successor after repurposing)"
+    },
+    "regulationPackIds": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Pack IDs that contributed field requirements to this passport"
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 datetime when this passport was first issued"
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "implementationProfile": {
+      "type": "string",
+      "description": "Implementation profile binding, e.g. aas_dpp4o",
+      "examples": ["aas_dpp4o"]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class EvidenceExportPackHooks(Protocol):
+    def evidence_scopes(self, pack_id: str) -> list[str]: ...
+    def signing_key_id(self, pack_id: str, tenant_id: str) -> str: ...

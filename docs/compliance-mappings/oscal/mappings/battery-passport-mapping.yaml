@@ -1,0 +1,125 @@
+mapping:
+  uuid: "c3d4e5f6-a7b8-9012-cdef-123456789012"
+  metadata:
+    title: "Battery Passport (EU 2023/1542) to Catena-X/ESPR Control Mapping"
+    last-modified: "2026-03-14T00:00:00Z"
+    version: "0.1.0"
+    oscal-version: "1.1.2"
+    remarks: |
+      This OSCAL mapping cross-references Battery Regulation (EU 2023/1542) Annex XIII
+      control obligations to Catena-X participation controls and ESPR framework controls.
+      It documents how the battery_passport pack satisfies obligations that overlap with
+      both the Battery Regulation and the Catena-X/ESPR ecosystem requirements.
+
+      Relationship types used:
+      - satisfies: the source control's obligation is fulfilled by the target control's implementation
+      - equivalent: the source and target controls impose the same requirement from different frameworks
+      - partially-satisfies: the source obligation is partially covered by the target; additional implementation needed
+    parties:
+      - uuid: "party-platform-team"
+        type: organization
+        name: Dataspace Platform Team
+  source-resource:
+    href: "profiles/battery-passport-profile.yaml"
+    type: profile
+    remarks: "Battery Regulation EU 2023/1542 Annex XIII control profile (to be created)"
+  target-resource:
+    href: "profiles/catena-x-profile.yaml"
+    type: profile
+  maps:
+    - sources:
+        - type: control
+          id-ref: battery-annex-xiii-public
+      targets:
+        - type: control
+          id-ref: cx-vc-01
+      relationship:
+        ns: "https://oscal.dataspace.internal/relationships"
+        value: "satisfies"
+      remarks: |
+        Battery Passport Annex XIII public-tier fields (battery model, chemistry, rated capacity,
+        carbon footprint, BattID) are included in the DataspaceParticipantCredential
+        credentialSubject claims for public-tier access. Participants in Catena-X can access
+        public-tier Battery Passport data via the DCP VC presentation mechanism without
+        requiring additional Catena-X-specific authorization.
+
+        Platform implementation: packs/battery_passport/annex_xiii/public_tier.py defines
+        the public field list. schemas/vc/source/profiles/participant-credential.schema.json
+        includes public-tier battery fields in the optional credentialSubject claims.
+
+    - sources:
+        - type: control
+          id-ref: battery-annex-xiii-authority
+      targets:
+        - type: control
+          id-ref: cx-dcp-01
+      relationship:
+        ns: "https://oscal.dataspace.internal/relationships"
+        value: "satisfies"
+      remarks: |
+        Battery Regulation authority-tier fields (cell chemical composition, hazardous substances,
+        compliance documentation) are gated by a DCP credential presentation. Only requestors
+        holding a valid VerifiableCredential with the authority_access claim (issued to regulatory
+        authorities and market surveillance bodies) can retrieve authority-tier fields.
+
+        The DCP adapter (adapters/dataspace/dcp/) enforces the authority_access claim check
+        before returning authority-tier data. The packs/battery_passport/annex_xiii/access_tiers.py
+        module defines which fields require the authority_access claim.
+
+    - sources:
+        - type: control
+          id-ref: battery-annex-xiii-legitimate-interest
+      targets:
+        - type: control
+          id-ref: cx-dcp-01
+      relationship:
+        ns: "https://oscal.dataspace.internal/relationships"
+        value: "partially-satisfies"
+      remarks: |
+        Battery Regulation legitimate-interest tier fields (state of health, internal resistance,
+        detailed material composition, battery management system data) require a DCP credential
+        presentation with the legitimate_interest_access claim. The claim can be held by economic
+        operators, repair companies, and recycling facilities.
+
+        The mapping is "partially-satisfies" because: (1) the DCP enforcement layer (adapters/dataspace/dcp/)
+        is not yet implemented (Wave 2 backlog), and (2) the legitimate_interest_access credential
+        type needs to be defined in the Catena-X credential profile for the automotive sector.
+
+    - sources:
+        - type: control
+          id-ref: battery-battid-01
+      targets:
+        - type: control
+          id-ref: cx-membership-01
+      relationship:
+        ns: "https://oscal.dataspace.internal/relationships"
+        value: "equivalent"
+      remarks: |
+        The Battery Regulation BattID requirement (globally unique battery identifier linked to
+        the Battery Passport) and the Catena-X membership requirement (globally unique BPN-L
+        identifier linked to the participant's DID) are equivalent in their uniqueness and
+        linkage requirements. Both are managed by the platform's company and passport registration
+        workflows.
+
+        The BattID is generated by packs/battery_passport/battid/ and stored in the passport
+        record. The BPN-L is the company's legalEntityId registered during company onboarding.
+
+    - sources:
+        - type: control
+          id-ref: battery-carbon-footprint-01
+      targets:
+        - type: control
+          id-ref: cx-odrl-01
+      relationship:
+        ns: "https://oscal.dataspace.internal/relationships"
+        value: "partially-satisfies"
+      remarks: |
+        The Battery Regulation carbon footprint disclosure requirement (must be included in the
+        public tier of the Battery Passport) and the Catena-X ODRL policy control (data sharing
+        conditions) are related: carbon footprint data shared via the Catena-X network must be
+        accompanied by an ODRL policy that specifies the allowed usage purposes (e.g.,
+        cx:UsagePurpose = "cx.core:QualityMonitoringInvestigation").
+
+        The mapping is "partially-satisfies" because ODRL policy enforcement governs HOW carbon
+        footprint data is shared, but does not define the data itself. Both controls must be
+        implemented together for full compliance.

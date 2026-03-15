@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/vc/source/profiles/profile-base.schema.json",
+  "title": "VC Profile Base",
+  "description": "Abstract base for platform-specific credential profile schemas. Each concrete credential type (e.g. DataspaceParticipantCredential, ComplianceCredential) extends this by composing with credential-envelope.schema.json and adding profile-specific credentialSubject constraints via allOf.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "$defs": {
+    "credentialEnvelope": {
+      "$ref": "https://dataspace-control-plane.internal/schemas/vc/source/envelope/credential-envelope.schema.json"
+    }
+  },
+
+  "allOf": [
+    {"$ref": "#/$defs/credentialEnvelope"}
+  ],
+
+  "properties": {
+    "credentialSubject": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uri",
+          "description": "DID or URI of the credential subject. Required in platform profiles."
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+
+  "examples": [
+    {
+      "@context": ["https://www.w3.org/ns/credentials/v2"],
+      "type": ["VerifiableCredential", "ExampleProfileCredential"],
+      "issuer": "did:example:issuer123",
+      "validFrom": "2026-01-01T00:00:00Z",
+      "credentialSubject": {
+        "id": "did:example:subject456",
+        "profileField": "example-value"
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/core/src/dataspace_control_plane_core/procedure_runtime/contracts.py
+# hypothesis_version: 6.135.10
+
+['cancelled', 'company-onboarding', 'completed', 'compliance-gap-scan', 'connector-bootstrap', 'contract-negotiation', 'failed', 'pending', 'running', 'timed_out']

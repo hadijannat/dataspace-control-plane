@@ -1,0 +1,19 @@
+# DCP TCK version lock
+# Update tck_tag to upgrade the TCK version.
+
+tck_tag: "0.0.1-SNAPSHOT"
+tck_artifact: "dcp-tck-runner"
+tck_source: "https://github.com/eclipse-dataspacetck/dcp-tck"
+sha256: "PENDING"
+
+# DCP actor SUT configuration (each actor is configured independently)
+actors:
+  credential_service:
+    url_env: DCP_CREDENTIAL_SERVICE_URL
+    protocols: [vpp, cip]
+  issuer:
+    url_env: DCP_ISSUER_URL
+    protocols: [cip]
+  verifier:
+    url_env: DCP_VERIFIER_URL
+    protocols: [vpp]

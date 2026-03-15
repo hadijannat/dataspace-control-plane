@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/confidence.schema.json",
+  "title": "Mapping Confidence Score",
+  "description": "Confidence assessment for a mapping specification or individual field mapping. Derived automatically by the mapping engine or assigned by a human reviewer.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["score", "level"],
+  "additionalProperties": false,
+
+  "properties": {
+    "score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Numeric confidence score 0.0 (no confidence) to 1.0 (certain)"
+    },
+    "level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "certain"],
+      "description": "Categorical label derived from score: low <0.5, medium 0.5–0.8, high 0.8–0.95, certain ≥0.95"
+    },
+    "method": {
+      "type": "string",
+      "enum": ["automated", "human_reviewed", "llm_suggested", "rule_based"],
+      "description": "How this confidence score was determined"
+    },
+    "basis": {
+      "type": "string",
+      "description": "Human-readable explanation of what drives this confidence score"
+    },
+    "assessedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "assessedBy": {
+      "type": "string",
+      "description": "Identifier of the system or person who assessed this confidence"
+    }
+  }
+}

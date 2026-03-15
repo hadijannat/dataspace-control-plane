@@ -1,0 +1,9 @@
+# Catena-X ODRL Profile — pinned placeholder
+# Source: https://github.com/catenax-eV/cx-odrl-profile
+# Version: 24.05  Retrieval-date: 2026-03-14
+# Replace this file with the actual pinned TTL from the upstream repository.
+@prefix cx-policy: <https://w3id.org/catenax/policy/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+
+cx-policy:UsagePurpose a odrl:LeftOperand ;
+    rdfs:label "Usage Purpose" .

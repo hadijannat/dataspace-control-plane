@@ -1,0 +1,42 @@
+# Staging environment overlay for control-api
+# Applied over charts/control-api/values.yaml
+
+replicaCount: 2
+
+image:
+  # Pinned semver — staging promotes from CI build; digest required for prod-eu
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  hosts:
+    - host: control-api.staging.dataspace.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: control-api-staging-tls
+      hosts:
+        - control-api.staging.dataspace.example.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+config:
+  logLevel: INFO
+  otlpEndpoint: "http://otel-collector:4317"
+  temporalNamespace: "dataspace"
+  temporalTaskQueue: "control-api"
+
+autoscaling:
+  enabled: false

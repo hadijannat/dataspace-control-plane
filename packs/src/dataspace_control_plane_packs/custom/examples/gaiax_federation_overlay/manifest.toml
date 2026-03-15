@@ -1,0 +1,12 @@
+pack_id = "example_eu_cloud_federation"
+pack_kind = "custom"
+version = "1.0.0"
+display_name = "Example EU Cloud Federation Overlay"
+description = "Reference example of a Gaia-X federation overlay pack. Not for production use."
+activation_scope = "tenant"
+default_priority = 10
+conflicts = []
+
+[[capabilities]]
+capability = "TrustAnchorOverlayProvider"
+interface_class = "dataspace_control_plane_packs.custom.examples.gaiax_federation_overlay.api.ExampleFederationTrustAnchorOverlay"

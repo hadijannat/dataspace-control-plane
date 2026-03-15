@@ -1,0 +1,90 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/your-org/dataspace-control-plane/temporal-workers
+  # Use digest in production: sha256:<digest>
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8081"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Workers do not expose HTTP externally — metrics only via headless service
+service:
+  type: ClusterIP
+  port: 8081
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+# External secret reference names (never literal values)
+secrets:
+  vaultSecretName: temporal-workers-vault
+  postgresSecretName: temporal-workers-postgres
+
+config:
+  logLevel: INFO
+  otlpEndpoint: "http://otel-collector:4317"
+  temporalHost: "temporal:7233"
+  temporalNamespace: "dataspace"
+  temporalTaskQueue: "dataspace-main"
+  temporalMaxConcurrentActivities: 10
+  temporalMaxConcurrentWorkflows: 5
+
+# Startup probe — allows longer initialization time before liveness kicks in
+startupProbe:
+  exec:
+    command:
+      - python
+      - -c
+      - "import os; os.kill(1, 0)"
+  failureThreshold: 30
+  periodSeconds: 10
+
+livenessProbe:
+  exec:
+    command:
+      - python
+      - -c
+      - "import os; os.kill(1, 0)"
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/implementation_profiles/aas_dpp4o/completeness.schema.json",
+  "title": "DPP4.0 Completeness Check",
+  "description": "Result of a completeness check on a DPP AAS shell — verifies that all required submodels and key fields are present for the activated regulation packs.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["passportId", "checkedAt", "packIds", "isComplete", "missingSubmodels", "missingFields"],
+  "additionalProperties": false,
+
+  "properties": {
+    "passportId": {"type": "string"},
+    "checkedAt": {"type": "string", "format": "date-time"},
+    "packIds": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Pack IDs whose requirements were checked"
+    },
+    "isComplete": {
+      "type": "boolean",
+      "description": "True only if all required submodels and mandatory fields are present"
+    },
+    "missingSubmodels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["semanticId", "packId"],
+        "properties": {
+          "semanticId": {"type": "string"},
+          "packId":     {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "missingFields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["submodelId", "fieldPath", "packId"],
+        "properties": {
+          "submodelId": {"type": "string"},
+          "fieldPath":  {"type": "string"},
+          "packId":     {"type": "string"},
+          "severity":   {"type": "string", "enum": ["error", "warning"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

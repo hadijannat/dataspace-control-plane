@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/base/prohibition.schema.json",
+  "title": "ODRL Prohibition",
+  "description": "An ODRL Prohibition — denies the assignee the right to perform an action on an asset.",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["action"],
+  "additionalProperties": true,
+
+  "properties": {
+    "action": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "object", "required": ["@id"], "properties": {"@id": {"type": "string"}}, "additionalProperties": true}
+      ]
+    },
+    "assigner": {"oneOf": [{"type": "string", "format": "uri"}, {"type": "object", "additionalProperties": true}]},
+    "assignee": {"oneOf": [{"type": "string", "format": "uri"}, {"type": "object", "additionalProperties": true}]},
+    "target":   {"oneOf": [{"type": "string", "format": "uri"}, {"type": "object", "additionalProperties": true}]},
+    "constraint": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/constraint.schema.json"},
+        {"type": "array", "items": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/constraint.schema.json"}}
+      ]
+    },
+    "remedy": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/duty.schema.json"},
+        {"type": "array", "items": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/duty.schema.json"}}
+      ],
+      "description": "Optional remedial duty when the prohibition is violated"
+    }
+  }
+}

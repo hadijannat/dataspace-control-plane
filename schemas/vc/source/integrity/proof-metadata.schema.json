@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/vc/source/integrity/proof-metadata.schema.json",
+  "title": "Proof Metadata",
+  "description": "Structure of a cryptographic proof attached to a Verifiable Credential or Presentation. Validates the proof envelope shape only — not cryptographic correctness. Compatible with W3C Data Integrity 1.0 and legacy JWT-based proofs.",
+  "x-source-standard": "W3C Data Integrity 1.0",
+  "x-source-version": "1.0",
+  "x-pack-dependencies": [],
+
+  "oneOf": [
+    {
+      "description": "Data Integrity proof (W3C Data Integrity 1.0)",
+      "type": "object",
+      "required": ["type", "proofPurpose", "verificationMethod", "created"],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Proof type, e.g. DataIntegrityProof, Ed25519Signature2020",
+          "examples": ["DataIntegrityProof", "Ed25519Signature2020", "EcdsaSecp256k1Signature2019"]
+        },
+        "cryptosuite": {
+          "type": "string",
+          "description": "Cryptographic suite identifier for DataIntegrityProof",
+          "examples": ["eddsa-rdfc-2022", "ecdsa-rdfc-2019"]
+        },
+        "proofPurpose": {
+          "type": "string",
+          "description": "The purpose of the proof",
+          "enum": ["assertionMethod", "authentication", "keyAgreement", "capabilityInvocation", "capabilityDelegation"]
+        },
+        "verificationMethod": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI of the verification method (public key or DID fragment)"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 datetime when the proof was created"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Optional domain binding"
+        },
+        "challenge": {
+          "type": "string",
+          "description": "Optional nonce for challenge-response binding"
+        },
+        "proofValue": {
+          "type": "string",
+          "description": "The actual proof value (base58btc or base64url encoded)"
+        }
+      }
+    },
+    {
+      "description": "Array of proofs (multi-proof support)",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["type", "proofPurpose", "verificationMethod", "created"],
+        "additionalProperties": true,
+        "properties": {
+          "type":               {"type": "string"},
+          "proofPurpose":       {"type": "string"},
+          "verificationMethod": {"type": "string", "format": "uri"},
+          "created":            {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  ]
+}

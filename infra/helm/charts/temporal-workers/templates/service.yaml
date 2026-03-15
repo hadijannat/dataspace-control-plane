@@ -1,0 +1,23 @@
+# Headless service — ClusterIP: None.
+# Used for metrics scraping by Prometheus (pod-level targeting).
+# Workers do not serve HTTP externally; this service is metrics-only.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "temporal-workers.fullname" . }}
+  labels:
+    {{- include "temporal-workers.labels" . | nindent 4 }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8081"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "temporal-workers.selectorLabels" . | nindent 4 }}

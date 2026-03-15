@@ -1,0 +1,13 @@
+source: "https://docs.gaia-x.eu/policy-rules-committee/trust-framework/22.10/"
+version: "22.10"
+retrieved: "2026-03-14"
+note: |
+  Replace this placeholder with the actual pinned content from the Gaia-X Trust Framework 22.10
+  publication. Pin the document under vocab/pinned/ with SHA-256 checksum in manifest.toml.
+  The compliance process is automated and versioned — outputs must reference the exact version.
+baseline_requirements:
+  - Legal entity must be registered in an EU member state or equivalent jurisdiction
+  - Self-description must be a valid Verifiable Credential using Gaia-X ontology
+  - Compliance credential is issued by a Gaia-X-accredited notary
+  - Federated catalogue entry must reference compliance credential
+  - Trust anchors are configured per federation (not universal)

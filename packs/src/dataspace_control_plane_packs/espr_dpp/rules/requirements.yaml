@@ -1,0 +1,29 @@
+version: "2024/1781"
+source: "Regulation (EU) 2024/1781 (ESPR)"
+effective_from: "2024-07-19"
+rules:
+  - rule_id: "espr:iso-15459-identifier-required"
+    title: "ISO/IEC 15459 Compatible Identifier Required"
+    severity: "error"
+    machine_checkable: true
+  - rule_id: "espr:data-carrier-required"
+    title: "Data Carrier Required"
+    severity: "error"
+    machine_checkable: true
+  - rule_id: "espr:registry-registration-required"
+    title: "Registry Registration Required"
+    severity: "error"
+    machine_checkable: false
+    note: "Commission registry operational by 2026-07-19"
+  - rule_id: "espr:open-standard-required"
+    title: "Open Standard Required"
+    severity: "error"
+    machine_checkable: false
+  - rule_id: "espr:machine-readable-required"
+    title: "Machine-Readable Structured Data Required"
+    severity: "error"
+    machine_checkable: false
+  - rule_id: "espr:backup-copy-required"
+    title: "Backup Copy Required"
+    severity: "error"
+    machine_checkable: true

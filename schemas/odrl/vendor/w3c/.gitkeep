@@ -1,0 +1,2 @@
+# W3C ODRL vendor artifacts — pinned by schemas/tools/pin_upstream.py
+# Run: python schemas/tools/pin_upstream.py --family odrl

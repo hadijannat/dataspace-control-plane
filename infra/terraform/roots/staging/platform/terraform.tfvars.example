@@ -1,0 +1,4 @@
+# namespace             = "dataspace"
+# postgres_storage_size = "20Gi"
+# vault_storage_size    = "10Gi"
+# ingress_class_name    = "nginx"

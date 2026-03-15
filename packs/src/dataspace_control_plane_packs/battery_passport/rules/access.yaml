@@ -1,0 +1,22 @@
+version: "2023/1542"
+source: "Regulation (EU) 2023/1542 Annex XIII"
+source_uri: "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L:2023:191:FULL"
+effective_from: "2027-02-18"
+note: |
+  Legitimate interest access details are subject to an implementing act
+  expected by 2026-08-18 (Article 74 §2). Until then, the legitimate_interest
+  access class uses a placeholder rule set.
+access_classes:
+  - class: "public"
+    description: "Anyone scanning the QR code or using the unique identifier"
+    effective_from: "2027-02-18"
+  - class: "authority"
+    description: "National market surveillance authorities and customs authorities"
+    effective_from: "2027-02-18"
+  - class: "legitimate_interest"
+    description: "Economic operators and third parties with legitimate interest (implementing act pending)"
+    effective_from: "2026-08-18"
+    note: "Implementing act by 2026-08-18 will specify eligible parties and access conditions"
+  - class: "manufacturer"
+    description: "Manufacturer and authorized repair, service, and second-life parties"
+    effective_from: "2027-02-18"

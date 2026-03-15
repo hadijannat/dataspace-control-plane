@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "control-api Helm values schema",
+  "type": "object",
+  "required": ["image", "service", "secrets", "config", "resources"],
+  "additionalProperties": true,
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Number of control-api pod replicas"
+    },
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag"],
+      "additionalProperties": true,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Container image repository (e.g. ghcr.io/your-org/dataspace-control-plane/control-api)"
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(sha256:[a-f0-9]{64}|[0-9]+\\.[0-9]+\\.[0-9]+.*)$",
+          "description": "Image tag — must be semver (0.1.0) or sha256 digest (sha256:<64 hex chars>) for production"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": ["port"],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Service port exposed to other pods"
+        },
+        "targetPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "required": ["postgresSecretName", "vaultSecretName", "keycloakSecretName"],
+      "additionalProperties": true,
+      "properties": {
+        "postgresSecretName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the K8s Secret containing Postgres credentials (never the actual credentials)"
+        },
+        "vaultSecretName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the K8s Secret referencing Vault credentials"
+        },
+        "keycloakSecretName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the K8s Secret referencing Keycloak OIDC client credentials"
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "logLevel": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+          "description": "Application log level"
+        },
+        "otlpEndpoint": {
+          "type": "string",
+          "description": "OpenTelemetry Collector OTLP gRPC endpoint"
+        },
+        "temporalNamespace": {
+          "type": "string"
+        },
+        "temporalTaskQueue": {
+          "type": "string"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "requests": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "CPU request (e.g. 100m)"
+            },
+            "memory": {
+              "type": "string",
+              "description": "Memory request (e.g. 128Mi)"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "hosts": {
+          "type": "array"
+        },
+        "tls": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+# Replace placeholder owners with real GitHub handles before enforcing review rules.
+
+/AGENTS.md @dataspace-control-plane/lead
+/PLANS.md @dataspace-control-plane/lead
+/.agents/skills/ @dataspace-control-plane/lead
+/docs/agents/ @dataspace-control-plane/docs-owner
+/apps/ @dataspace-control-plane/apps-owner
+/core/ @dataspace-control-plane/core-owner
+/procedures/ @dataspace-control-plane/procedures-owner
+/adapters/ @dataspace-control-plane/adapters-owner
+/packs/ @dataspace-control-plane/packs-owner
+/schemas/ @dataspace-control-plane/schemas-owner
+/tests/ @dataspace-control-plane/tests-owner
+/infra/ @dataspace-control-plane/infra-owner
+/docs/ @dataspace-control-plane/docs-owner

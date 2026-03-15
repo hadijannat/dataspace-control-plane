@@ -1,0 +1,4 @@
+# file: /Users/aeroshariati/dataspace-control-plane/schemas/tools/bundle.py
+# hypothesis_version: 6.135.10
+
+['#/', '$defs', '$id', '$ref', '--entrypoint', '--family', '--out', '.', '.schema.json', '/', '_', '__', '__main__', 'bundles', 'entrypoints', 'families', 'registry.yaml', 'schema_family']

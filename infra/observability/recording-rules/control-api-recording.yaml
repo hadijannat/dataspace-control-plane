@@ -1,0 +1,46 @@
+groups:
+  - name: control_api_recording
+    interval: 1m
+    rules:
+      # Request rate: total requests per second, summed by job
+      - record: job:http_server_request_rate5m:sum
+        expr: |
+          sum(rate(http_server_duration_count{job="control-api"}[5m])) by (job)
+
+      # Error rate: ratio of 5xx to total requests
+      - record: job:http_server_error_rate5m:sum
+        expr: |
+          sum(rate(http_server_duration_count{job="control-api",http_status_code=~"5.."}[5m])) by (job)
+          /
+          sum(rate(http_server_duration_count{job="control-api"}[5m])) by (job)
+
+      # P99 latency: 99th percentile request duration
+      - record: job:http_server_p99_latency5m:histogram_quantile
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_server_duration_bucket{job="control-api"}[5m])) by (le, job)
+          )
+
+      # P50 latency: 50th percentile (median) request duration
+      - record: job:http_server_p50_latency5m:histogram_quantile
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(http_server_duration_bucket{job="control-api"}[5m])) by (le, job)
+          )
+
+      # P95 latency: 95th percentile
+      - record: job:http_server_p95_latency5m:histogram_quantile
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_duration_bucket{job="control-api"}[5m])) by (le, job)
+          )
+
+      # Request rate by HTTP method and status code group
+      - record: job_method_status:http_server_request_rate5m:sum
+        expr: |
+          sum(rate(http_server_duration_count{job="control-api"}[5m])) by (job, http_method, http_status_code)
+
+      # Availability: fraction of time the job has at least one healthy target
+      - record: job:up:mean5m
+        expr: |
+          avg_over_time(up{job="control-api"}[5m])

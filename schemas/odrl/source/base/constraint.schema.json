@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/base/constraint.schema.json",
+  "title": "ODRL Constraint",
+  "description": "An ODRL Constraint — a boolean expression over operand, operator, and rightOperand/rightOperandReference that limits a rule. Supports both atomic constraints and logical constraints (AND/OR/XOR).",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+
+  "oneOf": [
+    {
+      "title": "Atomic Constraint",
+      "type": "object",
+      "required": ["leftOperand", "operator"],
+      "additionalProperties": true,
+      "properties": {
+        "leftOperand": {
+          "type": "string",
+          "description": "The property being constrained, e.g. odrl:dateTime, cx-policy:UsagePurpose"
+        },
+        "operator": {
+          "type": "string",
+          "description": "Comparison operator, e.g. odrl:eq, odrl:lt, odrl:isPartOf",
+          "examples": ["odrl:eq", "odrl:lt", "odrl:gt", "odrl:isPartOf", "odrl:isAnyOf"]
+        },
+        "rightOperand": {
+          "description": "The comparison value — scalar or array"
+        },
+        "rightOperandReference": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI reference to the right operand value"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Optional unit qualifier for numeric operands"
+        },
+        "dataType": {
+          "type": "string",
+          "description": "Optional XSD datatype for the rightOperand"
+        },
+        "status": {
+          "type": "string",
+          "description": "Evaluation status hint: active, inactive, violated"
+        }
+      }
+    },
+    {
+      "title": "Logical Constraint (AND)",
+      "type": "object",
+      "required": ["and"],
+      "properties": {
+        "and": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"$ref": "#"}
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Logical Constraint (OR)",
+      "type": "object",
+      "required": ["or"],
+      "properties": {
+        "or": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"$ref": "#"}
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Logical Constraint (XOR)",
+      "type": "object",
+      "required": ["xone"],
+      "properties": {
+        "xone": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"$ref": "#"}
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

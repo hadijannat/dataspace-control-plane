@@ -1,0 +1,8 @@
+{
+  "passportId": "urn:dpp:battery:BAT-BAD-001",
+  "passportVersion": "1.0.0",
+  "lifecycle": {
+    "currentState": "active",
+    "isCeased": false
+  }
+}

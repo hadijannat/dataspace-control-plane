@@ -1,0 +1,27 @@
+# Dev environment overlay for temporal-workers
+# Applied over charts/temporal-workers/values.yaml
+
+replicaCount: 1
+
+image:
+  tag: "dev"
+  pullPolicy: Always
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+config:
+  logLevel: DEBUG
+  temporalHost: "temporal:7233"
+  temporalNamespace: "dataspace"
+  temporalTaskQueue: "dataspace-main"
+  temporalMaxConcurrentActivities: 5
+  temporalMaxConcurrentWorkflows: 2
+
+autoscaling:
+  enabled: false

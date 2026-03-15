@@ -1,0 +1,426 @@
+# =============================================================================
+# dataspace-control-plane — .gitignore
+# =============================================================================
+# Organisation:
+#   1. Claude Code / AI agent tooling
+#   2. Python
+#   3. Node / pnpm (web-console)
+#   4. Java / Gradle (edc-extension)
+#   5. Terraform
+#   6. Helm
+#   7. MkDocs
+#   8. Secrets and credentials
+#   9. IDEs and editors
+#  10. OS artefacts
+#  11. Logs and temporaries
+# =============================================================================
+
+
+# =============================================================================
+# 1. Claude Code / AI agent tooling
+# =============================================================================
+
+# Ephemeral per-wave handoff artefacts written by agent teammates.
+# The README (protocol template) stays; individual handoffs are session state.
+.claude/handoffs/*.md
+!.claude/handoffs/README.md
+
+# Generated audit log written by the audit-config-change hook.
+.claude/config-audit.log
+
+# Claude Code session data and workspace caches that Claude Code creates
+# locally and that must not leak to remote (contain conversation state,
+# local tool paths, and machine-specific context).
+.claude/todos/
+.claude/tmp/
+
+# Personal/local settings override — never shared (does not exist in this repo
+# by default; listed here to prevent accidental commits if someone creates one).
+.claude/settings.local.json
+
+# NOTE — the following .claude/ paths ARE committed (team-shared):
+#   .claude/settings.json       project permissions + hook wiring
+#   .claude/team-ownership.yaml ownership map + wave definitions
+#   .claude/hooks/              lifecycle enforcement scripts
+#   .claude/skills/             wave management skills
+#   .claude/agents/             directory-owner subagent definitions
+#   .claude/handoffs/README.md  handoff protocol template
+
+# NOTE — .agents/ (repo-local reusable skills) IS committed.
+
+
+# =============================================================================
+# 2. Python
+# =============================================================================
+
+# Byte-compiled / optimised
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# uv managed virtual environments and cache
+.uv/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+htmlcov/
+.tox/
+.nox/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+.pytype/
+
+# Linter caches
+.ruff_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+*.ipynb
+
+# pyenv
+.python-version
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Spyder
+.spyderproject.db
+.spyproject
+
+# Rope
+.ropeproject
+
+
+# =============================================================================
+# 3. Node / pnpm  (apps/web-console)
+# =============================================================================
+
+node_modules/
+
+# pnpm store (local store is machine-specific)
+.pnpm-store/
+.pnpm-debug.log*
+
+# Build output (Vite)
+apps/web-console/dist/
+
+# Vitest coverage
+apps/web-console/coverage/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Next.js / other frameworks (listed defensively)
+.next/
+out/
+.nuxt/
+.output/
+
+# Storybook
+storybook-static/
+
+# Parcel cache
+.parcel-cache/
+
+# Vite temp
+.vite/
+
+# dotenv local overrides (vite convention)
+*.local
+
+
+# =============================================================================
+# 4. Java / Gradle  (apps/edc-extension)
+# =============================================================================
+
+# Gradle build directories and caches
+.gradle/
+apps/edc-extension/build/
+apps/edc-extension/*/build/
+
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Package files — do NOT ignore .jar files in schemas/aas/source/ or similar
+# (those are pinned upstream artifacts). Only ignore generated build outputs.
+apps/edc-extension/build/**/*.jar
+apps/edc-extension/build/**/*.war
+apps/edc-extension/build/**/*.nar
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
+
+# =============================================================================
+# 5. Terraform  (infra/terraform)
+# =============================================================================
+
+# Local .terraform directory (downloaded providers and modules)
+**/.terraform/
+
+# Terraform state files — NEVER commit state; use remote backend (Vault/S3/TFC)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Variable files that may contain secrets
+# Commit *.tfvars.example but never the real values
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+!*.tfvars.json.example
+
+# Override files (local developer overrides)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform plan files (may contain sensitive data)
+*.tfplan
+
+# Generated Terraform docs
+.terraform.docs.json
+
+# NOTE — .terraform.lock.hcl IS committed per directory (pins provider versions)
+
+
+# =============================================================================
+# 6. Helm  (infra/helm)
+# =============================================================================
+
+# Packaged chart archives (generated by helm package)
+infra/helm/charts/**/*.tgz
+infra/helm/**/*.tgz
+
+# Helm dependency charts downloaded via helm dep update
+# (committed charts/ subdirectories that are explicitly vendored are fine)
+infra/helm/charts/*/charts/
+
+# Rendered manifests from helm template (local debug output)
+infra/helm/**/.rendered/
+
+
+# =============================================================================
+# 7. MkDocs  (docs site build output)
+# =============================================================================
+
+# Built site directory
+site/
+
+# MkDocs offline assets cache
+docs/.cache/
+
+
+# =============================================================================
+# 8. Secrets and credentials
+# =============================================================================
+
+# Environment files — never commit real secrets
+.env
+.env.*
+*.env
+!*.env.example
+!*.env.template
+
+# Private keys, certificates, keystores
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# AWS credentials
+.aws/credentials
+.aws/config
+
+# Vault tokens
+.vault-token
+vault-token
+
+# kubeconfig (contains cluster credentials)
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+
+# Docker credential helpers
+.docker/config.json
+
+
+# =============================================================================
+# 9. IDEs and editors
+# =============================================================================
+
+# JetBrains (IntelliJ IDEA, PyCharm, etc.)
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# VS Code (local settings and extensions — workspace settings in .vscode/
+# may be committed if the team agrees; listed here as default-ignore)
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# Eclipse
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+Session.vim
+.netrwhist
+tags
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+
+# Nano
+*.save
+
+# Sublime Text
+*.sublime-project
+
+
+# =============================================================================
+# 10. OS artefacts
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+.directory
+
+
+# =============================================================================
+# 11. Logs and temporaries
+# =============================================================================
+
+# Generic log files (specific application logs committed for fixtures are OK)
+logs/
+*.log
+!tests/fixtures/**/*.log
+
+# Runtime / PID files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage reports (CI uploads these as artefacts; not for review in PR diffs)
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.bak
+*.backup
+*.orig
+*.rej
+
+# Lock files — the following ARE committed (pin exact versions for CI):
+# NOTE: uv.lock, pnpm-lock.yaml, .terraform.lock.hcl  →  commit these
+# NOTE: tests/compatibility/*/lock.yaml               →  commit these (pinned TCK artifacts)
+# NOTE: schemas/locks/upstream.lock.yaml              →  commit this (provenance tracking)

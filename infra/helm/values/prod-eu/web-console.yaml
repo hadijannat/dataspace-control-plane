@@ -1,0 +1,59 @@
+# Production EU environment overlay for web-console
+# Applied over charts/web-console/values.yaml
+#
+# REQUIRED: Replace image.tag with the real sha256 digest from CI.
+
+replicaCount: 3
+
+image:
+  tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: console.eu.dataspace.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: web-console-prod-eu-tls
+      hosts:
+        - console.eu.dataspace.example.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+config:
+  apiBaseUrl: "http://control-api"
+  keycloakUrl: "https://keycloak.eu.dataspace.example.com"
+  keycloakRealm: "dataspace"
+  keycloakClientId: "web-console"
+  nextTelemetryDisabled: "1"
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - web-console
+        topologyKey: kubernetes.io/hostname

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/source/profiles/endpoint-ref.schema.json",
+  "title": "AAS Endpoint Reference",
+  "description": "Protocol-specific endpoint descriptor for an AAS Shell or Submodel. Captures interface name, protocol, and address.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 2",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["interface", "protocolInformation"],
+  "additionalProperties": false,
+
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Interface type, e.g. AAS-3.0, AAS-REPOSITORY-3.0, SUBMODEL-3.0",
+      "examples": ["AAS-3.0", "AAS-REPOSITORY-3.0", "SUBMODEL-3.0", "AASX-SERVER-3.0"]
+    },
+    "protocolInformation": {
+      "type": "object",
+      "required": ["href"],
+      "additionalProperties": false,
+      "properties": {
+        "href": {
+          "type": "string",
+          "format": "uri",
+          "description": "Endpoint URL"
+        },
+        "endpointProtocol": {
+          "type": "string",
+          "description": "Transport protocol, e.g. HTTP, HTTPS, OPC UA",
+          "examples": ["HTTP", "HTTPS", "OPC UA"]
+        },
+        "endpointProtocolVersion": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Supported protocol versions"
+        },
+        "subprotocol": {
+          "type": "string",
+          "description": "Subprotocol, e.g. WebSocket",
+          "examples": ["WebSocket", "MQTT"]
+        },
+        "subprotocolBody": {
+          "type": "string",
+          "description": "Subprotocol-specific configuration"
+        },
+        "subprotocolBodyEncoding": {
+          "type": "string",
+          "description": "Encoding for subprotocolBody",
+          "examples": ["plain/text", "application/json"]
+        },
+        "securityAttributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "key", "value"],
+            "properties": {
+              "type":  {"type": "string"},
+              "key":   {"type": "string"},
+              "value": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  }
+}

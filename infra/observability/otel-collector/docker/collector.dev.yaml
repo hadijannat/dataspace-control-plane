@@ -1,0 +1,80 @@
+# collector.dev.yaml — Standalone OTel Collector config for Docker Compose
+#
+# Self-contained config combining base + debug profile + dev env overrides.
+# Used by compose.observability.yaml.
+#
+# This file is the single source of truth for local dev collection.
+# It does NOT reference external env vars (uses inline dev values).
+#
+# Exports to:
+#   - debug exporter (stdout, basic verbosity)
+#   - Prometheus remote write (http://prometheus:9090)
+#   - Loki push (http://loki:3100)
+#
+# Traces go to debug only (no Tempo in local dev by default).
+# Add Tempo to the compose stack and update this config to enable trace storage.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 100
+    send_batch_max_size: 200
+
+  memory_limiter:
+    limit_mib: 256
+    spike_limit_mib: 64
+    check_interval: 5s
+
+exporters:
+  debug:
+    verbosity: basic
+    sampling_initial: 10
+    sampling_thereafter: 100
+
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+    tls:
+      insecure: true
+
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    tls:
+      insecure: true
+    default_labels_enabled:
+      exporter: false
+      job: true
+      instance: true
+      level: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheusremotewrite, debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loki, debug]
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

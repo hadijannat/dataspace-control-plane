@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/exports/registry-envelope.schema.json",
+  "title": "DPP Registry Submission Envelope",
+  "description": "Envelope for submitting a Digital Product Passport to an external product registry (e.g. EU DPP registry, Catena-X registry). Contains passport identity, shell reference, regulation pack IDs, and submission metadata.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["passportId", "subjectId", "shellId", "shellEndpoint", "regulationPackIds", "submittedAt"],
+  "additionalProperties": false,
+
+  "properties": {
+    "passportId":      {"type": "string"},
+    "subjectId":       {"type": "string", "description": "Physical product identifier"},
+    "shellId":         {"type": "string", "description": "AAS Shell id"},
+    "shellEndpoint":   {"type": "string", "format": "uri"},
+    "registryId":      {"type": "string", "description": "Target registry identifier"},
+    "regulationPackIds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"},
+      "description": "Regulation packs whose requirements this passport satisfies"
+    },
+    "productClass":    {"type": "string"},
+    "lifecycleState":  {"type": "string"},
+    "submittedAt":     {"type": "string", "format": "date-time"},
+    "submittedBy":     {"type": "string", "description": "BPN or DID of submitting party"},
+    "submissionId":    {"type": "string", "description": "Registry-assigned submission reference"},
+    "checksum": {
+      "type": "object",
+      "properties": {
+        "algorithm": {"type": "string", "enum": ["SHA-256"]},
+        "value":     {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false,
+      "description": "Checksum of the canonical passport payload at submission time"
+    }
+  }
+}

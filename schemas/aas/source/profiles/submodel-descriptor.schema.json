@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/source/profiles/submodel-descriptor.schema.json",
+  "title": "AAS Submodel Descriptor",
+  "description": "AAS Submodel Descriptor per IDTA Release 25-01 Part 2. Registered in the AAS Registry; describes where a submodel can be reached and its semantic identity.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 2",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["id", "semanticId"],
+  "additionalProperties": true,
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Submodel identifier — matches Submodel.id"
+    },
+    "idShort": {"type": "string"},
+    "semanticId": {
+      "type": "object",
+      "required": ["type", "keys"],
+      "properties": {
+        "type": {"type": "string"},
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "value"],
+            "properties": {
+              "type":  {"type": "string"},
+              "value": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "https://dataspace-control-plane.internal/schemas/aas/source/profiles/endpoint-ref.schema.json"
+      }
+    },
+    "description": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["language", "text"],
+        "properties": {
+          "language": {"type": "string"},
+          "text":     {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "administration": {
+      "type": "object",
+      "properties": {
+        "version":  {"type": "string"},
+        "revision": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

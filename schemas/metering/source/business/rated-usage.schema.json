@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/rated-usage.schema.json",
+  "title": "Rated Usage",
+  "description": "The result of applying a rating rule to a usage record — captures the monetary value assigned to measured consumption. Immutable output of the rating engine.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["ratedUsageId", "usageRecordId", "ruleId", "dimensionId", "quantity", "unit", "amount", "currency", "ratedAt"],
+  "additionalProperties": false,
+
+  "properties": {
+    "ratedUsageId":  {"type": "string", "format": "uuid"},
+    "usageRecordId": {"type": "string", "format": "uuid", "description": "Matches usage-record.recordId"},
+    "ruleId":        {"type": "string", "description": "Matches rating-rule.ruleId applied"},
+    "dimensionId":   {"type": "string"},
+    "quantity":      {"type": "number", "minimum": 0},
+    "unit":          {"type": "string"},
+    "pricePerUnit":  {"type": "number", "description": "Effective rate applied (for auditability)"},
+    "amount": {
+      "type": "number",
+      "description": "Monetary charge = pricePerUnit × quantity (or formula result)"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "ratedAt":       {"type": "string", "format": "date-time"},
+    "ratingEngineVersion": {"type": "string"},
+    "tierApplied":   {"type": "integer", "minimum": 1, "description": "1-indexed tier used (for tiered pricing)"},
+    "notes":         {"type": "string"}
+  }
+}

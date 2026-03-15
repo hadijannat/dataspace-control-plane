@@ -1,0 +1,193 @@
+{
+  "version": "2.2.0",
+  "summary": {
+    "title": "Dataspace Control Plane — Platform Threat Model",
+    "owner": "infra-lead, docs-lead",
+    "description": "Platform-wide DFD covering the main trust boundaries between control-api, temporal-workers, Vault, Keycloak, Postgres, and external connectors.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Platform Data Flow",
+        "diagramType": "STRIDE",
+        "placeholder": "New STRIDE diagram",
+        "thumbnail": "./public/content/images/thumbnail.jpg",
+        "version": "2.2.0",
+        "cells": [
+          {
+            "position": {"x": 340, "y": 80},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Operator\n(Browser)"}},
+            "shape": "actor",
+            "id": "actor-operator",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Actor",
+              "name": "Operator",
+              "description": "Human operator using web-console to manage companies, passports, and workflows",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {"x": 340, "y": 220},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "control-api\n(FastAPI)"}},
+            "shape": "process",
+            "id": "process-control-api",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "control-api",
+              "description": "FastAPI HTTP service handling operator and machine requests. Validates JWTs, enforces role-based access, forwards long-running operations to Temporal.",
+              "outOfScope": false,
+              "privilegeLevel": "application",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "threat-ca-01",
+                  "title": "JWT token replay",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Spoofing",
+                  "description": "Attacker replays a captured JWT to impersonate an operator after the operator has logged out or the token should have expired",
+                  "mitigation": "Short-lived JWTs (5 min expiry) validated server-side via JWKS endpoint on every request. MFA enforced. Keycloak session revocation available.",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-ca-02",
+                  "title": "Injection via ODRL policy payload",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "Malformed ODRL policy payload from an external EDC connector may cause undefined behavior in the Catena-X pack policy compiler, potentially allowing policy bypass or application crash",
+                  "mitigation": "Validate against odrl.policy-offer schema before processing. Hypothesis property tests cover parser inputs. Fuzz testing of all constraint combinations is pending (Wave 3 hardening backlog).",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-ca-03",
+                  "title": "Rate limit bypass via forged tenant ID",
+                  "status": "Mitigated",
+                  "severity": "Low",
+                  "type": "Denial of Service",
+                  "description": "Attacker attempts to bypass per-tenant rate limits by cycling through tenant IDs",
+                  "mitigation": "Rate limits applied per JWT sub claim (user ID), not per tenant ID header. A stolen JWT from one tenant cannot be used to affect another tenant's rate limit.",
+                  "modelType": "STRIDE"
+                }
+              ]
+            }
+          },
+          {
+            "position": {"x": 600, "y": 220},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "PostgreSQL\n(RLS enabled)"}},
+            "shape": "store",
+            "id": "store-postgres",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Store",
+              "name": "PostgreSQL",
+              "description": "Tenant-isolated data store with Row-Level Security policies on all tenant tables. Stores companies, agreements, passports, evidence records (append-only), and metering contexts.",
+              "isALog": false,
+              "storesCredentials": false,
+              "storesInventory": true,
+              "outOfScope": false,
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "threat-pg-01",
+                  "title": "Cross-tenant query via forged tenant ID",
+                  "status": "Mitigated",
+                  "severity": "Critical",
+                  "type": "Information Disclosure",
+                  "description": "Attacker forges X-Tenant-ID header to access another tenant's data. Even if the API-layer filter is misconfigured, PostgreSQL RLS is the final enforcement layer.",
+                  "mitigation": "PostgreSQL RLS policies enforce tenant isolation at the database layer. The app.tenant_id session variable is set from the validated JWT claim, not from request headers. Forged header value does not affect the session variable.",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-pg-02",
+                  "title": "Evidence record tampering via SQL UPDATE",
+                  "status": "Mitigated",
+                  "severity": "Critical",
+                  "type": "Tampering",
+                  "description": "Attacker with compromised application credentials attempts to UPDATE an evidence record to falsify the audit trail",
+                  "mitigation": "The dataspace_app Postgres role has INSERT and SELECT on evidence_records but no UPDATE or DELETE grants. Evidence is also Vault Transit-signed — any modification invalidates the cryptographic proof.",
+                  "modelType": "STRIDE"
+                }
+              ]
+            }
+          },
+          {
+            "position": {"x": 600, "y": 100},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Vault Transit\n+ PKI"}},
+            "shape": "process",
+            "id": "process-vault",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "Vault Transit",
+              "description": "Cryptographic operations boundary — signing, verification, hashing, certificate issuance. Private keys created with exportable=false. Vault audit backend logs all operations.",
+              "outOfScope": false,
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "threat-vt-01",
+                  "title": "Vault sealed during signing request",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Denial of Service",
+                  "description": "If Vault is sealed (pod restart without auto-unseal, or Raft quorum loss), all signing operations fail and workflows stall at signing activities",
+                  "mitigation": "Vault HA (3-node Raft) in staging/prod. Auto-unseal via cloud KMS. Temporal retry policy (10 attempts, exponential backoff) handles brief outages transparently. Chaos test verifies graceful failure behavior.",
+                  "modelType": "STRIDE"
+                },
+                {
+                  "id": "threat-vt-02",
+                  "title": "Private key extraction via compromised Vault token",
+                  "status": "Mitigated",
+                  "severity": "Critical",
+                  "type": "Information Disclosure",
+                  "description": "Attacker with a stolen Vault AppRole token attempts to extract the raw private key material via the Transit export API",
+                  "mitigation": "Transit keys created with exportable=false. The export API returns 403 regardless of token policy. Vault audit log records the failed attempt.",
+                  "modelType": "STRIDE"
+                }
+              ]
+            }
+          },
+          {
+            "position": {"x": 100, "y": 220},
+            "size": {"width": 112, "height": 60},
+            "attrs": {"text": {"text": "Keycloak\n(Realm Admin)"}},
+            "shape": "process",
+            "id": "process-keycloak",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "Keycloak",
+              "description": "Identity provider and authorization server. Manages realms (one per tenant), clients, users, and service accounts. Issues short-lived JWTs.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": [
+                {
+                  "id": "threat-kc-01",
+                  "title": "Keycloak Admin REST exposed to unauthorized services",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Elevation of Privilege",
+                  "description": "If the Keycloak Admin REST API is accessible to any pod in the cluster, a compromised pod could create new admin users or disable MFA",
+                  "mitigation": "Kubernetes NetworkPolicy restricts Keycloak Admin REST (port 8080/auth/admin) to provisioning-agent pod only. All other platform pods cannot reach the admin path.",
+                  "modelType": "STRIDE"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

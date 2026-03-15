@@ -1,0 +1,27 @@
+/* Dataspace Control Plane — MkDocs extra styles */
+
+:root {
+  --md-primary-fg-color: #3f51b5;
+  --md-accent-fg-color: #2196f3;
+}
+
+/* ADR status badges */
+.adr-status-proposed { background-color: #ff9800; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; }
+.adr-status-accepted { background-color: #4caf50; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; }
+.adr-status-superseded { background-color: #9e9e9e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; }
+.adr-status-deprecated { background-color: #f44336; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; }
+
+/* Mermaid diagrams */
+.mermaid { text-align: center; margin: 1.5em 0; }
+
+/* Arc42 section numbers */
+.arc42-section { border-left: 4px solid var(--md-primary-fg-color); padding-left: 1em; margin: 1em 0; }
+
+/* Threat model tables */
+.threat-table th { background-color: var(--md-primary-fg-color); color: white; }
+.stride-spoofing { color: #e53935; }
+.stride-tampering { color: #fb8c00; }
+.stride-repudiation { color: #8e24aa; }
+.stride-info-disclosure { color: #1e88e5; }
+.stride-dos { color: #546e7a; }
+.stride-elevation { color: #c62828; }

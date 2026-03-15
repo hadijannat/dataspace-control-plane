@@ -1,0 +1,72 @@
+# profiles/debug.yaml — Local troubleshooting ONLY
+#
+# WARNING: NEVER use this profile in staging or production.
+# This profile:
+#   - Enables pprof (port 1777) — exposes CPU/memory profiling
+#   - Enables zpages (port 55679) — exposes internal collector state
+#   - Uses the debug exporter with detailed verbosity
+#   - Sets telemetry log level to debug
+#
+# Use with Docker Compose local stack:
+#   docker compose -f compose.yaml -f compose.dev.yaml -f compose.observability.yaml up
+#   The compose.observability.yaml uses docker/collector.dev.yaml which includes this profile.
+#
+# To connect to zpages: http://localhost:55679
+# To profile with pprof: go tool pprof http://localhost:1777/debug/pprof/profile
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # NEVER enable in staging or production
+  pprof:
+    endpoint: localhost:1777
+    block_profile_fraction: 0
+    mutex_profile_fraction: 0
+
+  zpages:
+    endpoint: localhost:55679
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 100
+
+  memory_limiter:
+    limit_mib: 256
+    spike_limit_mib: 64
+    check_interval: 5s
+
+exporters:
+  # Detailed debug output — prints all attributes and payloads
+  debug:
+    verbosity: detailed
+
+service:
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
+  telemetry:
+    logs:
+      level: debug
+    metrics:
+      address: 0.0.0.0:8888

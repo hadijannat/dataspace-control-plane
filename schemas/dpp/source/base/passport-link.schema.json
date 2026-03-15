@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-link.schema.json",
+  "title": "Passport Link",
+  "description": "A typed link between two Digital Product Passports — predecessor (original) to successor (derived after repurposing, remanufacturing, or cascaded component). Battery Regulation (EU) 2023/1542 and ESPR both require that a successor passport reference the original.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": ["battery_passport", "espr_dpp"],
+
+  "type": "object",
+  "required": ["linkedPassportId", "linkType", "linkedAt"],
+  "additionalProperties": false,
+
+  "properties": {
+    "linkedPassportId": {
+      "type": "string",
+      "description": "The passportId of the linked passport (predecessor or successor)"
+    },
+    "linkType": {
+      "type": "string",
+      "enum": [
+        "repurposed",
+        "remanufactured",
+        "cascaded_component",
+        "recycled_input",
+        "corrected_version"
+      ],
+      "description": "Semantic type of the link. 'repurposed' and 'remanufactured' are battery regulation terms; 'cascaded_component' is used for disassembly; 'corrected_version' for regulatory data corrections."
+    },
+    "linkedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this link was created"
+    },
+    "linkedBy": {
+      "type": "string",
+      "description": "Actor (BPN or DID) who created this link"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Human-readable context for the link"
+    }
+  }
+}

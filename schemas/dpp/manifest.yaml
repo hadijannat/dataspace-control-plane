@@ -1,0 +1,37 @@
+family: dpp
+version: "1.0.0"
+description: "Technology-neutral Digital Product Passport envelope schemas — base passport shape, lifecycle, access classes, predecessor/successor linkage, and AAS DPP4.0 implementation profile bindings."
+effective_from: "2026-03-14"
+
+upstream_standards:
+  - name: "IDTA DPP4.0"
+    version: "4.0"
+    source_uri: "https://industrialdigitaltwin.org/dpp4-0"
+  - name: "IDTA AAS Release 25-01"
+    version: "25-01"
+    source_uri: "https://industrialdigitaltwin.io/aas-specifications/IDTA-01001-3-0"
+
+validation_dialect: "https://json-schema.org/draft/2020-12/schema"
+
+artifact_classes:
+  - source
+  - bundles
+  - examples
+
+downstream_consumers:
+  - adapters
+  - procedures
+  - packs
+  - apps
+
+ci_gates:
+  - "python schemas/tools/validate.py --family dpp"
+  - "pytest tests/unit -k dpp_schemas"
+  - "pytest tests/compatibility -k dpp"
+
+notes: |
+  base/ is technology-neutral — no ESPR or battery-specific fields here.
+  AAS DPP4.0 realization lives in implementation_profiles/aas_dpp4o/.
+  Regulation packs extend the base envelope with effective-dated field requirements.
+  Do NOT hardcode ESPR delegated-act fields or battery access audiences here.
+  Registry submission schemas go in source/exports/, not in base/.

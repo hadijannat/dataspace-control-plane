@@ -1,0 +1,64 @@
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+    check_interval: 5s
+
+  # Resource attribute enrichment — add deployment environment tag
+  resource:
+    attributes:
+      - key: deployment.environment
+        from_attribute: DEPLOYMENT_ENVIRONMENT
+        action: upsert
+
+  # Redact sensitive attributes before export.
+  # This processor MUST appear in all pipelines that could carry user data.
+  # Patterns use Go regexp syntax (case-insensitive via (?i) flag).
+  redaction:
+    allow_all_keys: true
+    blocked_values:
+      - "(?i)password"
+      - "(?i)token"
+      - "(?i)secret"
+      - "(?i)private.key"
+      - "(?i)authorization"
+      - "(?i)api.key"
+      - "(?i)client.secret"
+    summary: debug
+
+  # Kubernetes attribute enrichment.
+  # Only active in Kubernetes deployments (gateway and node-agent profiles).
+  # Requires ClusterRole with permissions to get/list Pods.
+  k8sattributes:
+    auth_type: serviceAccount
+    passthrough: false
+    extract:
+      metadata:
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.pod.start_time
+        - k8s.namespace.name
+        - k8s.node.name
+        - k8s.deployment.name
+        - k8s.replicaset.name
+      labels:
+        - tag_name: app
+          key: app.kubernetes.io/name
+          from: pod
+        - tag_name: version
+          key: app.kubernetes.io/version
+          from: pod
+        - tag_name: component
+          key: app.kubernetes.io/component
+          from: pod
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+      - sources:
+          - from: connection

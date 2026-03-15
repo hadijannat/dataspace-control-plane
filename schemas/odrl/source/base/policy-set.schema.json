@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/base/policy-set.schema.json",
+  "title": "ODRL Policy Set",
+  "description": "An ODRL Policy Set — a collection of policy documents with a common uid and no mandatory assigner/assignee. Used as a container to group related policies.",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["@context", "@type", "uid"],
+  "additionalProperties": true,
+
+  "properties": {
+    "@context": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "array", "items": {"type": "string"}}
+      ]
+    },
+    "@type": {
+      "type": "string",
+      "const": "odrl:Set"
+    },
+    "uid": {
+      "type": "string",
+      "format": "uri"
+    },
+    "permission": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/permission.schema.json"},
+        {"type": "array", "items": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/permission.schema.json"}}
+      ]
+    },
+    "prohibition": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/prohibition.schema.json"},
+        {"type": "array", "items": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/prohibition.schema.json"}}
+      ]
+    },
+    "obligation": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/obligation.schema.json"},
+        {"type": "array", "items": {"$ref": "https://dataspace-control-plane.internal/schemas/odrl/source/base/obligation.schema.json"}}
+      ]
+    }
+  }
+}

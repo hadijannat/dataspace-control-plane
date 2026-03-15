@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/_shared/meta/provenance.schema.json",
+  "title": "Artifact Provenance Record",
+  "description": "Provenance metadata embedded in or alongside every published schema artifact. Tracks upstream standard, local version, and pack dependencies.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["artifact_id", "local_version", "generated_at", "generator"],
+  "additionalProperties": false,
+
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "description": "Stable artifact_id matching registry.yaml"
+    },
+    "local_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "source_standard": {
+      "oneOf": [{"type": "string"}, {"type": "null"}],
+      "description": "Human-readable upstream standard name"
+    },
+    "source_standard_version": {
+      "oneOf": [{"type": "string"}, {"type": "null"}],
+      "description": "Release/tag of the upstream standard this artifact derives from"
+    },
+    "source_uris": {
+      "type": "array",
+      "items": {"type": "string", "format": "uri"},
+      "description": "Canonical URIs of normative sources"
+    },
+    "upstream_checksums": {
+      "type": "object",
+      "description": "Map of vendor filename → SHA-256 hex digest",
+      "additionalProperties": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    },
+    "pack_dependencies": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Pack IDs (from packs/) that require or extend this schema artifact"
+    },
+    "effective_date_range": {
+      "type": "object",
+      "properties": {
+        "from": {"type": "string", "format": "date"},
+        "to":   {"oneOf": [{"type": "string", "format": "date"}, {"type": "null"}]}
+      },
+      "required": ["from"],
+      "additionalProperties": false
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when this provenance record was written"
+    },
+    "generator": {
+      "type": "string",
+      "description": "Tool or process that generated the artifact, e.g. schemas/tools/bundle.py"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

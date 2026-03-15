@@ -1,0 +1,19 @@
+version: "1.0"
+source: "Manufacturing-X / Factory-X specification 2024"
+rules:
+  - rule_id: "mx:discovery-layer-required"
+    title: "MX Discovery Layer Required"
+    severity: "error"
+    machine_checkable: true
+  - rule_id: "mx:access-usage-layer-required"
+    title: "MX Access and Usage Control Layer Required"
+    severity: "error"
+    machine_checkable: true
+  - rule_id: "mx:gate-layer-required"
+    title: "MX Gate Layer Required"
+    severity: "warning"
+    machine_checkable: true
+  - rule_id: "mx:open-standards-required"
+    title: "Open Standards Requirement"
+    severity: "error"
+    machine_checkable: false

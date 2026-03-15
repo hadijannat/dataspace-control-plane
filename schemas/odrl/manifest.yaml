@@ -1,0 +1,42 @@
+family: odrl
+version: "1.0.0"
+description: "Base ODRL policy schemas — permissions, prohibitions, obligations, constraints — plus an internal compact AST for non-graph runtime use."
+effective_from: "2026-03-14"
+
+upstream_standards:
+  - name: "W3C ODRL Information Model 2.2"
+    version: "2.2"
+    source_uri: "https://www.w3.org/TR/odrl-model/"
+  - name: "W3C ODRL Vocabulary 2.2"
+    version: "2.2"
+    source_uri: "https://www.w3.org/TR/odrl-vocab/"
+  - name: "Catena-X ODRL Policy Profile 24.05"
+    version: "24.05"
+    source_uri: "https://w3id.org/catenax/policy/v1"
+
+validation_dialect: "https://json-schema.org/draft/2020-12/schema"
+
+artifact_classes:
+  - vendor
+  - source
+  - derived
+  - bundles
+  - examples
+
+downstream_consumers:
+  - adapters
+  - procedures
+  - packs
+  - core
+
+ci_gates:
+  - "python schemas/tools/validate.py --family odrl"
+  - "python schemas/tools/pin_upstream.py --dry-run --family odrl"
+  - "pytest tests/unit -k odrl_schemas"
+
+notes: |
+  Base ODRL belongs here. Profile-specific vocabularies (cx-policy:*, Gaia-X terms)
+  belong in packs/ unless shared across multiple packs.
+  JSON Schema validates structure; semantic evaluation belongs in core/ and packs/.
+  ODRL is Linked Data-native but explicitly supports non-graph implementations —
+  maintain both JSON-LD and compact AST surfaces.

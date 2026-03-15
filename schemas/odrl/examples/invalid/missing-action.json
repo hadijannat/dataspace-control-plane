@@ -1,0 +1,17 @@
+{
+  "@context": ["http://www.w3.org/ns/odrl.jsonld"],
+  "@type": "odrl:Offer",
+  "uid": "https://provider.example.org/policies/bad-001",
+  "assigner": "https://provider.example.org",
+  "permission": [
+    {
+      "constraint": [
+        {
+          "leftOperand": "odrl:dateTime",
+          "operator": "odrl:lt",
+          "rightOperand": "2026-01-01"
+        }
+      ]
+    }
+  ]
+}

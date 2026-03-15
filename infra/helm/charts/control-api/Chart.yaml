@@ -1,0 +1,15 @@
+apiVersion: v2
+name: control-api
+description: Dataspace Control Plane — FastAPI control-api service
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/your-org/dataspace-control-plane
+sources:
+  - https://github.com/your-org/dataspace-control-plane
+maintainers:
+  - name: infra-lead
+keywords:
+  - dataspace
+  - control-api
+  - fastapi

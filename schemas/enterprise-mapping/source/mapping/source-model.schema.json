@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/source-model.schema.json",
+  "title": "Source Model Snapshot",
+  "description": "A snapshot of a source data model — tables, entities, or event types — at a point in time. The source model is the authoritative description of what the source system exposes; the mapping spec then maps fields from this model to target models.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["sourceModelId", "sourceKind", "capturedAt", "entities"],
+  "additionalProperties": false,
+
+  "properties": {
+    "sourceModelId": {
+      "type": "string",
+      "description": "Stable identifier for this source model (e.g. database name + schema)"
+    },
+    "sourceKind": {
+      "type": "string",
+      "enum": ["odata", "sql", "event", "object_storage", "custom"],
+      "description": "Type of the source system"
+    },
+    "sourceVersion": {
+      "type": "string",
+      "description": "Schema or API version of the source (e.g. OData API version)"
+    },
+    "capturedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this model snapshot was taken"
+    },
+    "sourceRef": {
+      "oneOf": [
+        {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/odata-csdl-ref.schema.json"},
+        {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/sql-model-ref.schema.json"},
+        {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/event-schema-ref.schema.json"},
+        {"$ref": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/object-metadata-ref.schema.json"}
+      ],
+      "description": "Reference to the source-native model artifact"
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entityName", "fields"],
+        "additionalProperties": false,
+        "properties": {
+          "entityName": {"type": "string", "description": "Table, entity set, or event type name"},
+          "entityType": {"type": "string", "enum": ["table", "view", "entity_set", "event", "container", "folder"]},
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["fieldName", "fieldType"],
+              "additionalProperties": false,
+              "properties": {
+                "fieldName":    {"type": "string"},
+                "fieldType":    {"type": "string", "description": "Source-native type, e.g. nvarchar(255), Edm.String, int4"},
+                "canonicalType":{"type": "string", "description": "Canonical type after coercion (string, integer, float, boolean, datetime, json)"},
+                "nullable":     {"type": "boolean", "default": true},
+                "isPrimaryKey": {"type": "boolean", "default": false},
+                "description":  {"type": "string"},
+                "metadata":     {"type": "object", "additionalProperties": true}
+              }
+            }
+          },
+          "rowCount":   {"type": "integer", "minimum": 0},
+          "sampleRows": {"type": "array", "items": {"type": "object", "additionalProperties": true}}
+        }
+      }
+    }
+  }
+}

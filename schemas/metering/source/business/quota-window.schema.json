@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/quota-window.schema.json",
+  "title": "Quota Window",
+  "description": "A time-bounded quota constraint on a usage dimension for a tenant or agreement. Tracks the limit, consumed amount, and remaining balance within the window.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+
+  "type": "object",
+  "required": ["quotaId", "tenantId", "dimensionId", "limit", "unit", "windowStart", "windowEnd"],
+  "additionalProperties": false,
+
+  "properties": {
+    "quotaId":       {"type": "string", "description": "Stable quota configuration identifier"},
+    "tenantId":      {"type": "string"},
+    "legalEntityId": {"type": "string"},
+    "agreementId":   {"type": "string"},
+    "dimensionId":   {"type": "string", "description": "Matches usage-dimension.dimensionId"},
+    "limit": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Maximum allowed quantity in this window"
+    },
+    "unit":     {"type": "string"},
+    "consumed": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Quantity consumed so far in this window"
+    },
+    "remaining": {
+      "type": "number",
+      "description": "Remaining quota (limit - consumed). May be negative if over-quota."
+    },
+    "windowStart": {"type": "string", "format": "date-time"},
+    "windowEnd":   {"type": "string", "format": "date-time"},
+    "resetPolicy": {
+      "type": "string",
+      "enum": ["rolling", "calendar_month", "calendar_day", "never"],
+      "description": "When the quota window resets"
+    },
+    "enforcementPolicy": {
+      "type": "string",
+      "enum": ["hard", "soft", "warn_only"],
+      "description": "hard = reject, soft = allow but alert, warn_only = log only"
+    },
+    "lastUpdatedAt": {"type": "string", "format": "date-time"}
+  }
+}

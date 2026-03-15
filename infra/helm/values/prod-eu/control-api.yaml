@@ -1,0 +1,61 @@
+# Production EU environment overlay for control-api
+# Applied over charts/control-api/values.yaml
+#
+# REQUIRED: Replace image.tag with the real sha256 digest from CI before deploying.
+# NEVER deploy with a mutable semver tag in production.
+
+replicaCount: 3
+
+image:
+  # Must be a sha256 digest — CI records the digest after docker buildx bake release
+  tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: control-api.eu.dataspace.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: control-api-prod-eu-tls
+      hosts:
+        - control-api.eu.dataspace.example.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+config:
+  logLevel: WARNING
+  otlpEndpoint: "http://otel-collector:4317"
+  temporalNamespace: "dataspace"
+  temporalTaskQueue: "control-api"
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - control-api
+        topologyKey: kubernetes.io/hostname

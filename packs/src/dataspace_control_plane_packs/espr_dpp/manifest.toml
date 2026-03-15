@@ -1,0 +1,31 @@
+pack_id = "espr_dpp"
+pack_kind = "regulation"
+version = "2024.1781.1"
+display_name = "ESPR Digital Product Passport Pack"
+description = "Core DPP obligations under Regulation (EU) 2024/1781 (ESPR). Product-group specifics belong in delegated-act subpackages."
+activation_scope = "tenant"
+default_priority = 30
+conflicts = []
+
+[compatibility]
+core = ">=0.1.0"
+
+[[capabilities]]
+capability = "RequirementProvider"
+interface_class = "dataspace_control_plane_packs.espr_dpp.api.EsprRequirementProvider"
+
+[[capabilities]]
+capability = "EvidenceAugmenter"
+interface_class = "dataspace_control_plane_packs.espr_dpp.api.EsprEvidenceAugmenter"
+
+[[capabilities]]
+capability = "TwinTemplateProvider"
+interface_class = "dataspace_control_plane_packs.espr_dpp.api.EsprAasTwinTemplateProvider"
+
+[[normative_sources]]
+source_uri = "https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?from=EN&uri=CELEX:32024R1781"
+version = "2024/1781"
+retrieval_date = "2026-03-14"
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+local_filename = "rules/requirements.yaml"
+effective_from = "2024-07-19"

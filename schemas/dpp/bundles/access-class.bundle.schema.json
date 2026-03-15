@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/bundles/access-class.bundle.schema.json",
+  "title": "Passport Access Class",
+  "description": "A named access class for a Digital Product Passport. Defines who belongs to this class and which field paths they can read. Specializations can add policy overlays to these generic access classes.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "className",
+    "description",
+    "readablePaths"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "className": {
+      "type": "string",
+      "description": "Access class name, e.g. public, operator, auditor, partner",
+      "examples": [
+        "public",
+        "operator",
+        "auditor",
+        "partner",
+        "authority"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of who belongs to this class"
+    },
+    "readablePaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Field paths readable by this class. Supports * (single element) and ** (recursive wildcard).",
+      "examples": [
+        [
+          "summary.subjectId",
+          "summary.productClass"
+        ],
+        [
+          "**"
+        ]
+      ]
+    },
+    "condition": {
+      "type": "string",
+      "description": "Optional condition that must be satisfied for access"
+    },
+    "regulationSource": {
+      "type": "string",
+      "description": "Normative or contractual source that defines this access class",
+      "examples": [
+        "platform-policy:v1",
+        "contract-template:shared-read-access"
+      ]
+    },
+    "effectiveFrom": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO-8601 date when this access class becomes operative"
+    },
+    "effectiveTo": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.519941+00:00"
+}

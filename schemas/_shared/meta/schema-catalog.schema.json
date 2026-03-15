@@ -1,82 +1,119 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dataspace-control-plane.internal/schemas/_shared/meta/schema-catalog.schema.json",
-  "title": "Schema Catalog Entry",
-  "description": "Validates a single entry in schemas/registry.yaml. Every schema artifact in the repository must conform to this shape.",
+  "title": "Schema Catalog",
+  "description": "Validates the root object in schemas/registry.yaml. Every registered schema artifact in the repository must conform to the catalogEntry definition.",
   "x-source-standard": null,
   "x-source-version": null,
   "x-pack-dependencies": [],
 
   "type": "object",
   "required": [
-    "schema_family", "artifact_id", "local_version",
-    "canonical_uri", "formats", "entrypoints",
-    "dependencies", "status", "effective_from"
+    "schema_version",
+    "generated_at",
+    "families"
   ],
   "additionalProperties": false,
 
   "properties": {
-    "schema_family": {
+    "schema_version": {
       "type": "string",
-      "description": "Top-level subdirectory: aas, odrl, vc, dpp, metering, enterprise-mapping, _shared",
-      "enum": ["aas", "odrl", "vc", "dpp", "metering", "enterprise-mapping", "_shared"]
-    },
-    "artifact_id": {
-      "type": "string",
-      "description": "Stable local identifier — dot-namespaced, e.g. vc.credential-envelope",
-      "pattern": "^[a-z_][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$"
-    },
-    "local_version": {
-      "type": "string",
-      "description": "Semver for the repo-authored artifact",
+      "description": "Semver for the registry document itself",
       "pattern": "^\\d+\\.\\d+\\.\\d+$"
     },
-    "upstream_standard": {
-      "oneOf": [{"type": "string"}, {"type": "null"}],
-      "description": "Human-readable standard name, or null if entirely repo-authored"
-    },
-    "upstream_version": {
-      "oneOf": [{"type": "string"}, {"type": "null"}],
-      "description": "Release/tag of the upstream standard, or null"
-    },
-    "canonical_uri": {
+    "generated_at": {
       "type": "string",
-      "format": "uri",
-      "description": "$id used inside the schema file"
+      "format": "date",
+      "description": "ISO-8601 date when the catalog was last refreshed"
     },
-    "formats": {
+    "families": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "string",
-        "enum": ["json-schema", "jsonld", "ttl", "yaml", "openapi", "xmi", "xsd", "pdf"]
+        "$ref": "#/$defs/catalogEntry"
       },
-      "description": "Serialization formats present for this artifact"
-    },
-    "entrypoints": {
-      "type": "array",
-      "minItems": 1,
-      "items": {"type": "string"},
-      "description": "Relative paths (from schemas/) to primary artifact files"
-    },
-    "dependencies": {
-      "type": "array",
-      "items": {"type": "string"},
-      "description": "artifact_id values this schema references"
-    },
-    "status": {
-      "type": "string",
-      "enum": ["draft", "stable", "deprecated"],
-      "description": "Lifecycle status"
-    },
-    "effective_from": {
-      "type": "string",
-      "format": "date",
-      "description": "ISO-8601 date when this artifact becomes valid for use"
-    },
-    "effective_to": {
-      "oneOf": [{"type": "string", "format": "date"}, {"type": "null"}],
-      "description": "ISO-8601 date when this artifact expires, or null for open-ended"
+      "description": "Registered source and published bundle artifacts"
+    }
+  },
+  "$defs": {
+    "catalogEntry": {
+      "type": "object",
+      "required": [
+        "schema_family",
+        "artifact_id",
+        "local_version",
+        "canonical_uri",
+        "formats",
+        "entrypoints",
+        "dependencies",
+        "status",
+        "effective_from"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_family": {
+          "type": "string",
+          "description": "Top-level subdirectory: aas, odrl, vc, dpp, metering, enterprise-mapping, _shared",
+          "enum": ["aas", "odrl", "vc", "dpp", "metering", "enterprise-mapping", "_shared"]
+        },
+        "artifact_id": {
+          "type": "string",
+          "description": "Stable local identifier — dot-namespaced, e.g. vc.credential-envelope",
+          "pattern": "^[a-z_][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)+$"
+        },
+        "local_version": {
+          "type": "string",
+          "description": "Semver for the repo-authored artifact or published bundle",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "upstream_standard": {
+          "oneOf": [{"type": "string"}, {"type": "null"}],
+          "description": "Human-readable standard name, or null if entirely repo-authored"
+        },
+        "upstream_version": {
+          "oneOf": [{"type": "string"}, {"type": "null"}],
+          "description": "Release/tag of the upstream standard, or null"
+        },
+        "canonical_uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "$id used inside the artifact file"
+        },
+        "formats": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["json-schema", "jsonld", "ttl", "yaml", "openapi", "xmi", "xsd", "pdf"]
+          },
+          "description": "Serialization formats present for this artifact"
+        },
+        "entrypoints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"},
+          "description": "Relative paths (from schemas/) to primary artifact files"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "artifact_id values this artifact references"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "stable", "deprecated"],
+          "description": "Lifecycle status"
+        },
+        "effective_from": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO-8601 date when this artifact becomes valid for use"
+        },
+        "effective_to": {
+          "oneOf": [{"type": "string", "format": "date"}, {"type": "null"}],
+          "description": "ISO-8601 date when this artifact expires, or null for open-ended"
+        }
+      }
     }
   }
 }

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/bundles/passport-lifecycle.bundle.schema.json",
+  "title": "Passport Lifecycle State",
+  "description": "Current lifecycle state and transition history of a Digital Product Passport. Models the technology-neutral state machine; regulation packs constrain which transitions are allowed and add transition obligations.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+  "$defs": {
+    "transition": {
+      "type": "object",
+      "required": [
+        "fromState",
+        "toState",
+        "occurredAt"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fromState": {
+          "type": "string"
+        },
+        "toState": {
+          "type": "string"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "Actor who performed the transition (BPN or DID)"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "evidenceRef": {
+          "type": "string",
+          "description": "Reference to supporting evidence artifact"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "required": [
+    "currentState"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "currentState": {
+      "type": "string",
+      "description": "Current lifecycle state of the passport. Core states; regulation packs may add domain-specific states.",
+      "enum": [
+        "active",
+        "repurposed",
+        "remanufactured",
+        "waste",
+        "recycled_ceased",
+        "suspended",
+        "recalled",
+        "decommissioned"
+      ]
+    },
+    "stateChangedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the current state was entered"
+    },
+    "isCeased": {
+      "type": "boolean",
+      "description": "True if the passport has reached a terminal state and is no longer active",
+      "default": false
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/transition"
+      },
+      "description": "Ordered history of state transitions (append-only)"
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.522150+00:00"
+}

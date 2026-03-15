@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/bundles/object-attributes.bundle.schema.json",
+  "title": "AAS Object Attributes",
+  "description": "ABAC object attributes for AAS Part 4. Describes what resource is being accessed. Can target a registry, repository, full shell, full submodel, or individual submodel elements via path.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 4",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "resourceType"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "resourceType": {
+      "type": "string",
+      "enum": [
+        "Registry",
+        "Repository",
+        "Shell",
+        "Submodel",
+        "SubmodelElement",
+        "Package"
+      ],
+      "description": "AAS resource class being accessed"
+    },
+    "shellId": {
+      "type": "string",
+      "description": "AAS Shell id, if applicable"
+    },
+    "submodelId": {
+      "type": "string",
+      "description": "Submodel id, if applicable"
+    },
+    "semanticId": {
+      "type": "string",
+      "description": "Semantic ID of the submodel or element, if applicable"
+    },
+    "elementPath": {
+      "type": "string",
+      "description": "Dot/slash path to a specific submodel element, e.g. PublicData.BatteryId. Supports * (single level) and ** (recursive wildcard)."
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "read",
+          "write",
+          "invoke",
+          "delete",
+          "create"
+        ]
+      },
+      "description": "Requested operations"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.361694+00:00"
+}

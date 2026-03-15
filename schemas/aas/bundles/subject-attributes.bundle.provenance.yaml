@@ -1,0 +1,13 @@
+artifact_id: aas.subject-attributes.bundle
+local_version: 1.0.0
+source_standard: IDTA AAS Release 25-01 Part 4
+source_standard_version: 25-01
+source_uris:
+- https://dataspace-control-plane.internal/schemas/aas/source/security/subject-attributes.schema.json
+pack_dependencies: []
+effective_date_range:
+  from: '2026-03-15'
+  to: null
+generated_at: '2026-03-15T19:36:30.362377+00:00'
+generator: schemas/tools/bundle.py
+notes: Compound offline bundle generated from a registered source entrypoint.

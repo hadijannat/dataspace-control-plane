@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/bundles/passport-subject.bundle.schema.json",
+  "title": "Passport Subject",
+  "description": "The physical or digital product that a Digital Product Passport describes. Captures the unique identifier, product class, and optional category or batch metadata. Specializations add domain-specific subject fields via extension.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "subjectId",
+    "productClass"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "subjectId": {
+      "type": "string",
+      "description": "Unique identifier of the physical product (serial number, batch ID, or QR-accessible URI)"
+    },
+    "productClass": {
+      "type": "string",
+      "description": "Product classification code or category for the passport subject",
+      "examples": [
+        "serialized_component",
+        "industrial_service",
+        "assembly",
+        "digital_asset"
+      ]
+    },
+    "productModel": {
+      "type": "string",
+      "description": "Model or type designation of the product"
+    },
+    "manufacturerId": {
+      "type": "string",
+      "description": "Identifier of the legal manufacturer (BPN or other)"
+    },
+    "manufacturerName": {
+      "type": "string"
+    },
+    "countryOfManufacture": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 country code"
+    },
+    "manufacturingDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of manufacture (ISO-8601 date)"
+    },
+    "batchId": {
+      "type": "string",
+      "description": "Batch or lot identifier, if applicable"
+    },
+    "qrCodeUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI encoded in the QR code on the physical product that links to this passport"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.523354+00:00"
+}

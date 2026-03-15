@@ -13,9 +13,9 @@ upstream_standards:
   - name: "IDTA AAS Part 4 Security"
     version: "25-01"
     source_uri: "https://industrialdigitaltwin.io/aas-specifications/IDTA-01004-1-0"
-  - name: "admin-shell-io AAS JSON Schema"
-    version: "25-01"
-    source_uri: "https://github.com/admin-shell-io/aas-specs-antora/releases/tag/v25-01"
+  - name: "admin-shell-io AAS Schemas"
+    version: "3.1.0"
+    source_uri: "https://github.com/admin-shell-io/aas-specs/tree/v3.1.0/schemas"
 
 validation_dialect: "https://json-schema.org/draft/2020-12/schema"
 

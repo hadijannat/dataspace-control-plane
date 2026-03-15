@@ -12,8 +12,8 @@ Implementation profile schemas for AAS Release 25-01 artifacts.
 | `source/security/` | AAS Part 4 ABAC: access rules, subject/object attributes, token claims |
 | `derived/` | Generated normalized artifacts |
 | `bundles/` | Compound bundle documents |
-| `examples/valid/` | Valid AAS instances |
-| `examples/invalid/` | Instances that must fail validation |
+| `examples/valid/<artifact-id>/` | Valid AAS instances for a registered artifact |
+| `examples/invalid/<artifact-id>/` | Instances that must fail validation for a registered artifact |
 | `tests/` | Pytest tests for this family |
 
 ## Design decisions
@@ -27,7 +27,7 @@ Implementation profile schemas for AAS Release 25-01 artifacts.
 ## Upstream releases
 
 - IDTA AAS Release 25-01 (Part 1 Metamodel, Part 2 APIs, Part 4 Security)
-- admin-shell-io `aas-specs-antora` v25-01 (JSON Schema, XSD, RDF)
+- admin-shell-io `aas-specs` v3.1.0 (JSON Schema, XSD, SHACL / RDF companion assets aligned with the 25-01 release train)
 
 ## Refreshing vendor artifacts
 

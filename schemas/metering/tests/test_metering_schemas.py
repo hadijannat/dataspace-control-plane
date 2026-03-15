@@ -14,8 +14,10 @@ import pytest
 
 SCHEMAS_ROOT = Path(__file__).resolve().parent.parent.parent
 METERING_SOURCE = SCHEMAS_ROOT / "metering" / "source"
-METERING_EXAMPLES_VALID = SCHEMAS_ROOT / "metering" / "examples" / "valid"
-METERING_EXAMPLES_INVALID = SCHEMAS_ROOT / "metering" / "examples" / "invalid"
+
+
+def _example_dir(validity: str, artifact_id: str) -> Path:
+    return SCHEMAS_ROOT / "metering" / "examples" / validity / artifact_id
 
 try:
     import jsonschema
@@ -57,7 +59,7 @@ def test_schema_validates_against_meta(schema_path: Path) -> None:
 
 def test_valid_usage_record(schema_registry) -> None:
     schema = _load(METERING_SOURCE / "business" / "usage-record.schema.json")
-    example = _load(METERING_EXAMPLES_VALID / "usage-record-example.json")
+    example = _load(_example_dir("valid", "metering.usage-record") / "usage-record-example.json")
     validator = jsonschema.Draft202012Validator(schema, registry=schema_registry)
     errors = list(validator.iter_errors(example))
     assert not errors, f"Valid example failed: {[e.message for e in errors]}"
@@ -65,7 +67,7 @@ def test_valid_usage_record(schema_registry) -> None:
 
 def test_invalid_usage_record_missing_tenant(schema_registry) -> None:
     schema = _load(METERING_SOURCE / "business" / "usage-record.schema.json")
-    example = _load(METERING_EXAMPLES_INVALID / "missing-tenant.json")
+    example = _load(_example_dir("invalid", "metering.usage-record") / "missing-tenant.json")
     validator = jsonschema.Draft202012Validator(schema, registry=schema_registry)
     errors = list(validator.iter_errors(example))
     assert errors, "Missing tenantId should fail validation"

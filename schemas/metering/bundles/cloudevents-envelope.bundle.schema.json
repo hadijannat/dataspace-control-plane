@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/bundles/cloudevents-envelope.bundle.schema.json",
+  "title": "CloudEvents Metering Envelope",
+  "description": "CloudEvents 1.0 wrapper for a metering usage-record payload. Wraps the business record for event-bus delivery without changing the record schema. The 'data' field contains the usage-record payload.",
+  "x-source-standard": "CloudEvents 1.0",
+  "x-source-version": "1.0",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "specversion",
+    "id",
+    "source",
+    "type",
+    "datacontenttype",
+    "data"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "specversion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "CloudEvents specification version"
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique event ID \u2014 should match usage-record.recordId for metering events"
+    },
+    "source": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI identifying the event producer (e.g. /apps/edc-extension)"
+    },
+    "type": {
+      "type": "string",
+      "description": "Event type, e.g. com.dataspace.metering.usage.v1",
+      "examples": [
+        "com.dataspace.metering.usage.v1",
+        "com.dataspace.metering.rated.v1",
+        "com.dataspace.metering.settled.v1"
+      ]
+    },
+    "subject": {
+      "type": "string",
+      "description": "Subject of the event \u2014 tenantId or agreementId"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event time (matches usage-record.eventTime)"
+    },
+    "datacontenttype": {
+      "type": "string",
+      "const": "application/json"
+    },
+    "dataschema": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional URI of the schema validating 'data'"
+    },
+    "data": {
+      "description": "The metering payload \u2014 must be a valid usage-record or rated-usage document",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/metering__source__business__usage_record_schema_json"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
+    },
+    "traceparent": {
+      "type": "string",
+      "description": "W3C trace context (OTel propagation)"
+    },
+    "tracestate": {
+      "type": "string",
+      "description": "W3C trace state"
+    }
+  },
+  "$defs": {
+    "metering__source__business__usage_dimension_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/usage-dimension.schema.json",
+      "title": "Usage Dimension",
+      "description": "A single measurable quantity within a usage record \u2014 e.g. bytes transferred, API calls made, CPU seconds consumed. Named and typed for rating rule lookup.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "dimensionId",
+        "quantity",
+        "unit"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "dimensionId": {
+          "type": "string",
+          "description": "Stable identifier for this usage dimension type, e.g. bytes_transferred, api_calls",
+          "examples": [
+            "bytes_transferred",
+            "api_calls",
+            "connector_sessions",
+            "cpu_seconds",
+            "storage_gb_day"
+          ]
+        },
+        "quantity": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Non-negative measured quantity"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of measurement",
+          "examples": [
+            "bytes",
+            "count",
+            "seconds",
+            "gb_day",
+            "request"
+          ]
+        },
+        "precision": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Decimal precision of the quantity measurement"
+        },
+        "rawValue": {
+          "type": "string",
+          "description": "Original string representation before numeric conversion, for audit"
+        }
+      }
+    },
+    "metering__source__references__agreement_ref_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/metering/source/references/agreement-ref.schema.json",
+      "title": "Agreement Reference",
+      "description": "Reference to the ODRL agreement (contract) that governs a usage event. Every usage record must trace to a valid agreement.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "agreementId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agreementId": {
+          "type": "string",
+          "format": "uri",
+          "description": "ODRL agreement UID (policy uid)"
+        },
+        "assetId": {
+          "type": "string",
+          "description": "Asset governed by this agreement"
+        },
+        "negotiationId": {
+          "type": "string",
+          "description": "DSP negotiation process ID that produced this agreement"
+        }
+      }
+    },
+    "metering__source__references__counterparty_ref_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/metering/source/references/counterparty-ref.schema.json",
+      "title": "Counterparty Reference",
+      "description": "Identifies the other party in a dataspace usage event \u2014 the provider (for consumer-side metering) or the consumer (for provider-side metering).",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "counterpartyId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "counterpartyId": {
+          "type": "string",
+          "description": "BPN, DID, or internal identifier of the counterparty"
+        },
+        "counterpartyRole": {
+          "type": "string",
+          "enum": [
+            "provider",
+            "consumer"
+          ],
+          "description": "Role of the counterparty in this event"
+        },
+        "connectorId": {
+          "type": "string",
+          "description": "EDC/DSP connector ID of the counterparty"
+        }
+      }
+    },
+    "metering__source__business__usage_record_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/metering/source/business/usage-record.schema.json",
+      "title": "Usage Record",
+      "description": "Immutable record of a single measurable dataspace usage event. Every usage record captures who (tenant, legal entity, counterparty), what (asset, service, API), how much (quantity, unit), when (event time, measurement interval), and under which agreement/policy \u2014 sufficient for rating, billing, and compliance audit.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "$defs": {
+        "dimensionRef": {
+          "$ref": "#/$defs/metering__source__business__usage_dimension_schema_json"
+        },
+        "agreementRef": {
+          "$ref": "#/$defs/metering__source__references__agreement_ref_schema_json"
+        },
+        "counterpartyRef": {
+          "$ref": "#/$defs/metering__source__references__counterparty_ref_schema_json"
+        }
+      },
+      "type": "object",
+      "required": [
+        "recordId",
+        "tenantId",
+        "legalEntityId",
+        "agreementRef",
+        "counterpartyRef",
+        "dimensions",
+        "eventTime",
+        "reportedAt",
+        "sourceSystem"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "recordId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Globally unique, stable record identifier. Must be deterministic per event for idempotent processing."
+        },
+        "tenantId": {
+          "type": "string",
+          "description": "Tenant scope identifier"
+        },
+        "legalEntityId": {
+          "type": "string",
+          "description": "Legal entity (BPN or internal) that this usage is attributed to"
+        },
+        "agreementRef": {
+          "$ref": "#/$defs/agreementRef"
+        },
+        "counterpartyRef": {
+          "$ref": "#/$defs/counterpartyRef"
+        },
+        "assetId": {
+          "type": "string",
+          "description": "Optional asset identifier (dataset, API, connector, etc.) being consumed"
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "Service or resource type, e.g. data_transfer, api_call, connector_session",
+          "examples": [
+            "data_transfer",
+            "api_call",
+            "connector_session",
+            "storage_gb_day"
+          ]
+        },
+        "dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dimensionRef"
+          },
+          "description": "Measured quantities \u2014 at least one dimension required"
+        },
+        "measurementInterval": {
+          "type": "object",
+          "required": [
+            "start",
+            "end"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "description": "Time window over which the measurement was taken"
+        },
+        "eventTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the usage event occurred (source time, not ingestion time)"
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this record was written (ingestion time)"
+        },
+        "sourceSystem": {
+          "type": "string",
+          "description": "System that generated this record, e.g. edc-extension, control-api",
+          "examples": [
+            "edc-extension",
+            "control-api",
+            "temporal-worker"
+          ]
+        },
+        "traceId": {
+          "type": "string",
+          "description": "OpenTelemetry trace ID for correlation with operational spans"
+        },
+        "correlationId": {
+          "type": "string",
+          "description": "Business correlation ID (e.g. negotiation ID, transfer process ID)"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional additional key-value metadata for downstream enrichment"
+        }
+      }
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.879449+00:00"
+}

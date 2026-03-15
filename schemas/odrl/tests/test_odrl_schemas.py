@@ -14,8 +14,10 @@ import pytest
 
 SCHEMAS_ROOT = Path(__file__).resolve().parent.parent.parent
 ODRL_SOURCE = SCHEMAS_ROOT / "odrl" / "source"
-ODRL_EXAMPLES_VALID = SCHEMAS_ROOT / "odrl" / "examples" / "valid"
-ODRL_EXAMPLES_INVALID = SCHEMAS_ROOT / "odrl" / "examples" / "invalid"
+
+
+def _example_dir(validity: str, artifact_id: str) -> Path:
+    return SCHEMAS_ROOT / "odrl" / "examples" / validity / artifact_id
 
 try:
     import jsonschema
@@ -58,7 +60,7 @@ def test_schema_validates_against_meta(schema_path: Path) -> None:
 
 def test_valid_offer_example(schema_registry) -> None:
     schema = _load(ODRL_SOURCE / "base" / "policy-offer.schema.json")
-    example = _load(ODRL_EXAMPLES_VALID / "policy-offer-example.json")
+    example = _load(_example_dir("valid", "odrl.policy-offer") / "policy-offer-example.json")
     validator = jsonschema.Draft202012Validator(schema, registry=schema_registry)
     errors = list(validator.iter_errors(example))
     assert not errors, f"Valid example failed: {[e.message for e in errors]}"
@@ -66,7 +68,7 @@ def test_valid_offer_example(schema_registry) -> None:
 
 def test_invalid_offer_missing_action(schema_registry) -> None:
     schema = _load(ODRL_SOURCE / "base" / "permission.schema.json")
-    example = _load(ODRL_EXAMPLES_INVALID / "missing-action.json")
+    example = _load(_example_dir("invalid", "odrl.permission") / "missing-action.json")
     # The invalid example has a permission object without 'action'
     perm = example.get("permission", [{}])[0]
     validator = jsonschema.Draft202012Validator(schema, registry=schema_registry)
@@ -82,3 +84,9 @@ def test_ast_schema_is_strict() -> None:
 
 def test_manifest_exists() -> None:
     assert (SCHEMAS_ROOT / "odrl" / "manifest.yaml").exists()
+
+
+def test_base_examples_do_not_use_profile_specific_terms() -> None:
+    example = _load(_example_dir("valid", "odrl.policy-offer") / "policy-offer-example.json")
+    text = json.dumps(example)
+    assert "cx-policy:" not in text

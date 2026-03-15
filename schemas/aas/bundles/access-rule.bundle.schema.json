@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/bundles/access-rule.bundle.schema.json",
+  "title": "AAS Access Rule",
+  "description": "AAS Part 4 ABAC access rule. Rules can target registries, repositories, full submodels, or individual submodel elements. Captures the combination of subject attributes, object attributes, and the access permission (allow/deny).",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 4",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "ruleId",
+    "subjectAttributes",
+    "objectAttributes",
+    "permission"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "ruleId": {
+      "type": "string",
+      "description": "Unique identifier for this access rule within a policy set"
+    },
+    "description": {
+      "type": "string"
+    },
+    "subjectAttributes": {
+      "$ref": "#/$defs/aas__source__security__subject_attributes_schema_json",
+      "description": "Who this rule applies to"
+    },
+    "objectAttributes": {
+      "$ref": "#/$defs/aas__source__security__object_attributes_schema_json",
+      "description": "What resource this rule targets"
+    },
+    "permission": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny"
+      ],
+      "description": "Access decision"
+    },
+    "effectiveFrom": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO-8601 date when this rule becomes effective"
+    },
+    "effectiveTo": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "ISO-8601 date when this rule expires, or null for indefinite"
+    },
+    "conditions": {
+      "type": "array",
+      "description": "Additional runtime conditions that must be satisfied",
+      "items": {
+        "type": "object",
+        "required": [
+          "conditionType",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "conditionType": {
+            "type": "string"
+          },
+          "value": {}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "aas__source__security__subject_attributes_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/aas/source/security/subject-attributes.schema.json",
+      "title": "AAS Subject Attributes",
+      "description": "ABAC subject attributes for AAS Part 4. Describes who is requesting access: role class, optional BPN identifier, credential type, and arbitrary extension claims.",
+      "x-source-standard": "IDTA AAS Release 25-01 Part 4",
+      "x-source-version": "25-01",
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "subjectClass"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "subjectClass": {
+          "type": "string",
+          "description": "Role or class of the accessing subject",
+          "examples": [
+            "public",
+            "authority",
+            "legitimate_interest",
+            "manufacturer",
+            "operator",
+            "user"
+          ]
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "Optional identifier (e.g. BPN, DID, or internal role ID)"
+        },
+        "credentialType": {
+          "type": "string",
+          "description": "Credential type presented for authentication",
+          "examples": [
+            "VerifiableCredential",
+            "OAuth2Token",
+            "APIKey"
+          ]
+        },
+        "attributes": {
+          "type": "object",
+          "description": "Additional subject attributes (role claims, organization, etc.)",
+          "additionalProperties": true
+        }
+      }
+    },
+    "aas__source__security__object_attributes_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/aas/source/security/object-attributes.schema.json",
+      "title": "AAS Object Attributes",
+      "description": "ABAC object attributes for AAS Part 4. Describes what resource is being accessed. Can target a registry, repository, full shell, full submodel, or individual submodel elements via path.",
+      "x-source-standard": "IDTA AAS Release 25-01 Part 4",
+      "x-source-version": "25-01",
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "resourceType"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "resourceType": {
+          "type": "string",
+          "enum": [
+            "Registry",
+            "Repository",
+            "Shell",
+            "Submodel",
+            "SubmodelElement",
+            "Package"
+          ],
+          "description": "AAS resource class being accessed"
+        },
+        "shellId": {
+          "type": "string",
+          "description": "AAS Shell id, if applicable"
+        },
+        "submodelId": {
+          "type": "string",
+          "description": "Submodel id, if applicable"
+        },
+        "semanticId": {
+          "type": "string",
+          "description": "Semantic ID of the submodel or element, if applicable"
+        },
+        "elementPath": {
+          "type": "string",
+          "description": "Dot/slash path to a specific submodel element, e.g. PublicData.BatteryId. Supports * (single level) and ** (recursive wildcard)."
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "invoke",
+              "delete",
+              "create"
+            ]
+          },
+          "description": "Requested operations"
+        }
+      }
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.360473+00:00"
+}

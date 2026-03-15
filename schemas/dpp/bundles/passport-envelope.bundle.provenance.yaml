@@ -1,0 +1,13 @@
+artifact_id: dpp.passport-envelope.bundle
+local_version: 1.0.0
+source_standard: IDTA DPP4.0
+source_standard_version: '4.0'
+source_uris:
+- https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-envelope.schema.json
+pack_dependencies: []
+effective_date_range:
+  from: '2026-03-15'
+  to: null
+generated_at: '2026-03-15T19:36:30.521663+00:00'
+generator: schemas/tools/bundle.py
+notes: Compound offline bundle generated from a registered source entrypoint.

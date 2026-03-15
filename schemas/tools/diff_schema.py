@@ -40,10 +40,33 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from _support import SCHEMAS_ROOT, load_registry_catalog
+
 
 def _load(path: str) -> dict:
     with open(path) as f:
         return json.load(f)
+
+
+def _registered_entrypoints() -> set[Path]:
+    catalog = load_registry_catalog()
+    paths: set[Path] = set()
+    for entry in catalog.get("families", []):
+        for entrypoint in entry.get("entrypoints", []):
+            path = (SCHEMAS_ROOT / entrypoint).resolve()
+            if path.suffix == ".json":
+                paths.add(path)
+    return paths
+
+
+def _ensure_registered(path: str, registered: set[Path]) -> None:
+    candidate = Path(path).resolve()
+    try:
+        candidate.relative_to(SCHEMAS_ROOT)
+    except ValueError:
+        return
+    if candidate not in registered:
+        raise ValueError(f"{candidate} is not a registered schema entrypoint")
 
 
 def _changes(old: Any, new: Any, path: str = "#") -> list[dict]:
@@ -130,9 +153,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        registered = _registered_entrypoints()
+        _ensure_registered(args.old_schema, registered)
+        _ensure_registered(args.new_schema, registered)
         old = _load(args.old_schema)
         new = _load(args.new_schema)
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 

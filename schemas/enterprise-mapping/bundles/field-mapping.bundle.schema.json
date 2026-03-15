@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/field-mapping.bundle.schema.json",
+  "title": "Field Mapping",
+  "description": "A mapping from one or more source fields (with optional transforms) to a single target field. Lineage is mandatory \u2014 every target field must declare its source fields and transform function.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "targetField",
+    "sourceFields",
+    "lineage"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "targetField": {
+      "type": "string",
+      "description": "Target field path, e.g. manufacturer.name or subject.subjectId"
+    },
+    "targetType": {
+      "type": "string",
+      "description": "Expected type at the target (canonical type)"
+    },
+    "sourceFields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "entity",
+          "field"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "entity": {
+            "type": "string",
+            "description": "Source entity name"
+          },
+          "field": {
+            "type": "string",
+            "description": "Source field name"
+          },
+          "alias": {
+            "type": "string",
+            "description": "Alias used in the transform expression"
+          }
+        }
+      }
+    },
+    "transformSteps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/enterprise_mapping__source__mapping__transform_step_schema_json"
+      },
+      "description": "Optional ordered sequence of transforms applied before the target assignment"
+    },
+    "lineage": {
+      "$ref": "#/$defs/enterprise_mapping__source__mapping__lineage_graph_schema_json"
+    },
+    "confidence": {
+      "$ref": "#/$defs/enterprise_mapping__source__mapping__confidence_schema_json"
+    },
+    "humanOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overrideValue": {
+          "description": "Manually-specified target value if transform is bypassed"
+        },
+        "overriddenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "overriddenBy": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "description": "Optional human override \u2014 bypasses the transform and sets a fixed target value"
+    },
+    "nullable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the target field may be null if source is missing"
+    }
+  },
+  "$defs": {
+    "enterprise_mapping__source__mapping__transform_step_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/transform-step.schema.json",
+      "title": "Transform Step",
+      "description": "A single transform function applied in a mapping pipeline. Captures function identity, input type, output type, and configuration parameters.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "stepId",
+        "functionId",
+        "inputType",
+        "outputType"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "stepId": {
+          "type": "string",
+          "description": "Stable step identifier within the field mapping pipeline"
+        },
+        "functionId": {
+          "type": "string",
+          "description": "Transform function identifier \u2014 fully qualified name or registered alias",
+          "examples": [
+            "cast.string_to_datetime",
+            "normalize.bpn_identifier",
+            "format.iso_date",
+            "lookup.country_code",
+            "concat.fields",
+            "split.delimiter",
+            "regex.extract"
+          ]
+        },
+        "inputType": {
+          "type": "string",
+          "description": "Expected input canonical type"
+        },
+        "outputType": {
+          "type": "string",
+          "description": "Produced output canonical type"
+        },
+        "params": {
+          "type": "object",
+          "description": "Function-specific configuration parameters",
+          "additionalProperties": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "isLossy": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this transform may lose information (e.g. truncation, approximation)"
+        },
+        "errorHandling": {
+          "type": "string",
+          "enum": [
+            "fail",
+            "null",
+            "default",
+            "skip"
+          ],
+          "default": "fail",
+          "description": "Behaviour when the transform fails for a row"
+        }
+      }
+    },
+    "enterprise_mapping__source__mapping__lineage_graph_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/lineage-graph.schema.json",
+      "title": "Field Lineage Graph",
+      "description": "Lineage record for a target field \u2014 captures the source fields, transform function chain, and derivation rationale. Every target field must have a lineage entry.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "derivationType",
+        "sourceFieldRefs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "derivationType": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "transformed",
+            "computed",
+            "constant",
+            "lookup",
+            "human_provided"
+          ],
+          "description": "How the target field was derived"
+        },
+        "sourceFieldRefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "entity",
+              "field"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "entity": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "description": "Role of this field in the derivation, e.g. primary, filter, lookup_key"
+              }
+            }
+          },
+          "description": "Source fields contributing to this target field"
+        },
+        "transformFunctionIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ordered list of transform function IDs applied"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Human-readable explanation of the derivation decision"
+        },
+        "isLossy": {
+          "type": "boolean",
+          "default": false
+        },
+        "lineageVersion": {
+          "type": "string",
+          "description": "Version of the lineage record (increments on correction)"
+        }
+      }
+    },
+    "enterprise_mapping__source__mapping__confidence_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/confidence.schema.json",
+      "title": "Mapping Confidence Score",
+      "description": "Confidence assessment for a mapping specification or individual field mapping. Derived automatically by the mapping engine or assigned by a human reviewer.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "score",
+        "level"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Numeric confidence score 0.0 (no confidence) to 1.0 (certain)"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "certain"
+          ],
+          "description": "Categorical label derived from score: low <0.5, medium 0.5\u20130.8, high 0.8\u20130.95, certain \u22650.95"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "automated",
+            "human_reviewed",
+            "llm_suggested",
+            "rule_based"
+          ],
+          "description": "How this confidence score was determined"
+        },
+        "basis": {
+          "type": "string",
+          "description": "Human-readable explanation of what drives this confidence score"
+        },
+        "assessedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "assessedBy": {
+          "type": "string",
+          "description": "Identifier of the system or person who assessed this confidence"
+        }
+      }
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.691450+00:00"
+}

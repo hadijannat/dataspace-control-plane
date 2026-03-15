@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/bundles/duty.bundle.schema.json",
+  "title": "ODRL Duty",
+  "description": "An ODRL Duty \u2014 an action that must be performed as a consequence of a permission (pre-condition or post-condition). Used as consequence in Permission and as remedy in Prohibition.",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "action"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "action": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": [
+            "@id"
+          ],
+          "properties": {
+            "@id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "assigner": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
+    },
+    "assignee": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
+    },
+    "target": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
+    },
+    "constraint": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/odrl__source__base__constraint_schema_json"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/odrl__source__base__constraint_schema_json"
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "odrl__source__base__constraint_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/base/constraint.schema.json",
+      "title": "ODRL Constraint",
+      "description": "An ODRL Constraint \u2014 a boolean expression over operand, operator, and rightOperand/rightOperandReference that limits a rule. Supports both atomic constraints and logical constraints (AND/OR/XOR).",
+      "x-source-standard": "W3C ODRL Information Model 2.2",
+      "x-source-version": "2.2",
+      "x-pack-dependencies": [],
+      "oneOf": [
+        {
+          "title": "Atomic Constraint",
+          "type": "object",
+          "required": [
+            "leftOperand",
+            "operator"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "leftOperand": {
+              "type": "string",
+              "description": "The property being constrained, e.g. odrl:dateTime or odrl:purpose"
+            },
+            "operator": {
+              "type": "string",
+              "description": "Comparison operator, e.g. odrl:eq, odrl:lt, odrl:isPartOf",
+              "examples": [
+                "odrl:eq",
+                "odrl:lt",
+                "odrl:gt",
+                "odrl:isPartOf",
+                "odrl:isAnyOf"
+              ]
+            },
+            "rightOperand": {
+              "description": "The comparison value \u2014 scalar or array"
+            },
+            "rightOperandReference": {
+              "type": "string",
+              "format": "uri",
+              "description": "URI reference to the right operand value"
+            },
+            "unit": {
+              "type": "string",
+              "description": "Optional unit qualifier for numeric operands"
+            },
+            "dataType": {
+              "type": "string",
+              "description": "Optional XSD datatype for the rightOperand"
+            },
+            "status": {
+              "type": "string",
+              "description": "Evaluation status hint: active, inactive, violated"
+            }
+          }
+        },
+        {
+          "title": "Logical Constraint (AND)",
+          "type": "object",
+          "required": [
+            "and"
+          ],
+          "properties": {
+            "and": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "$ref": "#"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Logical Constraint (OR)",
+          "type": "object",
+          "required": [
+            "or"
+          ],
+          "properties": {
+            "or": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "$ref": "#"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Logical Constraint (XOR)",
+          "type": "object",
+          "required": [
+            "xone"
+          ],
+          "properties": {
+            "xone": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "$ref": "#"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.185226+00:00"
+}

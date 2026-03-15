@@ -69,6 +69,10 @@
     "effective_from": {
       "type": "string",
       "format": "date"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form implementation notes and family-specific constraints"
     }
   }
 }

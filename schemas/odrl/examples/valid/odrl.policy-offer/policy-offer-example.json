@@ -1,7 +1,6 @@
 {
   "@context": [
-    "http://www.w3.org/ns/odrl.jsonld",
-    {"cx-policy": "https://w3id.org/catenax/policy/v1/"}
+    "https://www.w3.org/ns/odrl/2/"
   ],
   "@type": "odrl:Offer",
   "uid": "https://provider.example.org/policies/offer-001",
@@ -12,12 +11,9 @@
       "action": "odrl:use",
       "constraint": [
         {
-          "leftOperand": "cx-policy:UsagePurpose",
-          "operator": "odrl:isAnyOf",
-          "rightOperand": [
-            "cx-policy:ResearchAndDevelopment",
-            "cx-policy:SupplyChainManagement"
-          ]
+          "leftOperand": "odrl:dateTime",
+          "operator": "odrl:lt",
+          "rightOperand": "2027-01-01T00:00:00Z"
         }
       ],
       "duty": [

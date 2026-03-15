@@ -14,8 +14,10 @@ import pytest
 
 SCHEMAS_ROOT = Path(__file__).resolve().parent.parent.parent
 VC_SOURCE = SCHEMAS_ROOT / "vc" / "source"
-VC_EXAMPLES_VALID = SCHEMAS_ROOT / "vc" / "examples" / "valid"
-VC_EXAMPLES_INVALID = SCHEMAS_ROOT / "vc" / "examples" / "invalid"
+
+
+def _example_dir(validity: str, artifact_id: str) -> Path:
+    return SCHEMAS_ROOT / "vc" / "examples" / validity / artifact_id
 
 try:
     import jsonschema
@@ -59,7 +61,7 @@ def test_schema_validates_against_meta(schema_path: Path) -> None:
 
 def test_valid_credential_example(schema_registry) -> None:
     schema = _load(VC_SOURCE / "envelope" / "credential-envelope.schema.json")
-    example = _load(VC_EXAMPLES_VALID / "credential-example.json")
+    example = _load(_example_dir("valid", "vc.credential-envelope") / "credential-example.json")
     validator = jsonschema.Draft202012Validator(schema, registry=schema_registry)
     errors = list(validator.iter_errors(example))
     assert not errors, f"Valid example failed validation: {[e.message for e in errors]}"
@@ -67,7 +69,7 @@ def test_valid_credential_example(schema_registry) -> None:
 
 def test_invalid_credential_missing_issuer(schema_registry) -> None:
     schema = _load(VC_SOURCE / "envelope" / "credential-envelope.schema.json")
-    example = _load(VC_EXAMPLES_INVALID / "missing-issuer.json")
+    example = _load(_example_dir("invalid", "vc.credential-envelope") / "missing-issuer.json")
     validator = jsonschema.Draft202012Validator(schema, registry=schema_registry)
     errors = list(validator.iter_errors(example))
     assert errors, "Invalid example should have failed validation but passed"

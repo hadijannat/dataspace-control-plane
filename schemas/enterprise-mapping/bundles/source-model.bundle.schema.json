@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/source-model.bundle.schema.json",
+  "title": "Source Model Snapshot",
+  "description": "A snapshot of a source data model \u2014 tables, entities, or event types \u2014 at a point in time. The source model is the authoritative description of what the source system exposes; the mapping spec then maps fields from this model to target models.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "sourceModelId",
+    "sourceKind",
+    "capturedAt",
+    "entities"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "sourceModelId": {
+      "type": "string",
+      "description": "Stable identifier for this source model (e.g. database name + schema)"
+    },
+    "sourceKind": {
+      "type": "string",
+      "enum": [
+        "odata",
+        "sql",
+        "event",
+        "object_storage",
+        "custom"
+      ],
+      "description": "Type of the source system"
+    },
+    "sourceVersion": {
+      "type": "string",
+      "description": "Schema or API version of the source (e.g. OData API version)"
+    },
+    "capturedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this model snapshot was taken"
+    },
+    "sourceRef": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/enterprise_mapping__source__source_kinds__odata_csdl_ref_schema_json"
+        },
+        {
+          "$ref": "#/$defs/enterprise_mapping__source__source_kinds__sql_model_ref_schema_json"
+        },
+        {
+          "$ref": "#/$defs/enterprise_mapping__source__source_kinds__event_schema_ref_schema_json"
+        },
+        {
+          "$ref": "#/$defs/enterprise_mapping__source__source_kinds__object_metadata_ref_schema_json"
+        }
+      ],
+      "description": "Reference to the source-native model artifact"
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "entityName",
+          "fields"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "entityName": {
+            "type": "string",
+            "description": "Table, entity set, or event type name"
+          },
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "table",
+              "view",
+              "entity_set",
+              "event",
+              "container",
+              "folder"
+            ]
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fieldName",
+                "fieldType"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "fieldName": {
+                  "type": "string"
+                },
+                "fieldType": {
+                  "type": "string",
+                  "description": "Source-native type, e.g. nvarchar(255), Edm.String, int4"
+                },
+                "canonicalType": {
+                  "type": "string",
+                  "description": "Canonical type after coercion (string, integer, float, boolean, datetime, json)"
+                },
+                "nullable": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "isPrimaryKey": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "description": {
+                  "type": "string"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "rowCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sampleRows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "enterprise_mapping__source__source_kinds__odata_csdl_ref_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/odata-csdl-ref.schema.json",
+      "title": "OData CSDL Reference",
+      "description": "Reference to an OData 4.01 CSDL (Common Schema Definition Language) document describing the source data model. Preserves the source-native OData metadata without flattening it into a generic schema.",
+      "x-source-standard": "OData 4.01 CSDL JSON",
+      "x-source-version": "4.01",
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "kind",
+        "serviceUrl"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "odata",
+          "description": "Discriminator for source-kind polymorphism"
+        },
+        "serviceUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "OData service root URL from which $metadata can be fetched"
+        },
+        "metadataUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Direct URL to the CSDL document (typically serviceUrl/$metadata)"
+        },
+        "localCsdlPath": {
+          "type": "string",
+          "description": "Relative path to pinned CSDL document (preferred over live fetch)"
+        },
+        "odataVersion": {
+          "type": "string",
+          "enum": [
+            "4.0",
+            "4.01"
+          ],
+          "description": "OData protocol version"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Primary CSDL namespace, e.g. Microsoft.Dynamics365.Sales"
+        },
+        "pinnedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the CSDL was pinned locally"
+        },
+        "csdlChecksum": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 of the pinned CSDL document"
+        }
+      }
+    },
+    "enterprise_mapping__source__source_kinds__sql_model_ref_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/sql-model-ref.schema.json",
+      "title": "SQL Model Reference",
+      "description": "Reference to a SQL database model (introspected schema metadata). Used when the source is a relational database accessed via the sql_extract adapter.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "kind",
+        "database",
+        "sourceSchema"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "sql"
+        },
+        "database": {
+          "type": "string",
+          "description": "Database name or alias (no credentials)"
+        },
+        "sourceSchema": {
+          "type": "string",
+          "description": "Database schema name, e.g. public, dbo, sales"
+        },
+        "dialect": {
+          "type": "string",
+          "enum": [
+            "postgresql",
+            "mysql",
+            "mssql",
+            "oracle",
+            "snowflake",
+            "bigquery"
+          ],
+          "description": "SQL dialect"
+        },
+        "localSchemaPath": {
+          "type": "string",
+          "description": "Relative path to pinned schema introspection JSON"
+        },
+        "introspectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tableCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "enterprise_mapping__source__source_kinds__event_schema_ref_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/event-schema-ref.schema.json",
+      "title": "Event Schema Reference",
+      "description": "Reference to an event source schema \u2014 CloudEvents, AsyncAPI, Avro, or JSON Schema. Does not force CloudEvents on all event sources.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "kind",
+        "eventSchemaType",
+        "topic"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "event"
+        },
+        "eventSchemaType": {
+          "type": "string",
+          "enum": [
+            "cloudevents",
+            "asyncapi",
+            "avro",
+            "json-schema",
+            "protobuf",
+            "custom"
+          ],
+          "description": "Event schema format"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Kafka topic, AMQP queue, or event type URI"
+        },
+        "schemaUri": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI of the event schema document"
+        },
+        "localSchemaPath": {
+          "type": "string",
+          "description": "Relative path to pinned event schema document"
+        },
+        "messagingSystem": {
+          "type": "string",
+          "description": "OTel messaging.system attribute",
+          "examples": [
+            "kafka",
+            "rabbitmq",
+            "azure_service_bus"
+          ]
+        },
+        "pinnedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "enterprise_mapping__source__source_kinds__object_metadata_ref_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/object-metadata-ref.schema.json",
+      "title": "Object Storage Metadata Reference",
+      "description": "Reference to an object storage source \u2014 S3-compatible bucket, container, or prefix \u2014 where structured files (Parquet, CSV, JSON Lines) are stored.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "kind",
+        "bucket"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "object_storage"
+        },
+        "bucket": {
+          "type": "string",
+          "description": "Bucket or container name"
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Key prefix / folder path"
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": [
+            "parquet",
+            "csv",
+            "jsonlines",
+            "avro",
+            "orc",
+            "delta"
+          ],
+          "description": "File format of objects in this prefix"
+        },
+        "endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "S3-compatible endpoint URL (no credentials)"
+        },
+        "region": {
+          "type": "string",
+          "description": "Storage region, e.g. eu-central-1"
+        },
+        "sampleKeyCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of keys sampled during introspection"
+        },
+        "introspectedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.695850+00:00"
+}

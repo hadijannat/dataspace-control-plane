@@ -9,9 +9,11 @@ Schemas for metering, rating, and settlement. Separate from observability schema
 | `source/business/` | Usage record, dimension, quota window, rating rule, rated usage, charge statement, settlement batch |
 | `source/transport/` | CloudEvents envelope, event metadata |
 | `source/references/` | Agreement, policy, and counterparty reference schemas |
+| `vendor/` | Intentionally empty unless a shared upstream transport artifact must be pinned locally |
+| `derived/` | Generated normalized artifacts |
 | `bundles/` | Compound bundle documents |
-| `examples/valid/` | Valid usage record instances |
-| `examples/invalid/` | Instances that must fail |
+| `examples/valid/<artifact-id>/` | Valid usage instances for a registered artifact |
+| `examples/invalid/<artifact-id>/` | Instances that must fail for a registered artifact |
 | `tests/` | Pytest tests |
 
 ## Design decisions

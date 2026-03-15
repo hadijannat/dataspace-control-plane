@@ -17,7 +17,9 @@ upstream_standards:
 validation_dialect: "https://json-schema.org/draft/2020-12/schema"
 
 artifact_classes:
+  - vendor
   - source
+  - derived
   - bundles
   - examples
 
@@ -31,6 +33,7 @@ ci_gates:
   - "pytest tests/unit -k enterprise_mapping_schemas"
 
 notes: |
+  vendor/ is intentionally empty unless a shared upstream source-model artifact is pinned.
   The DSL is JSON Schema-based. Source-native models (OData CSDL, SQL DDL, etc.)
   are referenced by DSL specs, not inlined.
   Every mapping spec must require lineage for every target field.

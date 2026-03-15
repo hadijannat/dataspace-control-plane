@@ -14,7 +14,9 @@ upstream_standards:
 validation_dialect: "https://json-schema.org/draft/2020-12/schema"
 
 artifact_classes:
+  - vendor
   - source
+  - derived
   - bundles
   - examples
 
@@ -30,7 +32,8 @@ ci_gates:
   - "pytest tests/compatibility -k dpp"
 
 notes: |
-  base/ is technology-neutral — no ESPR or battery-specific fields here.
+  vendor/ is intentionally empty until a shared upstream DPP artifact must be pinned.
+  base/ is technology-neutral — no regulation-pack field lists or ecosystem-specific policy terms here.
   AAS DPP4.0 realization lives in implementation_profiles/aas_dpp4o/.
   Regulation packs extend the base envelope with effective-dated field requirements.
   Do NOT hardcode ESPR delegated-act fields or battery access audiences here.

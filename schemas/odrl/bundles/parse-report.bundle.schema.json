@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/bundles/parse-report.bundle.schema.json",
+  "title": "Policy Parse Report",
+  "description": "Result of parsing an ODRL document into the canonical AST. Records both the successful AST output and any lossy clauses that could not be canonicalized (unknown profile terms, unrecognised actions, etc.).",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "success",
+    "policy_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "success": {
+      "type": "boolean",
+      "description": "True if the policy was fully parsed; false if lossy clauses were encountered"
+    },
+    "policy_id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "ast": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/odrl__source__ast__canonical_policy_ast_schema_json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Canonical AST output, or null if parsing failed entirely"
+    },
+    "lossy_clauses": {
+      "type": "array",
+      "description": "Clauses that could not be fully represented in the canonical AST",
+      "items": {
+        "type": "object",
+        "required": [
+          "location",
+          "reason",
+          "raw"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "JSON pointer to the source clause"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why this clause could not be canonicalized"
+          },
+          "raw": {
+            "description": "Original clause value"
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Hard parse errors that prevented AST generation"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Non-fatal warnings about the input document"
+    },
+    "parsed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "parser_version": {
+      "type": "string",
+      "description": "Version of the policy parser that generated this report"
+    }
+  },
+  "$defs": {
+    "odrl__source__ast__canonical_policy_ast_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/odrl/source/ast/canonical-policy-ast.schema.json",
+      "title": "Canonical Policy AST",
+      "description": "Compact, non-graph internal representation of an ODRL policy for runtime evaluation by core/ and packs/. Consumers do not need to parse Turtle or JSON-LD to evaluate a policy. Lossy: profile-specific extension fields are captured in 'extensions'. The policy-evaluation result shape is in parse-report.schema.json.",
+      "x-source-standard": null,
+      "x-source-version": null,
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "policy_id",
+        "policy_type",
+        "rules"
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "party": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "URI or BPN identifier"
+            },
+            "party_type": {
+              "type": "string",
+              "enum": [
+                "assigner",
+                "assignee"
+              ]
+            },
+            "attributes": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "action": {
+          "type": "object",
+          "required": [
+            "action_id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "action_id": {
+              "type": "string",
+              "description": "Compact ODRL action term, e.g. use, distribute"
+            },
+            "included_in": {
+              "type": "string"
+            },
+            "refinements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/constraint"
+              }
+            }
+          }
+        },
+        "constraint": {
+          "type": "object",
+          "required": [
+            "left_operand",
+            "operator"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "left_operand": {
+              "type": "string"
+            },
+            "operator": {
+              "type": "string",
+              "enum": [
+                "eq",
+                "lt",
+                "gt",
+                "lteq",
+                "gteq",
+                "neq",
+                "isPartOf",
+                "isAnyOf",
+                "isAllOf",
+                "isNoneOf"
+              ]
+            },
+            "right_operand": {},
+            "data_type": {
+              "type": "string"
+            },
+            "unit": {
+              "type": "string"
+            },
+            "and": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/constraint"
+              }
+            },
+            "or": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/constraint"
+              }
+            },
+            "xone": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/constraint"
+              }
+            }
+          }
+        },
+        "rule": {
+          "type": "object",
+          "required": [
+            "rule_type",
+            "action"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "rule_type": {
+              "type": "string",
+              "enum": [
+                "permission",
+                "prohibition",
+                "obligation"
+              ]
+            },
+            "action": {
+              "$ref": "#/$defs/action"
+            },
+            "assigner": {
+              "$ref": "#/$defs/party"
+            },
+            "assignee": {
+              "$ref": "#/$defs/party"
+            },
+            "target": {
+              "type": "string",
+              "description": "Asset URI"
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/constraint"
+              }
+            },
+            "duties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/rule"
+              }
+            },
+            "extensions": {
+              "type": "object",
+              "description": "Profile-specific extension terms not captured in the canonical fields",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "format": "uri",
+          "description": "Unique policy identifier (original UID from the ODRL document)"
+        },
+        "policy_type": {
+          "type": "string",
+          "enum": [
+            "offer",
+            "agreement",
+            "set"
+          ],
+          "description": "ODRL policy subclass"
+        },
+        "assigner": {
+          "$ref": "#/$defs/party"
+        },
+        "assignee": {
+          "$ref": "#/$defs/party"
+        },
+        "target": {
+          "type": "string",
+          "description": "Primary asset URI"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rule"
+          },
+          "description": "Ordered list of parsed permissions, prohibitions, and obligations"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Pack profile IDs that extended this policy (e.g. catenax, gaia_x)"
+        },
+        "source_standard": {
+          "type": "string",
+          "description": "Normative standard this AST was compiled from"
+        },
+        "compiled_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.183316+00:00"
+}

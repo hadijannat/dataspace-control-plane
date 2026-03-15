@@ -14,7 +14,7 @@
   "properties": {
     "submodelId": {
       "type": "string",
-      "description": "Globally unique Submodel id, e.g. urn:battery-passport:BAT-2026-001"
+      "description": "Globally unique submodel identifier"
     },
     "semanticId": {
       "type": "string",
@@ -23,7 +23,7 @@
     },
     "packId": {
       "type": "string",
-      "description": "Pack ID that provides this submodel template, e.g. battery_passport, espr_dpp"
+      "description": "Pack ID that provides this submodel template"
     },
     "idShort": {
       "type": "string",

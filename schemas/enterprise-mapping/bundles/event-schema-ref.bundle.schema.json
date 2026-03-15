@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/event-schema-ref.bundle.schema.json",
+  "title": "Event Schema Reference",
+  "description": "Reference to an event source schema \u2014 CloudEvents, AsyncAPI, Avro, or JSON Schema. Does not force CloudEvents on all event sources.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "kind",
+    "eventSchemaType",
+    "topic"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "event"
+    },
+    "eventSchemaType": {
+      "type": "string",
+      "enum": [
+        "cloudevents",
+        "asyncapi",
+        "avro",
+        "json-schema",
+        "protobuf",
+        "custom"
+      ],
+      "description": "Event schema format"
+    },
+    "topic": {
+      "type": "string",
+      "description": "Kafka topic, AMQP queue, or event type URI"
+    },
+    "schemaUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI of the event schema document"
+    },
+    "localSchemaPath": {
+      "type": "string",
+      "description": "Relative path to pinned event schema document"
+    },
+    "messagingSystem": {
+      "type": "string",
+      "description": "OTel messaging.system attribute",
+      "examples": [
+        "kafka",
+        "rabbitmq",
+        "azure_service_bus"
+      ]
+    },
+    "pinnedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.697768+00:00"
+}

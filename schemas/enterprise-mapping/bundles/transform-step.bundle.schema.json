@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/transform-step.bundle.schema.json",
+  "title": "Transform Step",
+  "description": "A single transform function applied in a mapping pipeline. Captures function identity, input type, output type, and configuration parameters.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "stepId",
+    "functionId",
+    "inputType",
+    "outputType"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "stepId": {
+      "type": "string",
+      "description": "Stable step identifier within the field mapping pipeline"
+    },
+    "functionId": {
+      "type": "string",
+      "description": "Transform function identifier \u2014 fully qualified name or registered alias",
+      "examples": [
+        "cast.string_to_datetime",
+        "normalize.bpn_identifier",
+        "format.iso_date",
+        "lookup.country_code",
+        "concat.fields",
+        "split.delimiter",
+        "regex.extract"
+      ]
+    },
+    "inputType": {
+      "type": "string",
+      "description": "Expected input canonical type"
+    },
+    "outputType": {
+      "type": "string",
+      "description": "Produced output canonical type"
+    },
+    "params": {
+      "type": "object",
+      "description": "Function-specific configuration parameters",
+      "additionalProperties": true
+    },
+    "description": {
+      "type": "string"
+    },
+    "isLossy": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this transform may lose information (e.g. truncation, approximation)"
+    },
+    "errorHandling": {
+      "type": "string",
+      "enum": [
+        "fail",
+        "null",
+        "default",
+        "skip"
+      ],
+      "default": "fail",
+      "description": "Behaviour when the transform fails for a row"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.697197+00:00"
+}

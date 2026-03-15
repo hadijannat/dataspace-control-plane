@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/odrl/bundles/policy-agreement.bundle.schema.json",
+  "title": "ODRL Policy Agreement",
+  "description": "An ODRL Policy Agreement \u2014 a bilateral contract between assigner and assignee accepting specific permissions and/or obligations for an asset. Requires both assigner and assignee. Validates structural shape per W3C ODRL 2.2.",
+  "x-source-standard": "W3C ODRL Information Model 2.2",
+  "x-source-version": "2.2",
+  "x-pack-dependencies": [],
+  "$defs": {
+    "permission": {
+      "$ref": "#/$defs/odrl__source__base__permission_schema_json"
+    },
+    "prohibition": {
+      "$ref": "#/$defs/odrl__source__base__prohibition_schema_json"
+    },
+    "obligation": {
+      "$ref": "#/$defs/odrl__source__base__obligation_schema_json"
+    }
+  },
+  "type": "object",
+  "required": [
+    "@context",
+    "@type",
+    "uid",
+    "assigner",
+    "assignee"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "@context": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "@type": {
+      "type": "string",
+      "const": "odrl:Agreement"
+    },
+    "uid": {
+      "type": "string",
+      "format": "uri"
+    },
+    "assigner": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "@id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "assignee": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "@id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "target": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "@id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "permission": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/permission"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/permission"
+          }
+        }
+      ]
+    },
+    "prohibition": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/prohibition"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/prohibition"
+          }
+        }
+      ]
+    },
+    "obligation": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/obligation"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/obligation"
+          }
+        }
+      ]
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.190468+00:00"
+}

@@ -16,7 +16,7 @@
       "properties": {
         "leftOperand": {
           "type": "string",
-          "description": "The property being constrained, e.g. odrl:dateTime, cx-policy:UsagePurpose"
+          "description": "The property being constrained, e.g. odrl:dateTime or odrl:purpose"
         },
         "operator": {
           "type": "string",

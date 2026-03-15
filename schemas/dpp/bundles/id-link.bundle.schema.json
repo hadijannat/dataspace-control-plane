@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/bundles/id-link.bundle.schema.json",
+  "title": "AAS DPP4.0 ID Link",
+  "description": "Identification link for DPP4.0 \u2014 associates a physical asset identifier (QR code, serial number) with its AAS shell URI. Enables identification-link-based access as specified in the DPP4.0 architecture.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "physicalId",
+    "physicalIdType",
+    "shellId",
+    "shellEndpoint"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "physicalId": {
+      "type": "string",
+      "description": "The physical identifier (QR payload, serial number, batch number, etc.)"
+    },
+    "physicalIdType": {
+      "type": "string",
+      "enum": [
+        "qr_payload",
+        "serial_number",
+        "batch_id",
+        "gtin",
+        "ean",
+        "custom"
+      ],
+      "description": "Type of physical identifier"
+    },
+    "shellId": {
+      "type": "string",
+      "description": "AAS Shell id this physical ID resolves to"
+    },
+    "shellEndpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "HTTPS endpoint of the AAS Shell via the registry"
+    },
+    "registryId": {
+      "type": "string",
+      "description": "AAS Registry where the shell is registered"
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this ID link was last resolved or generated"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.526257+00:00"
+}

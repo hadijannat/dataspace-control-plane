@@ -140,6 +140,8 @@ _KIND_PRIORITY = {
     "custom": 3,
 }
 
+_REGULATED_KIND = "regulation"
+
 
 def reduce_defaults(
     value_sets: list[tuple[str, dict[str, Any]]],
@@ -151,14 +153,39 @@ def reduce_defaults(
             ``pack_kind`` is one of ``custom``, ``regulation``, ``ecosystem``.
 
     Returns:
-        Merged dict where later application yields
-        ``custom > regulation > ecosystem > shared/base``.
+        Merged dict where ``custom > regulation > ecosystem > shared/base``.
         If two packs of the same kind define the same key, the later one wins.
+
+    Raises:
+        ValueError: If a ``custom`` pack tries to override a key that was
+            already established by a ``regulation`` pack.  Custom packs may
+            only add new keys or override keys not owned by a regulation pack.
+            To override a regulated key intentionally, declare an explicit
+            conflict resolution in both pack manifests and handle the merge
+            outside this reducer.
     """
     ordered = sorted(value_sets, key=lambda t: _KIND_PRIORITY.get(t[0], 99))
     merged: dict[str, Any] = {}
-    for _, values in ordered:
+    # Track keys set by any regulation pack so that higher-priority-number
+    # packs (custom) cannot silently overwrite them.
+    regulated_keys: set[str] = set()
+
+    for pack_kind, values in ordered:
+        if pack_kind == _REGULATED_KIND:
+            regulated_keys.update(values.keys())
+        elif _KIND_PRIORITY.get(pack_kind, 99) > _KIND_PRIORITY[_REGULATED_KIND]:
+            # custom or unknown kind — block any override of a regulated key.
+            forbidden = set(values.keys()) & regulated_keys
+            if forbidden:
+                raise ValueError(
+                    f"Pack kind {pack_kind!r} attempts to override the following "
+                    f"key(s) already set by a regulation pack: {sorted(forbidden)}. "
+                    "Custom packs must not weaken or replace regulated defaults. "
+                    "Declare an explicit conflict resolution in the relevant pack "
+                    "manifests to override a regulated default intentionally."
+                )
         merged.update(values)
+
     return merged
 
 

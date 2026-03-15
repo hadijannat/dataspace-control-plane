@@ -51,15 +51,35 @@ class FakeRequirementProvider:
         return result
 
 
-def test_reduce_defaults_applies_custom_last() -> None:
+def test_reduce_defaults_custom_cannot_override_regulated_key() -> None:
+    """reduce_defaults must raise if a custom pack tries to override a regulation key.
+
+    The architectural invariant (from README and check_override_safety) is that
+    custom packs may add new keys or tighten rules, but must never silently replace
+    a default established by a regulation pack.
+    """
+    with pytest.raises(ValueError, match="regulation"):
+        reduce_defaults(
+            [
+                ("ecosystem", {"policy_mode": "ecosystem"}),
+                ("regulation", {"policy_mode": "regulation"}),
+                ("custom", {"policy_mode": "custom"}),
+            ]
+        )
+
+
+def test_reduce_defaults_custom_can_add_new_keys_not_in_regulation() -> None:
+    """Custom packs may introduce keys that no regulation pack declared."""
     merged = reduce_defaults(
         [
             ("ecosystem", {"policy_mode": "ecosystem"}),
-            ("regulation", {"policy_mode": "regulation"}),
-            ("custom", {"policy_mode": "custom"}),
+            ("regulation", {"audit_required": True}),
+            ("custom", {"extra_flag": "custom_only"}),
         ]
     )
-    assert merged["policy_mode"] == "custom"
+    assert merged["policy_mode"] == "ecosystem"
+    assert merged["audit_required"] is True
+    assert merged["extra_flag"] == "custom_only"
 
 
 def test_reduce_validation_short_circuits_on_first_error() -> None:
@@ -467,16 +487,33 @@ def test_reduce_defaults_shared_is_overridden_by_ecosystem() -> None:
     assert merged["b"] == "shared"
 
 
-def test_reduce_defaults_full_priority_chain() -> None:
+def test_reduce_defaults_full_priority_chain_raises_on_custom_regulation_conflict() -> None:
+    """The full chain base→ecosystem→regulation→custom raises when custom overrides a regulated key."""
+    with pytest.raises(ValueError, match="regulation"):
+        reduce_defaults(
+            [
+                ("base", {"key": "base"}),
+                ("ecosystem", {"key": "ecosystem"}),
+                ("regulation", {"key": "regulation"}),
+                ("custom", {"key": "custom"}),
+            ]
+        )
+
+
+def test_reduce_defaults_full_priority_chain_non_conflicting() -> None:
+    """Full chain where each kind owns distinct keys resolves without error."""
     merged = reduce_defaults(
         [
-            ("base", {"key": "base"}),
-            ("ecosystem", {"key": "ecosystem"}),
-            ("regulation", {"key": "regulation"}),
-            ("custom", {"key": "custom"}),
+            ("base", {"base_key": "base"}),
+            ("ecosystem", {"eco_key": "ecosystem"}),
+            ("regulation", {"reg_key": "regulation"}),
+            ("custom", {"custom_key": "custom"}),
         ]
     )
-    assert merged["key"] == "custom"
+    assert merged["base_key"] == "base"
+    assert merged["eco_key"] == "ecosystem"
+    assert merged["reg_key"] == "regulation"
+    assert merged["custom_key"] == "custom"
 
 
 def test_reduce_defaults_empty_input_returns_empty_dict() -> None:

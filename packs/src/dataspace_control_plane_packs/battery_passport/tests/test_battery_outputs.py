@@ -37,7 +37,7 @@ def test_battery_template_and_evidence_include_provenance() -> None:
 
     assert descriptor[PROVENANCE_KEY]["records"]["battery_passport"]["activation_scope"] == "template_catalog"
     assert submodel[PROVENANCE_KEY]["records"]["battery_passport"]["activation_scope"] == "tenant:acme"
-    assert evidence[PROVENANCE_KEY]["records"]["battery_passport"]["pack_version"] == "2023.0958.1"
+    assert evidence[PROVENANCE_KEY]["records"]["battery_passport"]["pack_version"] == "2023.1542.1"
 
 
 def test_battery_linkage_requires_successor_in_repurposed_states() -> None:

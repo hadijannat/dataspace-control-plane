@@ -16,7 +16,7 @@ _EVIDENCE_RULE_IDS = [
 class BatteryEvidenceAugmenter:
     """Augments evidence bundles with battery passport provenance fields."""
 
-    _PACK_VERSION = "2023.0958.1"
+    _PACK_VERSION = "2023.1542.1"
     _REGULATION_VERSION = "2023/1542"
 
     def augment(

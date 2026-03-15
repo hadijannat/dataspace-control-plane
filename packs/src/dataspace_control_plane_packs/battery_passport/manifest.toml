@@ -1,6 +1,6 @@
 pack_id = "battery_passport"
 pack_kind = "regulation"
-version = "2023.0958.1"
+version = "2023.1542.1"
 display_name = "EU Battery Regulation — Battery Passport Pack"
 description = "Battery passport obligations under Regulation (EU) 2023/1542. Covers LMT batteries, industrial batteries >2 kWh, and EV batteries. Lifecycle model, Annex XIII access matrix, unique identifier requirements, and predecessor/successor linkage."
 activation_scope = "tenant"

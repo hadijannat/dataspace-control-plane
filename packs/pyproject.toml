@@ -11,7 +11,6 @@ dependencies = [
     "dataspace-control-plane-core",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
-    "tomllib; python_version < '3.11'",
     "pyyaml>=6.0",
     "semver>=3.0",
     "jsonschema>=4.22",
@@ -26,6 +25,14 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dataspace_control_plane_packs"]
+# Explicitly include pinned normative vocab files (html, ttl, json, yaml, toml)
+# so that SHA-256 checks against manifest.toml work after wheel installation.
+artifacts = [
+    "src/dataspace_control_plane_packs/**/vocab/pinned/**",
+    "src/dataspace_control_plane_packs/**/vendor/**",
+    "src/dataspace_control_plane_packs/**/rules/**",
+    "src/dataspace_control_plane_packs/**/manifest.toml",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

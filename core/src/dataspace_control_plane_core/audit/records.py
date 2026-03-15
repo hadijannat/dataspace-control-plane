@@ -68,7 +68,7 @@ class AuditRecord:
     correlation: CorrelationContext
     legal_entity_id: LegalEntityId | None = None
     pack_ids: tuple[str, ...] = ()
-    detail: dict[str, Any] = field(default_factory=dict)
+    detail: dict[str, Any] = field(default_factory=dict, hash=False)
     retention_class: RetentionClass = RetentionClass.SEVEN_YEARS
     redaction_class: RedactionClass = RedactionClass.NONE
 

@@ -17,7 +17,7 @@ class MappingRule:
     source_path: str
     target_path: str
     transform: TransformType
-    transform_args: dict[str, str] = field(default_factory=dict)
+    transform_args: dict[str, str] = field(default_factory=dict, hash=False)
     is_required: bool = True
 
 

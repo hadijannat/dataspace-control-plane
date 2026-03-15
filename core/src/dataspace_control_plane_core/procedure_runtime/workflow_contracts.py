@@ -55,7 +55,7 @@ class ProcedureInput:
     procedure_type: ProcedureType
     actor: ActorRef
     correlation: CorrelationContext
-    payload: dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict, hash=False)
     legal_entity_id: LegalEntityId | None = None
     idempotency_key: str = ""
     pack_ids: tuple[str, ...] = ()
@@ -68,7 +68,7 @@ class ProcedureInput:
 class ProcedureResult:
     workflow_id: WorkflowId
     status: ProcedureStatus
-    output: dict[str, Any] = field(default_factory=dict)
+    output: dict[str, Any] = field(default_factory=dict, hash=False)
     error_code: str = ""
     error_message: str = ""
     completed_at: datetime | None = None

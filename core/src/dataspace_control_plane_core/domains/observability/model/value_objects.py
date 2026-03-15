@@ -51,13 +51,13 @@ class StructuredLogEntry:
     trace_id: str
     span_id: str
     tenant_id: str
-    fields: dict[str, str] = field(default_factory=dict)
+    fields: dict[str, str] = field(default_factory=dict, hash=False)
     occurred_at: datetime = field(default_factory=utc_now)
 
 
 @dataclass(frozen=True)
 class TelemetryAttributeSet:
-    attributes: dict[str, str] = field(default_factory=dict)
+    attributes: dict[str, str] = field(default_factory=dict, hash=False)
 
 
 @dataclass(frozen=True)

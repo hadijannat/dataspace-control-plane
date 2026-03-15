@@ -27,6 +27,7 @@ class AddCredentialCommand:
 @dataclass(frozen=True)
 class RevokeCredentialCommand:
     tenant_id: TenantId
+    legal_entity_id: LegalEntityId
     credential_id: str
     reason: str
     actor: ActorRef

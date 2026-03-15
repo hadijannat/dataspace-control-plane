@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
+from typing import Any
 
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError
@@ -39,7 +40,9 @@ from dataspace_control_plane_procedures._shared.activity_options import (
     RPC_OPTIONS,
 )
 from dataspace_control_plane_procedures._shared.continue_as_new import (
+    CarryEnvelope,
     DedupeState,
+    decode_start_input,
     should_continue_as_new,
 )
 from dataspace_control_plane_procedures._shared.search_attributes import (
@@ -47,6 +50,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     PROCEDURE_TYPE,
     STATUS,
     TENANT_ID,
+    build_search_attribute_updates,
 )
 
 from .activities import (
@@ -74,10 +78,6 @@ from .input import (
 from .messages import ForceRotate, PauseResult, PauseRotation, ResumeResult, ResumeRotation
 from .state import RotationWorkflowState
 
-# Trigger Continue-As-New after this many rotation iterations to keep history
-# size bounded.  Each iteration emits O(10-20) history events so 80 iterations
-# stays comfortably below the 9,000-event threshold used elsewhere in _shared.
-_CAN_ITERATION_THRESHOLD = 80
 
 
 @workflow.defn
@@ -98,23 +98,28 @@ class RotateCredentialsWorkflow:
     # ------------------------------------------------------------------
 
     @workflow.run
-    async def run(self, inp: RotationStartInput | RotationCarryState) -> RotationResult:
-        """Main workflow loop.  Accepts either a fresh RotationStartInput or a
-        RotationCarryState produced by a previous Continue-As-New call.
-        """
-        if isinstance(inp, RotationCarryState):
-            self._restore_carry_state(inp)
-        else:
-            self._init_from_input(inp)
+    async def run(
+        self,
+        inp: Any,
+    ) -> RotationResult:
+        """Main workflow loop with explicit Continue-As-New resume support."""
+        start_input, carry = decode_start_input(
+            inp,
+            start_input_type=RotationStartInput,
+            state_type=RotationCarryState,
+        )
+        self._init_from_input(start_input)
+        if carry is not None:
+            self._restore_carry_state(carry)
 
-        workflow.upsert_search_attributes({
-            TENANT_ID: [self._tenant_id],
-            LEGAL_ENTITY_ID: [self._legal_entity_id],
-            PROCEDURE_TYPE: ["rotate-credentials"],
-            STATUS: ["running"],
-        })
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: self._tenant_id,
+            LEGAL_ENTITY_ID: self._legal_entity_id,
+            PROCEDURE_TYPE: "rotate-credentials",
+            STATUS: "running",
+        }))
 
-        await self._main_loop()
+        await self._main_loop(start_input)
 
         # In practice this workflow never returns (it either loops forever or
         # continues-as-new).  This return satisfies the type checker.
@@ -140,22 +145,15 @@ class RotateCredentialsWorkflow:
         self._state.rotation_state = carry.rotation_state
         self._state.last_rotation_at = carry.last_rotation_at
         self._state.rotated_count = carry.rotated_count_total
+        self._state.is_paused = carry.is_paused
         self._state.dedupe = DedupeState.from_snapshot(carry.dedupe_ids)
         self._state.iteration = carry.iteration
-        # Scalar workflow parameters must also be carried on RotationCarryState.
-        # We read them from the carry object's optional fields if present, else
-        # fall back to defaults that match RotationStartInput defaults.
-        self._tenant_id = getattr(carry, "tenant_id", "")
-        self._legal_entity_id = getattr(carry, "legal_entity_id", "")
-        self._credential_profile = getattr(carry, "credential_profile", "")
-        self._rotation_interval_days = getattr(carry, "rotation_interval_days", 90)
-        self._look_ahead_days = getattr(carry, "look_ahead_days", 30)
 
     # ------------------------------------------------------------------
     # Main loop
     # ------------------------------------------------------------------
 
-    async def _main_loop(self) -> None:
+    async def _main_loop(self, start_input: RotationStartInput) -> None:
         """Runs rotation cycles indefinitely, sleeping between each one."""
         while True:
             # Honour pause before doing any work.
@@ -169,16 +167,28 @@ class RotateCredentialsWorkflow:
             self._state.force_rotate_requested = False
             self._state.iteration += 1
 
-            # Continue-As-New boundary: keep history bounded.
-            if should_continue_as_new(self._state.iteration, threshold=_CAN_ITERATION_THRESHOLD):
-                await workflow.wait_condition(workflow.all_handlers_finished)
+            # Continue-As-New boundary: keep history bounded using the actual
+            # event count rather than an iteration-count proxy.  Iteration cost
+            # varies by cycle (no-op vs full rotation), so the proxy drifts.
+            if should_continue_as_new(workflow.info().get_current_history_length()):
+                try:
+                    await workflow.wait_condition(
+                        workflow.all_handlers_finished,
+                        timeout=timedelta(seconds=30),
+                    )
+                except asyncio.TimeoutError:
+                    pass  # Handlers are synchronous; proceed with CAN.
                 workflow.continue_as_new(
-                    RotationCarryState(
-                        rotation_state=self._state.rotation_state,
-                        last_rotation_at=self._state.last_rotation_at,
-                        rotated_count_total=self._state.rotated_count,
-                        dedupe_ids=self._state.dedupe.snapshot(),
-                        iteration=self._state.iteration,
+                    CarryEnvelope(
+                        start_input=start_input,
+                        state=RotationCarryState(
+                            rotation_state=self._state.rotation_state,
+                            last_rotation_at=self._state.last_rotation_at,
+                            rotated_count_total=self._state.rotated_count,
+                            is_paused=self._state.is_paused,
+                            dedupe_ids=self._state.dedupe.snapshot(),
+                            iteration=self._state.iteration,
+                        ),
                     )
                 )
 
@@ -330,7 +340,7 @@ class RotateCredentialsWorkflow:
     async def pause_rotation(self, cmd: PauseRotation) -> PauseResult:
         """Pause future rotation cycles.  In-progress cycles complete first."""
         self._state.is_paused = True
-        workflow.upsert_search_attributes({STATUS: ["paused"]})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "paused"}))
         return PauseResult(accepted=True)
 
     @pause_rotation.validator
@@ -342,7 +352,7 @@ class RotateCredentialsWorkflow:
     async def resume_rotation(self, cmd: ResumeRotation) -> ResumeResult:
         """Resume a previously paused rotation loop."""
         self._state.is_paused = False
-        workflow.upsert_search_attributes({STATUS: ["running"]})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "running"}))
         return ResumeResult(accepted=True)
 
     @resume_rotation.validator

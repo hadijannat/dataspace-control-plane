@@ -5,6 +5,7 @@ from temporalio.exceptions import ApplicationError, CancelledError
 
 from dataspace_control_plane_procedures._shared.search_attributes import (
     TENANT_ID, LEGAL_ENTITY_ID, PROCEDURE_TYPE, STATUS, ASSET_ID,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     PROVISIONING_OPTIONS, EXTERNAL_CALL_OPTIONS, RPC_OPTIONS,
@@ -35,13 +36,13 @@ class RegisterDigitalTwinWorkflow:
 
     @workflow.run
     async def run(self, inp: TwinStartInput) -> TwinResult:
-        workflow.upsert_search_attributes({
-            TENANT_ID: [inp.tenant_id],
-            LEGAL_ENTITY_ID: [inp.legal_entity_id],
-            PROCEDURE_TYPE: ["register-digital-twin"],
-            STATUS: ["running"],
-            ASSET_ID: [inp.global_asset_id],
-        })
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: inp.tenant_id,
+            LEGAL_ENTITY_ID: inp.legal_entity_id,
+            PROCEDURE_TYPE: "register-digital-twin",
+            STATUS: "running",
+            ASSET_ID: inp.global_asset_id,
+        }))
         try:
             await self._validate_shell(inp)
             if self._state.manual_review.is_pending:
@@ -58,7 +59,7 @@ class RegisterDigitalTwinWorkflow:
             await run_twin_compensation(self._state, inp.tenant_id)
             raise
 
-        workflow.upsert_search_attributes({STATUS: ["completed"]})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
         await workflow.wait_condition(workflow.all_handlers_finished)
         return TwinResult(
             workflow_id=workflow.info().workflow_id,
@@ -71,7 +72,10 @@ class RegisterDigitalTwinWorkflow:
     @workflow.update
     async def approve_semantic_mapping(self, cmd: ApproveSemanticMapping) -> SemanticApprovalResult:
         self._state.manual_review.record_decision(
-            "approved", cmd.reviewer_id, f"confirmed: {cmd.confirmed_semantic_id}"
+            "approved",
+            cmd.reviewer_id,
+            f"confirmed: {cmd.confirmed_semantic_id}",
+            decided_at=workflow.now(),
         )
         self._review_decided = True
         return SemanticApprovalResult(accepted=True)
@@ -112,6 +116,7 @@ class RegisterDigitalTwinWorkflow:
             self._state.manual_review.request(
                 f"Ambiguous semantic ID: {result.ambiguous_semantic_id}",
                 review_id=inp.aas_id,
+                requested_at=workflow.now(),
             )
         self._state.phase = "validated"
 

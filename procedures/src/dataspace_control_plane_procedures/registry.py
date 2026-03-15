@@ -7,34 +7,49 @@ temporal-workers calls register_all() on its Worker instances.
 from __future__ import annotations
 from typing import Any
 
+from dataspace_control_plane_procedures._shared.task_queues import (
+    COMPLIANCE_QUEUE,
+    CONTRACTS_NEGOTIATION_QUEUE,
+    MACHINE_TRUST_QUEUE,
+    ONBOARDING_QUEUE,
+    TWINS_PUBLICATION_QUEUE,
+)
 
 # Maps task queue name → list of workflow classes registered on that queue.
 # Populated by importing each procedure's api module.
 WORKFLOW_REGISTRY: dict[str, list[Any]] = {
-    "onboarding": [],
-    "machine-trust": [],
-    "twins-publication": [],
-    "contracts-negotiation": [],
-    "compliance": [],
-    "maintenance": [],
+    ONBOARDING_QUEUE: [],
+    MACHINE_TRUST_QUEUE: [],
+    TWINS_PUBLICATION_QUEUE: [],
+    CONTRACTS_NEGOTIATION_QUEUE: [],
+    COMPLIANCE_QUEUE: [],
 }
 
 # Maps task queue name → list of activity functions/classes registered on that queue.
 ACTIVITY_REGISTRY: dict[str, list[Any]] = {
-    "onboarding": [],
-    "machine-trust": [],
-    "twins-publication": [],
-    "contracts-negotiation": [],
-    "compliance": [],
-    "maintenance": [],
+    ONBOARDING_QUEUE: [],
+    MACHINE_TRUST_QUEUE: [],
+    TWINS_PUBLICATION_QUEUE: [],
+    CONTRACTS_NEGOTIATION_QUEUE: [],
+    COMPLIANCE_QUEUE: [],
 }
+
+_POPULATED = False
 
 
 def _register(queue: str, workflow: Any | None = None, activity: Any | None = None) -> None:
-    if workflow is not None:
-        WORKFLOW_REGISTRY.setdefault(queue, []).append(workflow)
-    if activity is not None:
-        ACTIVITY_REGISTRY.setdefault(queue, []).append(activity)
+    if workflow is not None and workflow not in WORKFLOW_REGISTRY.setdefault(queue, []):
+        WORKFLOW_REGISTRY[queue].append(workflow)
+    if activity is not None and activity not in ACTIVITY_REGISTRY.setdefault(queue, []):
+        ACTIVITY_REGISTRY[queue].append(activity)
+
+
+def reset_registry() -> None:
+    global _POPULATED
+    for registry in (WORKFLOW_REGISTRY, ACTIVITY_REGISTRY):
+        for items in registry.values():
+            items.clear()
+    _POPULATED = False
 
 
 def populate_from_procedures() -> None:
@@ -44,6 +59,10 @@ def populate_from_procedures() -> None:
     Each api.register() appends workflow/activity objects to WORKFLOW_REGISTRY
     and ACTIVITY_REGISTRY via _register().
     """
+    global _POPULATED
+    if _POPULATED:
+        return
+
     from dataspace_control_plane_procedures.company_onboarding.api import register as _r0
     _r0()
     from dataspace_control_plane_procedures.connector_bootstrap.api import register as _r1
@@ -66,6 +85,7 @@ def populate_from_procedures() -> None:
     _r9()
     from dataspace_control_plane_procedures.wallet_bootstrap.api import register as _r10
     _r10()
+    _POPULATED = True
 
 
 def verify_registry() -> None:

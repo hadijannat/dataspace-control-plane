@@ -33,4 +33,8 @@ async def run_connector_compensation(state: ConnectorWorkflowState) -> None:
                 ),
                 **PROVISIONING_OPTIONS,
             )
-            state.compensation.mark_compensated(marker.action, marker.resource_id)
+            state.compensation.mark_compensated(
+                marker.action,
+                marker.resource_id,
+                completed_at=workflow.now(),
+            )

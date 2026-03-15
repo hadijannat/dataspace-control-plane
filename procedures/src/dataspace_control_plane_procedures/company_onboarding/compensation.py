@@ -22,4 +22,8 @@ async def run_compensation(state: OnboardingWorkflowState) -> None:
                 CompensateRegistrationInput(registration_ref=marker.resource_id),
                 **PROVISIONING_OPTIONS,
             )
-            state.compensation.mark_compensated(marker.action, marker.resource_id)
+            state.compensation.mark_compensated(
+                marker.action,
+                marker.resource_id,
+                completed_at=workflow.now(),
+            )

@@ -23,6 +23,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     LEGAL_ENTITY_ID,
     PROCEDURE_TYPE,
     STATUS,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     PROVISIONING_OPTIONS,
@@ -83,12 +84,12 @@ class DelegateTenantWorkflow:
 
     @workflow.run
     async def run(self, inp: DelegationStartInput) -> DelegationResult:
-        workflow.upsert_search_attributes({
+        workflow.upsert_search_attributes(build_search_attribute_updates({
             TENANT_ID: inp.tenant_id,
             LEGAL_ENTITY_ID: inp.legal_entity_id,
             PROCEDURE_TYPE: "delegate-tenant",
             STATUS: "running",
-        })
+        }))
 
         try:
             await self._create_child_topology(inp)
@@ -117,7 +118,7 @@ class DelegateTenantWorkflow:
             await run_delegation_compensation(self._state)
             raise
 
-        workflow.upsert_search_attributes({STATUS: "completed"})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
         self._state.delegation_state = "delegation_verified"
         self._state.is_verified = True
 
@@ -158,7 +159,12 @@ class DelegateTenantWorkflow:
         self, cmd: ApproveCrossBorderDelegation
     ) -> ApprovalResult:
         """Reviewer approves a pending cross-border delegation."""
-        self._state.manual_review.record_decision("approved", cmd.reviewer_id, cmd.notes)
+        self._state.manual_review.record_decision(
+            "approved",
+            cmd.reviewer_id,
+            cmd.notes,
+            decided_at=workflow.now(),
+        )
         self._review_decided = True
         return ApprovalResult(accepted=True)
 
@@ -170,7 +176,12 @@ class DelegateTenantWorkflow:
     @workflow.update
     async def reject_delegation(self, cmd: RejectDelegation) -> RejectionResult:
         """Reviewer rejects the delegation."""
-        self._state.manual_review.record_decision("rejected", cmd.reviewer_id, cmd.reason)
+        self._state.manual_review.record_decision(
+            "rejected",
+            cmd.reviewer_id,
+            cmd.reason,
+            decided_at=workflow.now(),
+        )
         self._state.is_rejected = True
         self._review_decided = True
         return RejectionResult(accepted=True)
@@ -255,6 +266,7 @@ class DelegateTenantWorkflow:
             self._state.manual_review.request(
                 "cross-border delegation requires manual review",
                 review_id=f"xborder:{inp.tenant_id}:{inp.legal_entity_id}",
+                requested_at=workflow.now(),
             )
             await workflow.wait_condition(lambda: self._review_decided)
 

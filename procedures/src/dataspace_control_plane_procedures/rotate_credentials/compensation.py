@@ -41,4 +41,5 @@ async def run_rotation_compensation(
     state.compensation.mark_compensated(
         action="credential_reissuance",
         resource_id=f"{tenant_id}:{legal_entity_id}",
+        completed_at=workflow.now(),
     )

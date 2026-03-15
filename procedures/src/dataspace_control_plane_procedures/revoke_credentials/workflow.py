@@ -21,6 +21,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     LEGAL_ENTITY_ID,
     PROCEDURE_TYPE,
     STATUS,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     PROVISIONING_OPTIONS,
@@ -66,12 +67,12 @@ class RevokeCredentialsWorkflow:
     @workflow.run
     async def run(self, inp: RevocationStartInput) -> RevocationResult:
         # Publish search attributes so the workflow is discoverable.
-        workflow.upsert_search_attributes({
+        workflow.upsert_search_attributes(build_search_attribute_updates({
             TENANT_ID: inp.tenant_id,
             LEGAL_ENTITY_ID: inp.legal_entity_id,
             PROCEDURE_TYPE: "revoke-credentials",
             STATUS: "revoking",
-        })
+        }))
 
         # Step 1: Update credential status in the trust domain registry
         await self._update_status(inp)
@@ -100,7 +101,7 @@ class RevokeCredentialsWorkflow:
         # Step 5: Record the full revocation evidence chain
         await self._record_evidence(inp)
 
-        workflow.upsert_search_attributes({STATUS: "completed"})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
         await workflow.wait_condition(workflow.all_handlers_finished)
 
         return RevocationResult(

@@ -37,6 +37,12 @@ ALL_ACTIVITIES = [
     revoke_delegation,
 ]
 
+WorkflowClass = DelegateTenantWorkflow
+StartInput = DelegationStartInput
+Result = DelegationResult
+StatusQuery = DelegationStatusQuery
+manifest = MANIFEST
+
 
 def register() -> None:
     """Called by registry.populate_from_procedures() at worker startup."""
@@ -61,6 +67,11 @@ __all__ = [
     "ApprovalResult",
     "RejectDelegation",
     "RejectionResult",
+    "WorkflowClass",
+    "StartInput",
+    "Result",
+    "StatusQuery",
+    "manifest",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

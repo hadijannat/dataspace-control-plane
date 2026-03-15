@@ -50,3 +50,26 @@ See `src/dataspace_control_plane_procedures/_shared/` for:
 - `continue_as_new.py` — history threshold check and deduplication state
 - `versioning.py` — deterministic patch ID registry for safe deploys
 - `testing.py` — fake activity factories and call-recording helpers
+
+## Verification Notes
+
+- The `procedures/tests` harness registers the custom Temporal search
+  attributes used by these workflows before starting the time-skipping test
+  server. This keeps integration, replay, and scenario tests aligned with the
+  worker bootstrap contract.
+- Long-lived workflows that continue-as-new restore typed carry state from a
+  stable `CarryEnvelope` payload and wait for `workflow.all_handlers_finished`
+  before checkpointing.
+
+## Dependency Notes
+
+- `docs/` owner: update operator runbooks and architecture notes to call out
+  replay-safe manual-review timestamps, typed search-attribute registration,
+  and the carry-envelope continue-as-new contract used by long-lived
+  procedures.
+- `tests/` owner: consider lifting the new Temporal time-skipping/search-
+  attribute setup and replay fixtures into shared repo-wide test utilities once
+  other roots need the same coverage.
+- `apps/temporal-workers` owner: keep worker bootstrap aligned with the
+  procedure registry and search-attribute catalog so workers fail fast if a
+  workflow or search-attribute registration drifts from the procedure package.

@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from dataspace_control_plane_procedures._shared.compensation import CompensationMarker
+from dataspace_control_plane_procedures._shared.manual_review import ManualReviewState
+
 
 @dataclass(frozen=True)
 class OnboardingStartInput:
@@ -47,4 +50,7 @@ class OnboardingCarryState:
     connector_ref: str
     compliance_ref: str
     dedupe_ids: set[str]
+    manual_review: ManualReviewState = field(default_factory=ManualReviewState)
+    compensation_markers: list[CompensationMarker] = field(default_factory=list)
+    is_cancelled: bool = False
     iteration: int = 0

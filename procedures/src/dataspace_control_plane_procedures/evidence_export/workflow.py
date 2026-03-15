@@ -18,6 +18,7 @@ from dataspace_control_plane_procedures._shared.search_attributes import (
     LEGAL_ENTITY_ID,
     PROCEDURE_TYPE,
     STATUS,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     EXPORT_OPTIONS,
@@ -61,12 +62,12 @@ class EvidenceExportWorkflow:
     @workflow.run
     async def run(self, inp: EvidenceExportStartInput) -> EvidenceExportResult:
         # Publish search attributes so the workflow is discoverable.
-        workflow.upsert_search_attributes({
+        workflow.upsert_search_attributes(build_search_attribute_updates({
             TENANT_ID: inp.tenant_id,
             LEGAL_ENTITY_ID: inp.legal_entity_id,
             PROCEDURE_TYPE: "evidence-export",
             STATUS: "running",
-        })
+        }))
         self._state.is_dry_run = inp.dry_run
 
         # Collect evidence refs
@@ -115,7 +116,7 @@ class EvidenceExportWorkflow:
                 **RPC_OPTIONS,
             )
             self._state.dry_run_diff = dry_result.diff_summary
-            workflow.upsert_search_attributes({STATUS: "completed_dry_run"})
+            workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed_dry_run"}))
             await workflow.wait_condition(workflow.all_handlers_finished)
             return EvidenceExportResult(
                 workflow_id=workflow.info().workflow_id,
@@ -164,7 +165,7 @@ class EvidenceExportWorkflow:
         )
         self._state.phase = "published"
 
-        workflow.upsert_search_attributes({STATUS: "completed"})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
         await workflow.wait_condition(workflow.all_handlers_finished)
 
         return EvidenceExportResult(

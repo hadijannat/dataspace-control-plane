@@ -24,6 +24,12 @@ ALL_ACTIVITIES = [
     decommission_connector,
 ]
 
+WorkflowClass = ConnectorBootstrapWorkflow
+StartInput = ConnectorStartInput
+Result = ConnectorResult
+StatusQuery = ConnectorStatusQuery
+manifest = MANIFEST
+
 
 def register() -> None:
     """Called by registry.populate_from_procedures() at worker startup."""
@@ -47,6 +53,11 @@ __all__ = [
     "WalletBound",
     "ForceHealthCheckInput",
     "ForceHealthCheckResult",
+    "WorkflowClass",
+    "StartInput",
+    "Result",
+    "StatusQuery",
+    "manifest",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

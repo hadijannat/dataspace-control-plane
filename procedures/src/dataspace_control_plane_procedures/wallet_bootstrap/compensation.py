@@ -24,4 +24,8 @@ async def run_wallet_compensation(state: WalletWorkflowState, tenant_id: str) ->
                 ),
                 **PROVISIONING_OPTIONS,
             )
-            state.compensation.mark_compensated(marker.action, marker.resource_id)
+            state.compensation.mark_compensated(
+                marker.action,
+                marker.resource_id,
+                completed_at=workflow.now(),
+            )

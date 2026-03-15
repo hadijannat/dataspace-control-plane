@@ -5,6 +5,7 @@ from temporalio.exceptions import ApplicationError, CancelledError
 
 from dataspace_control_plane_procedures._shared.search_attributes import (
     TENANT_ID, LEGAL_ENTITY_ID, PROCEDURE_TYPE, STATUS, ASSET_ID,
+    build_search_attribute_updates,
 )
 from dataspace_control_plane_procedures._shared.activity_options import (
     PROVISIONING_OPTIONS, EXTERNAL_CALL_OPTIONS, RPC_OPTIONS,
@@ -34,13 +35,13 @@ class DppProvisionWorkflow:
 
     @workflow.run
     async def run(self, inp: DppStartInput) -> DppResult:
-        workflow.upsert_search_attributes({
-            TENANT_ID: [inp.tenant_id],
-            LEGAL_ENTITY_ID: [inp.legal_entity_id],
-            PROCEDURE_TYPE: ["dpp-provision"],
-            STATUS: ["running"],
-            ASSET_ID: [inp.asset_id],
-        })
+        workflow.upsert_search_attributes(build_search_attribute_updates({
+            TENANT_ID: inp.tenant_id,
+            LEGAL_ENTITY_ID: inp.legal_entity_id,
+            PROCEDURE_TYPE: "dpp-provision",
+            STATUS: "running",
+            ASSET_ID: inp.asset_id,
+        }))
         try:
             await self._collect_source_snapshot(inp)
             template_refs = await self._resolve_submodel_templates(inp)
@@ -49,6 +50,7 @@ class DppProvisionWorkflow:
                 self._state.manual_review.request(
                     f"Missing mandatory fields: {', '.join(self._state.missing_mandatory)}",
                     review_id=inp.product_instance_id,
+                    requested_at=workflow.now(),
                 )
                 await workflow.wait_condition(lambda: self._review_decided)
                 if self._state.manual_review.is_rejected:
@@ -60,7 +62,7 @@ class DppProvisionWorkflow:
             await run_dpp_compensation(self._state)
             raise
 
-        workflow.upsert_search_attributes({STATUS: ["completed"]})
+        workflow.upsert_search_attributes(build_search_attribute_updates({STATUS: "completed"}))
         await workflow.wait_condition(workflow.all_handlers_finished)
         return DppResult(
             workflow_id=workflow.info().workflow_id,
@@ -76,7 +78,10 @@ class DppProvisionWorkflow:
     ) -> ApproveResult:
         self._state.field_overrides.update(cmd.field_overrides)
         self._state.manual_review.record_decision(
-            "approved", cmd.reviewer_id, f"field_overrides: {list(cmd.field_overrides.keys())}"
+            "approved",
+            cmd.reviewer_id,
+            f"field_overrides: {list(cmd.field_overrides.keys())}",
+            decided_at=workflow.now(),
         )
         self._review_decided = True
         return ApproveResult(accepted=True)

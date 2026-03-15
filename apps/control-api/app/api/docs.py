@@ -9,7 +9,7 @@ from app.settings import settings
 
 
 def register_docs_routes(app: FastAPI) -> None:
-    if settings.docs_public or settings.debug:
+    if settings.docs_public:
 
         @app.get("/openapi.json", include_in_schema=False)
         async def openapi_json() -> JSONResponse:

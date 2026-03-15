@@ -1,7 +1,16 @@
 """Public import surface for the metering_finops domain."""
 from .model.enums import MeteringDimension, ChargeStatementStatus, QuotaStatus
-from .model.value_objects import UsageEvent, QuotaLimit, ChargeLineItem
-from .model.aggregates import MeteringLedger, QuotaAllocation
+from .model.value_objects import ChargeLineItem, MeterEvent, QuotaLimit, RatedUsage, UsageEvent
+from .model.aggregates import (
+    AdjustmentEvent,
+    ChargeStatement,
+    MeteringLedger,
+    QuotaAllocation,
+    QuotaWindow,
+    RatingRule,
+    SettlementBatch,
+    UsageLedger,
+)
 from .model.invariants import require_draft_ledger, require_period_valid
 from .commands import (
     RecordUsageEventCommand,
@@ -20,7 +29,14 @@ from .errors import (
     LedgerAlreadyFinalizedError,
     QuotaExceededError,
 )
-from .ports import MeteringLedgerRepository, QuotaAllocationRepository, BillingExportPort
+from .ports import (
+    BillingExportPort,
+    MeteringLedgerRepository,
+    QuotaAllocationRepository,
+    QuotaEnforcerPort,
+    RatingEnginePort,
+    UsageIngestPort,
+)
 from .services import MeteringService
 
 __all__ = [
@@ -29,11 +45,11 @@ __all__ = [
     "ChargeStatementStatus",
     "QuotaStatus",
     # value objects
-    "UsageEvent",
+    "UsageEvent", "MeterEvent", "RatedUsage",
     "QuotaLimit",
     "ChargeLineItem",
     # aggregates
-    "MeteringLedger",
+    "MeteringLedger", "UsageLedger", "QuotaWindow", "RatingRule", "ChargeStatement", "SettlementBatch", "AdjustmentEvent",
     "QuotaAllocation",
     # invariants
     "require_draft_ledger",
@@ -55,7 +71,7 @@ __all__ = [
     # ports
     "MeteringLedgerRepository",
     "QuotaAllocationRepository",
-    "BillingExportPort",
+    "BillingExportPort", "UsageIngestPort", "RatingEnginePort", "QuotaEnforcerPort",
     # services
     "MeteringService",
 ]

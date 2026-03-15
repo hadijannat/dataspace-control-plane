@@ -1,9 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 
 from dataspace_control_plane_core.domains._shared.aggregate import AggregateRoot
 from dataspace_control_plane_core.domains._shared.ids import AggregateId, TenantId
+from dataspace_control_plane_core.domains._shared.time import utc_now
 from .enums import GrantStatus
 from .value_objects import Role, Scope, Permission, PermissionAction
 
@@ -29,7 +30,7 @@ class OperatorPrincipal:
 
 @dataclass(frozen=True)
 class Grant:
-    """An explicit authorization grant for a principal on a resource."""
+    """Deprecated compatibility record for historical grant payloads."""
     grant_id: str
     subject: str
     role_name: str
@@ -45,6 +46,37 @@ class Grant:
         if self.expires_at and self.expires_at < now:
             return False
         return True
+
+
+@dataclass
+class GrantAggregate(AggregateRoot):
+    """Tenant-scoped authorization grant aggregate."""
+    principal_subject: str = ""
+    role: Role | None = None
+    scope: Scope = field(default_factory=lambda: Scope(resource_type="tenant"))
+    granted_by: str = ""
+    granted_at: datetime = field(default_factory=utc_now)
+    expires_at: datetime | None = None
+    status: GrantStatus = GrantStatus.ACTIVE
+
+    @property
+    def grant_id(self) -> str:
+        return str(self.id)
+
+    def revoke(self) -> None:
+        self.status = GrantStatus.REVOKED
+
+    def is_active(self, now: datetime) -> bool:
+        return Grant(
+            grant_id=self.grant_id,
+            subject=self.principal_subject,
+            role_name=self.role.name if self.role else "",
+            scope=self.scope,
+            granted_by=self.granted_by,
+            granted_at=self.granted_at,
+            expires_at=self.expires_at,
+            status=self.status,
+        ).is_active(now)
 
 
 @dataclass(frozen=True)

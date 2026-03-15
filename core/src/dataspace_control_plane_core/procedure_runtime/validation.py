@@ -1,4 +1,5 @@
-from .contracts import ProcedureInput, ProcedureType
+from .procedure_ids import ProcedureType
+from .workflow_contracts import ProcedureInput
 from .errors import ProcedureInputValidationError
 
 REQUIRED_PAYLOAD_KEYS: dict[ProcedureType, list[str]] = {

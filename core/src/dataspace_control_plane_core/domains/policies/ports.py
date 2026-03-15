@@ -27,3 +27,6 @@ class PolicyEvaluator(Protocol):
 
 class PurposeCatalogProvider(Protocol):
     async def list_purposes(self, namespace: str) -> list["PurposeCode"]: ...  # noqa: F821
+
+
+PolicySetRepository = PolicyTemplateRepository

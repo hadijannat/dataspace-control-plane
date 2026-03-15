@@ -36,3 +36,9 @@ class SchemaRegistryPort(Protocol):
     async def validate_against_schema(self, instance: dict, schema_id: str) -> bool:
         """Return True if instance validates against the schema, False otherwise."""
         ...
+
+
+SourceSchemaIntrospectorPort = SchemaRegistryPort
+TemplateProviderPort = SchemaRegistryPort
+TransformationExecutorPort = SchemaRegistryPort
+UnitConversionPort = SchemaRegistryPort

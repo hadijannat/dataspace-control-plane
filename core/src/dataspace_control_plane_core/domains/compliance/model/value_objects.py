@@ -26,3 +26,6 @@ class ComplianceSnapshot:
     frameworks: tuple[ComplianceFramework, ...]
     gaps: tuple[ComplianceGap, ...]
     posture: CompliancePosture
+
+
+Gap = ComplianceGap

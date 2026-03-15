@@ -1,7 +1,13 @@
 """Public import surface for the contracts domain."""
 from .model.enums import NegotiationStatus, EntitlementStatus
-from .model.value_objects import OfferSnapshot, AgreementRecord, TransferAuthorization
-from .model.aggregates import NegotiationCase, Entitlement
+from .model.value_objects import (
+    AgreementRecord,
+    ContractReference,
+    CounterOffer,
+    OfferSnapshot,
+    TransferAuthorization,
+)
+from .model.aggregates import AgreementAggregate, Entitlement, NegotiationCase
 from .model.invariants import require_counterparty, require_active_entitlement
 from .commands import (
     StartNegotiationCommand, SubmitOfferCommand,
@@ -17,13 +23,20 @@ from .errors import (
     NegotiationAlreadyConcludedError, NegotiationTerminatedError,
     EntitlementNotActiveError,
 )
-from .ports import NegotiationRepository, EntitlementRepository, AgreementRegistryPort, CatalogLookupPort
+from .ports import (
+    AgreementRegistryPort,
+    CatalogLookupPort,
+    EntitlementRepository,
+    NegotiationPort,
+    NegotiationRepository,
+    TransferObservationPort,
+)
 from .services import ContractService
 
 __all__ = [
     "NegotiationStatus", "EntitlementStatus",
-    "OfferSnapshot", "AgreementRecord", "TransferAuthorization",
-    "NegotiationCase", "Entitlement",
+    "OfferSnapshot", "CounterOffer", "AgreementRecord", "ContractReference", "TransferAuthorization",
+    "NegotiationCase", "Entitlement", "AgreementAggregate",
     "require_counterparty", "require_active_entitlement",
     "StartNegotiationCommand", "SubmitOfferCommand",
     "ConcludeAgreementCommand", "TerminateNegotiationCommand",
@@ -34,6 +47,6 @@ __all__ = [
     "NegotiationAlreadyConcludedError", "NegotiationTerminatedError",
     "EntitlementNotActiveError",
     "NegotiationRepository", "EntitlementRepository",
-    "AgreementRegistryPort", "CatalogLookupPort",
+    "AgreementRegistryPort", "CatalogLookupPort", "NegotiationPort", "TransferObservationPort",
     "ContractService",
 ]

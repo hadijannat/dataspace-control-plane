@@ -14,6 +14,10 @@ class Address:
     country_code: str  # ISO 3166-1 alpha-2
     region: str | None = None
 
+    def formatted(self) -> str:
+        region = f", {self.region}" if self.region else ""
+        return f"{self.street}, {self.postal_code} {self.city}{region}, {self.country_code}"
+
 
 @dataclass(frozen=True)
 class ExternalIdentifier:
@@ -36,3 +40,4 @@ class TopologySnapshot:
     display_name: str
     external_identifiers: tuple[ExternalIdentifier, ...]
     site_ids: tuple[SiteId, ...]
+    environment_ids: tuple[str, ...] = ()

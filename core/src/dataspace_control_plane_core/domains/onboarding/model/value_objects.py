@@ -26,3 +26,30 @@ class OnboardingCheckpoint:
     phase: OnboardingPhase
     result: PhaseResult
     occurred_at: datetime
+
+
+@dataclass(frozen=True)
+class Prerequisite:
+    prerequisite_id: str
+    description: str
+    satisfied: bool = False
+
+
+@dataclass(frozen=True)
+class CapabilityCheck:
+    name: str
+    passed: bool
+    detail: str = ""
+
+
+@dataclass(frozen=True)
+class OnboardingDecision:
+    approved: bool
+    rationale: str = ""
+
+
+@dataclass(frozen=True)
+class ReadinessReport:
+    generated_at: datetime
+    checks: tuple[CapabilityCheck, ...]
+    decision: OnboardingDecision

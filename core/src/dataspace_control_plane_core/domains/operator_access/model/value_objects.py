@@ -9,6 +9,11 @@ class Scope:
     resource_type: str   # e.g. "tenant", "legal_entity", "site", "environment", "*"
     resource_id: str | None = None  # None = all resources of that type
 
+    def tenant_hint(self) -> str | None:
+        if self.resource_type == "tenant":
+            return self.resource_id
+        return None
+
 
 @dataclass(frozen=True)
 class Permission:

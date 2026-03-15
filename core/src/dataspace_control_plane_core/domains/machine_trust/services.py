@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataspace_control_plane_core.domains._shared.ids import AggregateId
 from dataspace_control_plane_core.domains._shared.time import Clock, UtcClock
 from .commands import RegisterDidCommand, AddCredentialCommand, RevokeCredentialCommand
-from .events import DidRegistered, CredentialAdded, CredentialRevoked
+from .events import CredentialAdded, CredentialRevoked, DidRegistered
 from .model.aggregates import TrustParticipant
 from .ports import TrustParticipantRepository
 
@@ -32,6 +32,18 @@ class MachineTrustService:
             tenant_id=cmd.tenant_id,
             credential_id=cmd.credential.id,
             credential_type=",".join(cmd.credential.type_labels),
+        ))
+        await self._repo.save(participant, expected_version=participant.version)
+        return participant
+
+    async def revoke_credential(self, cmd: RevokeCredentialCommand) -> TrustParticipant:
+        participant = await self._repo.get(cmd.tenant_id, cmd.legal_entity_id)
+        participant.revoke_credential(cmd.credential_id)
+        participant._raise_event(CredentialRevoked(
+            tenant_id=cmd.tenant_id,
+            credential_id=cmd.credential_id,
+            reason=cmd.reason,
+            correlation=cmd.correlation,
         ))
         await self._repo.save(participant, expected_version=participant.version)
         return participant

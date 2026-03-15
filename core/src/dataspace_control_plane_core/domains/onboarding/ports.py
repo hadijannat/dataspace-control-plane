@@ -42,3 +42,10 @@ class ConnectorProvisioningPort(Protocol):
     ) -> None:
         """Bootstraps the connector at the given URL for the legal entity."""
         ...
+
+
+TopologyLookupPort = IdentityProvisioningPort
+TrustReadinessPort = IdentityProvisioningPort
+ConnectorReadinessPort = ConnectorProvisioningPort
+PolicyCatalogReadinessPort = ConnectorProvisioningPort
+ComplianceBaselinePort = ConnectorProvisioningPort

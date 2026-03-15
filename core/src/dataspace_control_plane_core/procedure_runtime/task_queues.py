@@ -1,4 +1,4 @@
-from .contracts import ProcedureType
+from .procedure_ids import ProcedureType
 
 TASK_QUEUE_MAP: dict[ProcedureType, str] = {
     ProcedureType.COMPANY_ONBOARDING: "onboarding",

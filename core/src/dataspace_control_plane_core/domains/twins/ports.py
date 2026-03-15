@@ -56,3 +56,9 @@ class TwinEndpointProbePort(Protocol):
     async def probe(self, endpoint_url: str) -> EndpointHealth:
         """Return an EndpointHealth snapshot for the given URL."""
         ...
+
+
+AasRepositoryPort = AasRegistryPort
+SubmodelServerPort = AasRegistryPort
+DigitalTwinRegistryPort = AasRegistryPort
+ConnectorAssetPort = TwinEndpointProbePort

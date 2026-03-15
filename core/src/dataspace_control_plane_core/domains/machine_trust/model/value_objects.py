@@ -27,3 +27,6 @@ class TrustAnchor:
     did: DidUri
     trust_scope: str
     is_active: bool = True
+
+
+KeyBindingRef = KeyRef

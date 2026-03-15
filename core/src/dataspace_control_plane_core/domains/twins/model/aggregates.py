@@ -1,12 +1,13 @@
 """Aggregate roots for the twins domain."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 
 from dataspace_control_plane_core.domains._shared.aggregate import AggregateRoot
 from dataspace_control_plane_core.domains._shared.ids import AggregateId, TenantId, LegalEntityId
 from dataspace_control_plane_core.domains._shared.actor import ActorRef
 from dataspace_control_plane_core.domains._shared.errors import ConflictError
+from dataspace_control_plane_core.domains._shared.time import utc_now
 from .enums import TwinLifecycleState, TwinVisibility
 from .value_objects import TwinDescriptor, TwinVersion
 
@@ -34,10 +35,10 @@ class TwinAsset(AggregateRoot):
             raise ConflictError(
                 f"TwinAsset {self.id} is already published at version {self.version}",
                 {"twin_id": str(self.id), "version": str(self.version)},
-            )
+        )
         self.descriptor = descriptor
         self.lifecycle = TwinLifecycleState.PUBLISHED
-        self.published_at = datetime.now(timezone.utc)
+        self.published_at = utc_now()
 
     def deprecate(self) -> None:
         """Mark the twin as deprecated."""
@@ -51,3 +52,40 @@ class TwinAsset(AggregateRoot):
         """Replace the descriptor and bump the minor version."""
         self.descriptor = descriptor
         self.version = self.version.bump_minor()
+
+
+@dataclass(frozen=True)
+class AasShellRecord:
+    shell_id: str
+    global_asset_id: str
+
+
+@dataclass(frozen=True)
+class SubmodelBinding:
+    submodel_id: str
+    semantic_id: str | None = None
+
+
+@dataclass(frozen=True)
+class TwinPublication:
+    twin_id: str
+    published_at: datetime | None
+    lifecycle: TwinLifecycleState
+
+
+@dataclass(frozen=True)
+class RegistryEntryRef:
+    registry_id: str
+    shell_id: str
+
+
+@dataclass(frozen=True)
+class TwinAccessPolicyBinding:
+    policy_id: str
+    object_ref: str
+
+
+@dataclass(frozen=True)
+class SemanticBinding:
+    semantic_id: str
+    target_path: str

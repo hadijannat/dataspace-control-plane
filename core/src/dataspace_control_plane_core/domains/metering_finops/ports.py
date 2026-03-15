@@ -62,3 +62,8 @@ class BillingExportPort(Protocol):
         (e.g. an external invoice ID or file path).
         """
         ...
+
+
+UsageIngestPort = MeteringLedgerRepository
+RatingEnginePort = BillingExportPort
+QuotaEnforcerPort = QuotaAllocationRepository

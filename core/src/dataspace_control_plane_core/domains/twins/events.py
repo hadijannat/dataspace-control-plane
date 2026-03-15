@@ -1,11 +1,12 @@
 """Domain events for the twins domain."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import ClassVar
 
 from dataspace_control_plane_core.domains._shared.events import DomainEvent
 from dataspace_control_plane_core.domains._shared.ids import AggregateId, TenantId, LegalEntityId
+from dataspace_control_plane_core.domains._shared.time import utc_now
 
 
 @dataclass(frozen=True)
@@ -24,7 +25,7 @@ class TwinPublished(DomainEvent):
     tenant_id: TenantId = field(default_factory=lambda: TenantId("__unset__"))
     global_asset_id: str = ""
     version: str = ""
-    published_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    published_at: datetime = field(default_factory=utc_now)
 
 
 @dataclass(frozen=True)

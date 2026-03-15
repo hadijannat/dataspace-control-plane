@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from dataspace_control_plane_core.canonical_models.metering import RatedUsage as CanonicalRatedUsage
 from dataspace_control_plane_core.domains._shared.money import Money
 from .enums import MeteringDimension
 
@@ -42,3 +43,7 @@ class ChargeLineItem:
     quantity: int
     unit_price: Money
     total: Money
+
+
+MeterEvent = UsageEvent
+RatedUsage = CanonicalRatedUsage

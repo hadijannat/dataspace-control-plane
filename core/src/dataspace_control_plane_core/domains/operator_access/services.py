@@ -1,9 +1,7 @@
 from __future__ import annotations
-from datetime import datetime, timezone
-from uuid import uuid4
-
+from dataspace_control_plane_core.domains._shared.ids import AggregateId, TenantId
 from dataspace_control_plane_core.domains._shared.time import Clock, UtcClock
-from .model.aggregates import Grant, AuthorizationDecision, OperatorPrincipal
+from .model.aggregates import AuthorizationDecision, Grant, GrantAggregate, OperatorPrincipal
 from .model.value_objects import Scope, PermissionAction
 from .model.enums import GrantStatus
 from .commands import GrantRoleCommand, RevokeGrantCommand, CheckAuthorizationCommand
@@ -19,22 +17,58 @@ class AuthorizationService:
         self._clock = clock
 
     async def grant_role(self, cmd: GrantRoleCommand) -> Grant:
-        grant = Grant(
-            grant_id=str(uuid4()),
-            subject=cmd.subject,
-            role_name=cmd.role_name,
+        tenant_id = TenantId(cmd.scope.tenant_hint() or "platform")
+        aggregate = GrantAggregate(
+            id=AggregateId.generate(),
+            tenant_id=tenant_id,
+            principal_subject=cmd.subject,
             scope=cmd.scope,
             granted_by=cmd.granted_by.subject,
             granted_at=self._clock.now(),
             expires_at=cmd.expires_at,
             status=GrantStatus.ACTIVE,
         )
-        await self._repo.save(grant)
-        return grant
+        aggregate._raise_event(RoleGranted(
+            tenant_id=tenant_id,
+            subject=cmd.subject,
+            role_name=cmd.role_name,
+            scope_resource=cmd.scope.resource_type,
+            correlation=cmd.correlation,
+        ))
+        await self._repo.save(aggregate, tenant_id=tenant_id)
+        return Grant(
+            grant_id=aggregate.grant_id,
+            subject=aggregate.principal_subject,
+            role_name=cmd.role_name,
+            scope=aggregate.scope,
+            granted_by=aggregate.granted_by,
+            granted_at=aggregate.granted_at,
+            expires_at=aggregate.expires_at,
+            status=aggregate.status,
+        )
 
     async def revoke_grant(self, cmd: RevokeGrantCommand) -> Grant:
-        grant = await self._repo.get(cmd.grant_id)
-        grant = Grant(**{**grant.__dict__, "status": GrantStatus.REVOKED})
+        loaded = await self._repo.get(cmd.grant_id)
+        if isinstance(loaded, GrantAggregate):
+            loaded.revoke()
+            loaded._raise_event(GrantRevoked(
+                tenant_id=loaded.tenant_id,
+                grant_id=loaded.grant_id,
+                subject=loaded.principal_subject,
+                correlation=cmd.correlation,
+            ))
+            await self._repo.save(loaded, tenant_id=loaded.tenant_id)
+            return Grant(
+                grant_id=loaded.grant_id,
+                subject=loaded.principal_subject,
+                role_name=loaded.role.name if loaded.role else "",
+                scope=loaded.scope,
+                granted_by=loaded.granted_by,
+                granted_at=loaded.granted_at,
+                expires_at=loaded.expires_at,
+                status=loaded.status,
+            )
+        grant = Grant(**{**loaded.__dict__, "status": GrantStatus.REVOKED})
         await self._repo.save(grant)
         return grant
 

@@ -34,16 +34,21 @@ def reduce_validation(
     *,
     context: dict[str, Any],
     on: date | None = None,
+    short_circuit_on_error: bool = False,
 ) -> ValidationResult:
     """Run all requirement providers and union their violations.
 
     The first ``error``-severity violation found in any provider's result
-    is surfaced; all warnings and infos are accumulated.
+    is surfaced when ``short_circuit_on_error`` is enabled; all warnings and
+    infos observed before that point are accumulated.
     """
     result = ValidationResult(subject_id=context.get("subject_id", "unknown"))
     for provider in providers:
         sub_result = provider.validate(subject, context=context, on=on)
-        result.violations.extend(sub_result.violations)
+        for violation in sub_result.violations:
+            result.add(violation)
+            if short_circuit_on_error and violation.severity == "error":
+                return result
     return result
 
 
@@ -126,7 +131,13 @@ def reduce_identifier_schemes(
 # Default-value reducer (priority-based)
 # ---------------------------------------------------------------------------
 
-_KIND_PRIORITY = {"custom": 0, "regulation": 1, "ecosystem": 2}
+_KIND_PRIORITY = {
+    "shared": 0,
+    "base": 0,
+    "ecosystem": 1,
+    "regulation": 2,
+    "custom": 3,
+}
 
 
 def reduce_defaults(
@@ -139,7 +150,8 @@ def reduce_defaults(
             ``pack_kind`` is one of ``custom``, ``regulation``, ``ecosystem``.
 
     Returns:
-        Merged dict where ``custom > regulation > ecosystem``.
+        Merged dict where later application yields
+        ``custom > regulation > ecosystem > shared/base``.
         If two packs of the same kind define the same key, the later one wins.
     """
     ordered = sorted(value_sets, key=lambda t: _KIND_PRIORITY.get(t[0], 99))

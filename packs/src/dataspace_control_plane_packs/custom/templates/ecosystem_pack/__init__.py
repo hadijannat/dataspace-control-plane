@@ -41,4 +41,6 @@ Forbidden:
 # Step 4: Pin normative sources under vocab/pinned/ with provenance metadata in manifest.toml
 # Step 5: Export MANIFEST and PROVIDERS from api.py
 #         MANIFEST = _minimal_manifest(...) or PackManifest.from_toml(Path(__file__).parent / "manifest.toml")
-#         PROVIDERS = {"RequirementProvider": YourRequirementProvider(), ...}
+#         PROVIDERS = {PackCapability.REQUIREMENT_PROVIDER: YourRequirementProvider(), ...}
+# Step 6: Place the completed pack under custom/examples/ or custom/org_packs/
+#         and the loader will discover it automatically.

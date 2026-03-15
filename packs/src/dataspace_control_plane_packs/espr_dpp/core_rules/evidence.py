@@ -9,6 +9,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..._shared.provenance import attach_module_provenance
+
+_EVIDENCE_RULE_IDS = [
+    "espr_dpp:identifier-obligation",
+    "espr_dpp:data-carrier-obligation",
+    "espr_dpp:registry-obligation",
+    "espr_dpp:backup-copy-obligation",
+]
+
 
 class EsprEvidenceAugmenter:
     """Augments an evidence bundle with ESPR DPP-specific fields.
@@ -36,4 +45,9 @@ class EsprEvidenceAugmenter:
         augmented["espr:carrier_type"] = evidence.get("carrier_type")
         augmented["espr:regulation_version"] = "2024/1781"
         augmented["espr:backup_copy_ref"] = evidence.get("backup_location_uri")
-        return augmented
+        return attach_module_provenance(
+            augmented,
+            module_file=__file__,
+            rule_ids=_EVIDENCE_RULE_IDS,
+            activation_scope=activation_scope,
+        )

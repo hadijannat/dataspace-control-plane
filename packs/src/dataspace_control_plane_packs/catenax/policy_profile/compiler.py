@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..._shared.provenance import attach_module_provenance
 from .parser import parse_cx_policy
 from .purposes_loader import load_purposes
 
@@ -59,6 +60,7 @@ class CatenaxPolicyDialectProvider:
         )
         prohibitions = _compile_rules(canonical_policy.get("prohibitions", []))
         obligations = _compile_rules(canonical_policy.get("obligations", []))
+        review_flags = _collect_review_flags(canonical_policy)
 
         result: dict[str, Any] = {
             "@context": _CX_ODRL_CONTEXT,
@@ -71,8 +73,15 @@ class CatenaxPolicyDialectProvider:
             result["odrl:obligation"] = obligations
         if canonical_policy.get("uid"):
             result["@id"] = canonical_policy["uid"]
+        if review_flags:
+            result["review_flags"] = review_flags
 
-        return result
+        return attach_module_provenance(
+            result,
+            module_file=__file__,
+            rule_ids=["catenax:policy-profile", "catenax:policy-purpose-catalog"],
+            activation_scope=activation_scope,
+        )
 
     def parse(self, dialect_policy: dict[str, Any]) -> dict[str, Any]:
         """Parse a Catena-X ODRL policy dict back to a canonical policy dict."""
@@ -116,6 +125,8 @@ def _compile_permissions(
 
         for raw_constraint in perm.get("odrl:constraint", []):
             constraints.append(raw_constraint)
+        for unsupported_constraint in perm.get("unsupported_constraints", []):
+            constraints.append(unsupported_constraint)
 
         if constraints:
             cx_perm["odrl:constraint"] = constraints
@@ -132,3 +143,18 @@ def _compile_permissions(
 def _compile_rules(rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Pass-through compilation for prohibitions and obligations."""
     return list(rules)
+
+
+def _collect_review_flags(canonical_policy: dict[str, Any]) -> list[dict[str, Any]]:
+    flags: list[dict[str, Any]] = []
+    for permission in canonical_policy.get("permissions", []):
+        flags.extend(permission.get("review_flags", []))
+        if permission.get("unsupported_constraints"):
+            flags.append(
+                {
+                    "code": "unsupported_cx_constraint",
+                    "message": "Unsupported Catena-X constraints were preserved in odrl:constraint.",
+                }
+            )
+    flags.extend(canonical_policy.get("review_flags", []))
+    return flags

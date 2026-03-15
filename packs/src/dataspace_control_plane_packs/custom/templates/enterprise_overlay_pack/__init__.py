@@ -56,4 +56,6 @@ Forbidden:
 # Step 2: Implement EvidenceAugmenter in evidence.py (add enterprise fields)
 # Step 3: If adding extra validation rules, implement RequirementProvider and call
 #         check_override_safety() inside requirements() / validate()
-# Step 4: Export MANIFEST and PROVIDERS from api.py
+# Step 4: Export MANIFEST and PROVIDERS from api.py using PackCapability keys
+# Step 5: Place the completed pack under custom/examples/ or custom/org_packs/
+#         and the loader will discover it automatically.

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .._shared.provenance import attach_module_provenance
+
 MEMBERSHIP_CREDENTIAL = "MembershipCredential"
 BPN_CREDENTIAL = "BpnCredential"
 DATA_EXCHANGE_GOVERNANCE_CREDENTIAL = "DataExchangeGovernanceCredential"
@@ -23,6 +25,15 @@ _CONTEXT = [
     "https://www.w3.org/2018/credentials/v1",
     "https://w3id.org/catenax/credentials/v1",
 ]
+
+_CREDENTIAL_RULE_IDS = {
+    MEMBERSHIP_CREDENTIAL: ["catenax:membership-credential-profile"],
+    BPN_CREDENTIAL: ["catenax:bpn-credential-profile"],
+    DATA_EXCHANGE_GOVERNANCE_CREDENTIAL: [
+        "catenax:deg-credential-profile",
+        "catenax:deg-acceptance-required",
+    ],
+}
 
 
 class CatenaxCredentialProfileProvider:
@@ -68,13 +79,19 @@ class CatenaxCredentialProfileProvider:
 
         credential_subject = _build_credential_subject(credential_type, subject)
 
-        return {
+        payload = {
             "@context": _CONTEXT,
             "type": ["VerifiableCredential", credential_type],
             "issuer": "PLACEHOLDER_ISSUER_DID",
             "credentialSubject": credential_subject,
             "activation_scope": activation_scope,
         }
+        return attach_module_provenance(
+            payload,
+            module_file=__file__,
+            rule_ids=_CREDENTIAL_RULE_IDS.get(credential_type, [credential_type]),
+            activation_scope=activation_scope,
+        )
 
 
 def _build_credential_subject(

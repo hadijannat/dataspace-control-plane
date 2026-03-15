@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .._shared.provenance import attach_module_provenance
 from .._shared.implementation_profiles.aas_dpp4o.api import (
     AAS_RELEASE,
     AasId,
@@ -31,6 +32,10 @@ _MX_PACK_VERSION = "1.0.0"
 # Template descriptor keys
 _TMPL_NAMEPLATE = "mx:nameplate"
 _TMPL_MX_CAPABILITY = "mx:capability-declaration"
+_TEMPLATE_RULE_IDS = [
+    "manufacturing_x:mx-port-profile",
+    "manufacturing_x:aas-dpp4o-bridge",
+]
 
 
 class MxTwinTemplateProvider:
@@ -51,7 +56,7 @@ class MxTwinTemplateProvider:
         Each descriptor has at minimum ``template_id``, ``name``, and
         ``semantic_id`` keys.
         """
-        return [
+        templates = [
             {
                 "template_id": _TMPL_NAMEPLATE,
                 "name": "MX Asset Nameplate",
@@ -72,6 +77,15 @@ class MxTwinTemplateProvider:
                     "Declares the MX-Port layers and protocols supported by this asset."
                 ),
             },
+        ]
+        return [
+            attach_module_provenance(
+                template,
+                module_file=__file__,
+                rule_ids=_TEMPLATE_RULE_IDS,
+                activation_scope="template_catalog",
+            )
+            for template in templates
         ]
 
     def apply_template(
@@ -131,7 +145,12 @@ class MxTwinTemplateProvider:
                 el["value"] = str(subject["product_designation"])
             elif id_short == "SerialNumber" and "serial_number" in subject:
                 el["value"] = str(subject["serial_number"])
-        return sm
+        return attach_module_provenance(
+            sm,
+            module_file=__file__,
+            rule_ids=_TEMPLATE_RULE_IDS,
+            activation_scope=activation_scope,
+        )
 
     def _apply_capability_declaration(
         self,
@@ -172,10 +191,16 @@ class MxTwinTemplateProvider:
             ),
         ]
 
-        return minimal_submodel(
+        submodel = minimal_submodel(
             submodel_id=f"{asset_id}/mx-capability",
             id_short="MxCapabilityDeclaration",
             elements=elements,
             semantic_id=_SEMID_MX_CAPABILITY,
             kind=KIND_TEMPLATE,
+        )
+        return attach_module_provenance(
+            submodel,
+            module_file=__file__,
+            rule_ids=_TEMPLATE_RULE_IDS,
+            activation_scope=activation_scope,
         )

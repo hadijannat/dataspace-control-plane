@@ -11,6 +11,8 @@ to get the ResolvedPackProfile for the current tenant/entity.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -38,19 +40,28 @@ class ActivationRequest:
     pack_options: dict[str, Any] = field(default_factory=dict)
     """Pack-specific option overrides keyed by pack_id."""
 
+    compatibility_context: dict[str, Any] = field(default_factory=dict)
+    """Optional layer-version metadata used for manifest compatibility checks."""
+
+
+@dataclass
+class CachedActivation:
+    fingerprint: str
+    profile: ResolvedPackProfile
+
 
 @dataclass
 class ActivationState:
     """Stores resolved profiles for all active scopes."""
 
-    _profiles: dict[str, ResolvedPackProfile] = field(default_factory=dict)
+    _profiles: dict[str, CachedActivation] = field(default_factory=dict)
 
-    def get(self, scope_key: str) -> ResolvedPackProfile | None:
+    def get(self, scope_key: str) -> CachedActivation | None:
         """Return the resolved profile for ``scope_key``, or None."""
         return self._profiles.get(scope_key)
 
-    def set(self, scope_key: str, profile: ResolvedPackProfile) -> None:
-        self._profiles[scope_key] = profile
+    def set(self, scope_key: str, cached: CachedActivation) -> None:
+        self._profiles[scope_key] = cached
 
     def scope_keys(self) -> list[str]:
         return list(self._profiles.keys())
@@ -86,20 +97,23 @@ class PackActivationManager:
             PackActivationError: If resolution fails.
         """
         scope_key = f"{request.scope_kind}:{request.scope_id}"
+        fingerprint = self._fingerprint_request(request)
         existing = self._state.get(scope_key)
-        if existing is not None:
-            return existing
+        if existing is not None and existing.fingerprint == fingerprint:
+            return existing.profile
 
         try:
             self._validate_scope(request)
+            metadata = {
+                "scope_kind": request.scope_kind,
+                "scope_id": request.scope_id,
+                "pack_options": request.pack_options,
+                **request.compatibility_context,
+            }
             profile = self._resolver.resolve(
                 activation_id=scope_key,
                 requested_packs=request.requested_packs,
-                metadata={
-                    "scope_kind": request.scope_kind,
-                    "scope_id": request.scope_id,
-                    "pack_options": request.pack_options,
-                },
+                metadata=metadata,
             )
         except Exception as exc:
             raise PackActivationError(
@@ -107,7 +121,7 @@ class PackActivationManager:
                 f"for scope {scope_key!r}: {exc}"
             ) from exc
 
-        self._state.set(scope_key, profile)
+        self._state.set(scope_key, CachedActivation(fingerprint=fingerprint, profile=profile))
         logger.info(
             "Activated packs %s for scope %s",
             profile.pack_ids(),
@@ -123,7 +137,8 @@ class PackActivationManager:
 
     def get_profile(self, scope_kind: ScopeKind, scope_id: str) -> ResolvedPackProfile | None:
         """Return the cached resolved profile, or None if not yet activated."""
-        return self._state.get(f"{scope_kind}:{scope_id}")
+        cached = self._state.get(f"{scope_kind}:{scope_id}")
+        return cached.profile if cached is not None else None
 
     def _validate_scope(self, request: ActivationRequest) -> None:
         """Check that all requested packs support the requested scope kind."""
@@ -139,3 +154,15 @@ class PackActivationManager:
                     manifest.activation_scope,
                     request.scope_kind,
                 )
+
+    @staticmethod
+    def _fingerprint_request(request: ActivationRequest) -> str:
+        payload = {
+            "scope_kind": request.scope_kind,
+            "scope_id": request.scope_id,
+            "requested_packs": sorted(request.requested_packs),
+            "pack_options": request.pack_options,
+            "compatibility_context": request.compatibility_context,
+        }
+        encoded = json.dumps(payload, sort_keys=True, default=str).encode()
+        return hashlib.sha256(encoded).hexdigest()

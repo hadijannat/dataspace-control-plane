@@ -8,7 +8,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from .._shared.provenance import attach_module_provenance
+
 _PACK_VERSION = "4.0.0"
+_EVIDENCE_RULE_IDS = [
+    "catenax:bpnl-required",
+    "catenax:deg-acceptance-required",
+    "catenax:connector-registration-required",
+    "catenax:policy-profile",
+]
 
 
 class CatenaxEvidenceAugmenter:
@@ -50,4 +58,9 @@ class CatenaxEvidenceAugmenter:
 
         augmented["cx:pack_version"] = _PACK_VERSION
 
-        return augmented
+        return attach_module_provenance(
+            augmented,
+            module_file=__file__,
+            rule_ids=_EVIDENCE_RULE_IDS,
+            activation_scope=activation_scope,
+        )

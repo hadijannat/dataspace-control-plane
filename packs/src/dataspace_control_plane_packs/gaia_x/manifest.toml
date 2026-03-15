@@ -37,7 +37,7 @@ interface_class = "dataspace_control_plane_packs.gaia_x.api.GaiaXEvidenceAugment
 [[normative_sources]]
 source_uri = "https://docs.gaia-x.eu/policy-rules-committee/trust-framework/22.10/"
 version = "22.10"
-retrieval_date = "2026-03-14"
-sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
-local_filename = "rules/compliance_baseline.yaml"
+retrieval_date = "2026-03-15"
+sha256 = "bb8ca12206e921f114474449b7100ce955526c83427ff4f1edc4a5c6f13a2b71"
+local_filename = "vocab/pinned/trust_framework_22_10.html"
 effective_from = "2022-10-01"

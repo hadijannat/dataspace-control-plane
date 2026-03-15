@@ -130,6 +130,6 @@ MANIFEST: PackManifest = _minimal_manifest(
     ],
 )
 
-PROVIDERS: dict[str, Any] = {
-    "EvidenceAugmenter": EnterpriseEvidenceAugmenter(),
+PROVIDERS: dict[PackCapability, Any] = {
+    PackCapability.EVIDENCE_AUGMENTER: EnterpriseEvidenceAugmenter(),
 }

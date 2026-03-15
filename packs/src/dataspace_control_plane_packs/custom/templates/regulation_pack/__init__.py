@@ -52,4 +52,6 @@ Forbidden:
 # Step 3: Add rule YAML files under core_rules/rules/ with effective_from on every entry
 # Step 4: For each delegated/implementing act, add a subpackage under delegated_acts/
 # Step 5: Pin regulation texts under vocab/pinned/ with retrieval_date and sha256
-# Step 6: Export MANIFEST and PROVIDERS from api.py
+# Step 6: Export MANIFEST and PROVIDERS from api.py using PackCapability keys
+# Step 7: Place the completed pack under custom/examples/ or custom/org_packs/
+#         and the loader will discover it automatically.

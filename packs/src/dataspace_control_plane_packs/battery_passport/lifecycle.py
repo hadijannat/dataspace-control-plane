@@ -17,19 +17,19 @@ from .._shared.rule_model import RuleViolation, ValidationResult
 class BatteryState(str, Enum):
     """Valid lifecycle states for a battery passport."""
 
-    ACTIVE = "ACTIVE"
+    ACTIVE = "active"
     """Battery is in active use (first life or subsequent life)."""
 
-    REPURPOSED = "REPURPOSED"
+    REPURPOSED = "repurposed"
     """Battery has been repurposed for a different application (second life)."""
 
-    REMANUFACTURED = "REMANUFACTURED"
+    REMANUFACTURED = "remanufactured"
     """Battery has been remanufactured (cells/modules replaced or reconditioned)."""
 
-    WASTE = "WASTE"
+    WASTE = "waste"
     """Battery has been declared end-of-life and sent to waste processing."""
 
-    RECYCLED_CEASED = "RECYCLED_CEASED"
+    RECYCLED_CEASED = "recycled_ceased"
     """Recycling completed — passport is terminal and ceases to be active."""
 
 

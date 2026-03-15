@@ -14,10 +14,15 @@ Federation-specific overlays in ``federations/<id>/`` should override
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 _GX_PACK_VERSION = "22.10.0"
+_DEFAULT_TRUST_ANCHOR_FILE = (
+    Path(__file__).resolve().parents[1] / "vocab" / "pinned" / "trust_anchors_22_10.json"
+)
 
 
 @dataclass(frozen=True)
@@ -62,6 +67,30 @@ class TrustAnchorConfig:
             if a.federation_id == federation_id
         ]
 
+    @classmethod
+    def from_file(cls, path: Path) -> "TrustAnchorConfig":
+        """Load a trust anchor config snapshot from a pinned JSON file."""
+        if not path.is_file():
+            return cls()
+
+        with path.open() as handle:
+            payload = json.load(handle)
+
+        anchors = [
+            TrustAnchor(
+                did=item["did"],
+                name=item["name"],
+                public_key_pem=item.get("public_key_pem", ""),
+                active=item.get("active", True),
+                federation_id=item.get("federation_id"),
+            )
+            for item in payload.get("anchors", [])
+        ]
+        return cls(
+            anchors=anchors,
+            version=payload.get("version", "22.10"),
+        )
+
 
 class GaiaXBaselineTrustAnchorOverlay:
     """Baseline trust anchor overlay for Gaia-X.
@@ -74,7 +103,7 @@ class GaiaXBaselineTrustAnchorOverlay:
     """
 
     def __init__(self, config: TrustAnchorConfig | None = None) -> None:
-        self._config = config or TrustAnchorConfig()
+        self._config = config or TrustAnchorConfig.from_file(_DEFAULT_TRUST_ANCHOR_FILE)
 
     # ------------------------------------------------------------------
     # TrustAnchorOverlayProvider interface

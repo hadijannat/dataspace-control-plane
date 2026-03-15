@@ -30,7 +30,16 @@ from ._shared.interfaces import (
     UiSchemaProvider,
 )
 from ._shared.manifest import PackCapabilityDecl, PackDependency, PackManifest
-from ._shared.provenance import ArtifactProvenance, NormativeSource
+from ._shared.provenance import (
+    PROVENANCE_KEY,
+    ArtifactProvenance,
+    NormativeSource,
+    attach_module_provenance,
+    attach_pack_provenance,
+    compute_sha256,
+    require_pack_provenance,
+    validate_manifest_sources,
+)
 from ._shared.reducers import (
     check_override_safety,
     reduce_defaults,
@@ -73,6 +82,12 @@ __all__ = [
     # Provenance
     "ArtifactProvenance",
     "NormativeSource",
+    "PROVENANCE_KEY",
+    "attach_pack_provenance",
+    "attach_module_provenance",
+    "require_pack_provenance",
+    "compute_sha256",
+    "validate_manifest_sources",
     # Interfaces
     "RequirementProvider",
     "PolicyDialectProvider",

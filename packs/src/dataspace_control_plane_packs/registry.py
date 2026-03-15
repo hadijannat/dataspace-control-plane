@@ -14,7 +14,7 @@ from collections import defaultdict
 from typing import Any, TypeVar
 
 from ._shared.capabilities import PackCapability
-from ._shared.errors import PackNotFoundError
+from ._shared.errors import PackNotFoundError, PackValidationError
 from ._shared.manifest import PackManifest
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class PackRegistry:
     def __init__(self) -> None:
         self._manifests: dict[str, PackManifest] = {}
         self._providers: dict[PackCapability, list[Any]] = defaultdict(list)
-        self._raw_providers: dict[str, dict[PackCapability, Any]] = {}
+        self._raw_providers: dict[str, dict[PackCapability, tuple[Any, ...]]] = {}
 
     def register(
         self,
@@ -57,16 +57,31 @@ class PackRegistry:
         providers = providers or {}
         self._raw_providers[manifest.pack_id] = {}
 
-        for cap_decl in manifest.capabilities:
-            provider = providers.get(cap_decl.capability)
-            if provider is not None:
-                self._providers[cap_decl.capability].append(provider)
-                self._raw_providers[manifest.pack_id][cap_decl.capability] = provider
+        declared_capabilities = {cap_decl.capability for cap_decl in manifest.capabilities}
+        normalized_inputs: dict[PackCapability, tuple[Any, ...]] = {}
+        for raw_capability, raw_provider in providers.items():
+            capability = (
+                raw_capability
+                if isinstance(raw_capability, PackCapability)
+                else PackCapability(raw_capability)
+            )
+            if capability not in declared_capabilities:
+                raise PackValidationError(
+                    f"Pack {manifest.pack_id!r} registers provider(s) for {capability.value!r} "
+                    "without declaring that capability in manifest.toml."
+                )
+            normalized_inputs[capability] = self._normalize_providers(raw_provider)
+
+        for capability in declared_capabilities:
+            provider_instances = normalized_inputs.get(capability, ())
+            if provider_instances:
+                self._providers[capability].extend(provider_instances)
+                self._raw_providers[manifest.pack_id][capability] = provider_instances
             else:
                 logger.debug(
                     "Pack %r declares capability %s but no provider instance was given.",
                     manifest.pack_id,
-                    cap_decl.capability,
+                    capability,
                 )
 
         logger.info("Registered pack %r v%s", manifest.pack_id, manifest.version)
@@ -101,7 +116,22 @@ class PackRegistry:
         self, pack_id: str, capability: PackCapability
     ) -> Any | None:
         """Return the capability provider for a specific pack, or None."""
-        return self._raw_providers.get(pack_id, {}).get(capability)
+        providers = self._raw_providers.get(pack_id, {}).get(capability, ())
+        return providers[0] if providers else None
+
+    def providers_for_pack(
+        self, pack_id: str, capability: PackCapability
+    ) -> list[Any]:
+        """Return all capability providers registered for a specific pack."""
+        return list(self._raw_providers.get(pack_id, {}).get(capability, ()))
+
+    @staticmethod
+    def _normalize_providers(raw_provider: Any) -> tuple[Any, ...]:
+        if raw_provider is None:
+            return ()
+        if isinstance(raw_provider, (list, tuple)):
+            return tuple(item for item in raw_provider if item is not None)
+        return (raw_provider,)
 
 
 # Module-level singleton registry.

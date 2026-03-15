@@ -81,7 +81,7 @@ class PackResolver:
         2. Resolve transitive dependencies (required deps only).
         3. Check for declared conflicts.
         4. Check compatibility version specs.
-        5. Sort by default_priority (ascending = higher priority).
+        5. Resolve deterministically by dependency order, then default_priority, then pack_id.
         6. Build providers dict.
 
         Raises:
@@ -90,40 +90,55 @@ class PackResolver:
             PackConflictError: If two active packs declare a conflict.
             PackVersionError: If a pack's version is outside a required range.
         """
-        all_ids = self._expand_dependencies(requested_packs)
-        self._check_conflicts(all_ids)
-        manifests = [self._registry.manifest(pid) for pid in all_ids]
-        sorted_manifests = sorted(manifests, key=lambda m: m.default_priority)
+        resolution_order = self._expand_dependencies(requested_packs)
+        self._check_conflicts(resolution_order)
+        manifests = [self._registry.manifest(pid) for pid in resolution_order]
+        self._check_compatibility(manifests, metadata or {})
 
         providers: dict[PackCapability, list[Any]] = {}
-        for manifest in sorted_manifests:
-            for cap_decl in manifest.capabilities:
-                provider = self._registry.provider_for_pack(
-                    manifest.pack_id, cap_decl.capability
+        for manifest in manifests:
+            for capability in _unique_declared_capabilities(manifest):
+                instances = self._registry.providers_for_pack(
+                    manifest.pack_id,
+                    capability,
                 )
-                if provider is not None:
-                    providers.setdefault(cap_decl.capability, []).append(provider)
+                if instances:
+                    providers.setdefault(capability, []).extend(instances)
 
         return ResolvedPackProfile(
             activation_id=activation_id,
-            active_packs=sorted_manifests,
+            active_packs=manifests,
             providers=providers,
             metadata=metadata or {},
         )
 
     def _expand_dependencies(self, requested: list[str]) -> list[str]:
-        """BFS expansion of required pack dependencies."""
+        """Return a deterministic dependency-first resolution order."""
         visited: set[str] = set()
-        queue = list(requested)
-        while queue:
-            pack_id = queue.pop(0)
+        visiting: set[str] = set()
+        ordered: list[str] = []
+
+        def visit(pack_id: str) -> None:
             if pack_id in visited:
-                continue
-            visited.add(pack_id)
+                return
+            if pack_id in visiting:
+                raise PackDependencyError(
+                    f"Cyclic pack dependency detected while resolving {pack_id!r}."
+                )
+
+            visiting.add(pack_id)
             manifest = self._registry.manifest(pack_id)
-            for dep in manifest.dependencies:
-                if not dep.required:
-                    continue
+            dependencies = sorted(
+                (dep for dep in manifest.dependencies if dep.required),
+                key=lambda dep: (
+                    self._registry.manifest(dep.pack_id).default_priority
+                    if self._registry.has_pack(dep.pack_id)
+                    else 999,
+                    dep.pack_id,
+                ),
+            )
+
+            for dep in dependencies:
                 if not self._registry.has_pack(dep.pack_id):
                     raise PackDependencyError(
                         f"Pack {pack_id!r} requires {dep.pack_id!r} "
@@ -135,9 +150,17 @@ class PackResolver:
                         f"Pack {pack_id!r} requires {dep.pack_id!r} {dep.version_spec} "
                         f"but found {dep_manifest.version}."
                     )
-                if dep.pack_id not in visited:
-                    queue.append(dep.pack_id)
-        return list(visited)
+                visit(dep.pack_id)
+
+            visiting.remove(pack_id)
+            visited.add(pack_id)
+            ordered.append(pack_id)
+
+        requested_manifests = [self._registry.manifest(pack_id) for pack_id in set(requested)]
+        for manifest in sorted(requested_manifests, key=self._manifest_sort_key):
+            visit(manifest.pack_id)
+
+        return ordered
 
     def _check_conflicts(self, all_ids: list[str]) -> None:
         """Raise PackConflictError if any pair of active packs declares a conflict."""
@@ -151,3 +174,46 @@ class PackResolver:
                         f"but both are in the requested activation. "
                         "Remove one or declare an explicit override in a custom pack."
                     )
+
+    def _check_compatibility(
+        self,
+        manifests: list[PackManifest],
+        metadata: dict[str, Any],
+    ) -> None:
+        for manifest in manifests:
+            for target, spec in manifest.compatibility.items():
+                actual_version = _resolve_compatibility_version(metadata, target)
+                if actual_version is None:
+                    continue
+                if not versions_compatible(str(actual_version), spec):
+                    raise PackVersionError(
+                        f"Pack {manifest.pack_id!r} requires {target!r} {spec}, "
+                        f"but activation metadata provided {actual_version!r}."
+                    )
+
+    @staticmethod
+    def _manifest_sort_key(manifest: PackManifest) -> tuple[int, str]:
+        return (manifest.default_priority, manifest.pack_id)
+
+
+def _resolve_compatibility_version(metadata: dict[str, Any], target: str) -> Any | None:
+    aliases = (
+        target,
+        f"{target}_version",
+        f"{target}_api_version",
+    )
+    for alias in aliases:
+        value = metadata.get(alias)
+        if value is not None:
+            return value
+    return None
+
+
+def _unique_declared_capabilities(manifest: PackManifest) -> list[PackCapability]:
+    ordered: list[PackCapability] = []
+    seen: set[PackCapability] = set()
+    for cap_decl in manifest.capabilities:
+        if cap_decl.capability not in seen:
+            ordered.append(cap_decl.capability)
+            seen.add(cap_decl.capability)
+    return ordered

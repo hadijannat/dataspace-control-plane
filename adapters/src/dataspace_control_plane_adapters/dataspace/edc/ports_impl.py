@@ -393,12 +393,22 @@ class EdcConnectorAssetProbe:
 
     async def probe(self, endpoint_url: str) -> EndpointHealth:
         _validate_probe_url(endpoint_url)  # raises ValueError on SSRF-risky URLs
+        is_reachable = False
         try:
             async with httpx.AsyncClient(timeout=self._timeout_s) as client:
-                await client.get(endpoint_url)
+                resp = await client.get(endpoint_url)
+            # Treat any HTTP response (including 4xx auth errors) as reachable —
+            # a 401/403 means the endpoint is up but requires credentials, which
+            # is the expected state for a protected connector surface.
             is_reachable = True
-        except Exception:
-            is_reachable = False
+            if not resp.is_success:
+                logger.debug(
+                    "Probe %s returned HTTP %d (still reachable)",
+                    endpoint_url,
+                    resp.status_code,
+                )
+        except Exception as exc:
+            logger.warning("Probe %s failed: %s: %s", endpoint_url, type(exc).__name__, exc)
 
         return EndpointHealth(
             endpoint_url=endpoint_url,

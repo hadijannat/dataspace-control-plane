@@ -191,3 +191,136 @@ async def test_temporal_health_probe_exposes_runtime_capabilities() -> None:
 
     assert report.status is HealthStatus.OK
     assert "updates" in descriptor["capabilities"]
+
+
+# ---------------------------------------------------------------------------
+# _map_temporal_status — exhaustive status mapping coverage
+# ---------------------------------------------------------------------------
+
+def test_map_temporal_status_maps_all_known_variants() -> None:
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.ports_impl import (
+        _map_temporal_status,
+    )
+    from dataspace_control_plane_core.procedure_runtime.workflow_contracts import ProcedureStatus
+
+    assert _map_temporal_status("RUNNING") is ProcedureStatus.RUNNING
+    assert _map_temporal_status("COMPLETED") is ProcedureStatus.COMPLETED
+    assert _map_temporal_status("FAILED") is ProcedureStatus.FAILED
+    assert _map_temporal_status("CANCELED") is ProcedureStatus.CANCELLED
+    assert _map_temporal_status("TIMED_OUT") is ProcedureStatus.TIMED_OUT
+    assert _map_temporal_status("WORKFLOW_EXECUTION_STATUS_RUNNING") is ProcedureStatus.RUNNING
+    assert _map_temporal_status("WORKFLOW_EXECUTION_STATUS_COMPLETED") is ProcedureStatus.COMPLETED
+    # Unknown status string falls back to PENDING
+    assert _map_temporal_status("TOTALLY_UNKNOWN") is ProcedureStatus.PENDING
+
+
+# ---------------------------------------------------------------------------
+# _infer_procedure_type — prefix fallback and error path
+# ---------------------------------------------------------------------------
+
+def test_infer_procedure_type_uses_prefix_fallback_when_no_workflow_type() -> None:
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.ports_impl import (
+        _infer_procedure_type,
+    )
+
+    assert _infer_procedure_type(None, "company-onboarding:wf-1") == "company-onboarding"
+    assert _infer_procedure_type(None, "contract:wf-2") == "contract-negotiation"
+    assert _infer_procedure_type(None, "dpp:wf-3") == "asset-twin-publication"
+
+
+def test_infer_procedure_type_raises_for_completely_unknown_type() -> None:
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.ports_impl import (
+        _infer_procedure_type,
+    )
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.errors import (
+        TemporalRpcError,
+    )
+
+    with pytest.raises(TemporalRpcError):
+        _infer_procedure_type(None, "totally-unknown-workflow-id")
+
+
+# ---------------------------------------------------------------------------
+# _resolve_status — is_paused and manual_review.decision branches
+# ---------------------------------------------------------------------------
+
+def test_resolve_status_returns_paused_when_is_paused_flag_set() -> None:
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.ports_impl import (
+        _resolve_status,
+    )
+    from dataspace_control_plane_core.procedure_runtime.workflow_contracts import ProcedureStatus
+
+    status = _resolve_status("RUNNING", {"is_paused": True, "blocking_reason": ""})
+    assert status is ProcedureStatus.PAUSED
+
+
+def test_resolve_status_maps_rejected_manual_review_to_failed() -> None:
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.ports_impl import (
+        _resolve_status,
+    )
+    from dataspace_control_plane_core.procedure_runtime.workflow_contracts import ProcedureStatus
+
+    status = _resolve_status(
+        "RUNNING",
+        {"is_paused": False, "manual_review": {"is_pending": False, "decision": "Rejected"}},
+    )
+    assert status is ProcedureStatus.FAILED
+
+
+# ---------------------------------------------------------------------------
+# _normalize_query_result — dataclass serialization path
+# ---------------------------------------------------------------------------
+
+def test_normalize_query_result_converts_dataclass_to_dict() -> None:
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.ports_impl import (
+        _normalize_query_result,
+    )
+    from dataclasses import dataclass
+
+    @dataclass
+    class _SampleQuery:
+        phase: str
+        is_complete: bool
+
+    result = _normalize_query_result(_SampleQuery(phase="running", is_complete=False))
+    assert result == {"phase": "running", "is_complete": False}
+
+
+# ---------------------------------------------------------------------------
+# _parse_iso_datetime — invalid input returns None
+# ---------------------------------------------------------------------------
+
+def test_parse_iso_datetime_returns_none_for_invalid_string() -> None:
+    from dataspace_control_plane_adapters.infrastructure.temporal_client.ports_impl import (
+        _parse_iso_datetime,
+    )
+
+    assert _parse_iso_datetime("not-a-date") is None
+    assert _parse_iso_datetime(None) is None
+    assert _parse_iso_datetime("") is None
+
+
+# ---------------------------------------------------------------------------
+# TemporalWorkflowGateway — custom control_names override
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_gateway_uses_custom_control_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(temporal_ports, "WorkflowHandleHelper", _FakeWorkflowHandleHelper)
+    monkeypatch.setattr(temporal_ports, "SignalSender", _FakeSignalSender)
+    monkeypatch.setattr(temporal_ports, "QueryExecutor", _FakeQueryExecutor)
+    monkeypatch.setattr(temporal_ports, "UpdateExecutor", _FakeUpdateExecutor)
+
+    gateway = temporal_ports.TemporalWorkflowGateway(
+        object(),
+        control_names={"approve": "my_approve", "query": "my_status"},
+    )
+
+    await gateway.approve(
+        ApproveProcedure(_tenant_id(), _workflow_id(), _actor(), _correlation(), "ok")
+    )
+
+    assert gateway._update_executor.calls[0][1] == "my_approve"
+    assert gateway._control_names["query"] == "my_status"

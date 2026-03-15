@@ -105,3 +105,89 @@ async def test_dcp_health_probe_reports_trust_anchor_configuration() -> None:
     assert report.status is HealthStatus.OK
     assert report.details["trust_anchor_count"] == 2
     assert descriptor["trust_anchor_count"] == 2
+
+
+# ---------------------------------------------------------------------------
+# map_verification_result — all error branches
+# ---------------------------------------------------------------------------
+
+def test_map_verification_result_maps_revoked_error() -> None:
+    from dataspace_control_plane_adapters.dataspace.dcp.presentation_mapper import (
+        map_verification_result,
+    )
+    from dataspace_control_plane_core.domains.machine_trust.model.enums import VerificationResult
+
+    assert (
+        map_verification_result({"valid": False, "error": "credential is revoked"})
+        is VerificationResult.REVOKED
+    )
+
+
+def test_map_verification_result_maps_expired_error() -> None:
+    from dataspace_control_plane_adapters.dataspace.dcp.presentation_mapper import (
+        map_verification_result,
+    )
+    from dataspace_control_plane_core.domains.machine_trust.model.enums import VerificationResult
+
+    assert (
+        map_verification_result({"valid": False, "error": "VC has expired"})
+        is VerificationResult.EXPIRED
+    )
+
+
+def test_map_verification_result_returns_unknown_for_unrecognized_error() -> None:
+    from dataspace_control_plane_adapters.dataspace.dcp.presentation_mapper import (
+        map_verification_result,
+    )
+    from dataspace_control_plane_core.domains.machine_trust.model.enums import VerificationResult
+
+    assert (
+        map_verification_result({"valid": False, "error": "some completely unknown error"})
+        is VerificationResult.UNKNOWN
+    )
+
+
+# ---------------------------------------------------------------------------
+# DcpTrustAnchorResolver — scope filtering and URL-to-DID conversion
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_dcp_trust_anchor_resolver_filters_by_scope() -> None:
+    resolver = dcp_ports.DcpTrustAnchorResolver(_settings())
+    anchors = await resolver.list_active("gaia-x")
+
+    # Only the gaia-x URL matches; catena-x URL should be filtered out
+    assert len(anchors) == 1
+    assert "gaia-x" in anchors[0].did.uri
+
+
+@pytest.mark.asyncio
+async def test_dcp_trust_anchor_resolver_returns_all_when_no_match() -> None:
+    resolver = dcp_ports.DcpTrustAnchorResolver(_settings())
+    anchors = await resolver.list_active("completely-unknown-scope")
+
+    # No URL matches scope → entire configured list returned
+    assert len(anchors) == 2
+
+
+def test_url_to_did_web_strips_https_prefix_and_path() -> None:
+    from dataspace_control_plane_adapters.dataspace.dcp.ports_impl import _url_to_did_web
+
+    assert _url_to_did_web("https://ta.example.com/trust") == "did:web:ta.example.com"
+    assert _url_to_did_web("https://ta.example.com") == "did:web:ta.example.com"
+
+
+def test_url_to_did_web_encodes_port() -> None:
+    from dataspace_control_plane_adapters.dataspace.dcp.ports_impl import _url_to_did_web
+
+    # Port remains in the host segment (did:web encoding uses %3A in resolution,
+    # but _url_to_did_web produces the raw host:port string)
+    result = _url_to_did_web("https://ta.example.com:8443")
+    assert result == "did:web:ta.example.com:8443"
+
+
+def test_select_trust_anchor_urls_returns_all_for_empty_scope() -> None:
+    from dataspace_control_plane_adapters.dataspace.dcp.ports_impl import _select_trust_anchor_urls
+
+    urls = ["https://a.com", "https://b.com"]
+    assert _select_trust_anchor_urls(urls, "") == urls

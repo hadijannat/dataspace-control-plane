@@ -69,3 +69,50 @@ def test_public_api_hides_translation_helpers() -> None:
         "translate_participant_credential",
         "translate_compliance_credential",
     }.isdisjoint(gaiax_api.__all__)
+
+
+# ---------------------------------------------------------------------------
+# GaiaXTrustAnchorAdapterPort — non-gaia-x scope treated as direct federation override
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_trust_anchor_resolver_always_uses_config_federation_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Non-gaia-x scope strings must NOT be used as direct federation IDs.
+
+    federation_id is always taken from GaiaXSettings.federation_id to prevent
+    callers from enumerating arbitrary federation endpoints.
+    """
+    monkeypatch.setattr(gaiax_ports, "GaiaXTrustAnchorClient", _FakeTrustAnchorClient)
+
+    resolver = gaiax_ports.GaiaXTrustAnchorAdapterPort(_settings())
+    await resolver.list_active("catena-x")
+
+    # Regardless of scope, the configured federation_id must be used.
+    assert resolver._client.federations == ["gaia-x-eu"]
+
+
+@pytest.mark.asyncio
+async def test_trust_anchor_resolver_uses_config_federation_id_for_gaia_x_scope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(gaiax_ports, "GaiaXTrustAnchorClient", _FakeTrustAnchorClient)
+
+    resolver = gaiax_ports.GaiaXTrustAnchorAdapterPort(_settings())
+    await resolver.list_active("gaia-x")
+
+    # "gaia-x" scope → uses configured federation_id ("gaia-x-eu")
+    assert resolver._client.federations == ["gaia-x-eu"]
+
+
+@pytest.mark.asyncio
+async def test_trust_anchor_resolver_empty_scope_uses_config_federation_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(gaiax_ports, "GaiaXTrustAnchorClient", _FakeTrustAnchorClient)
+
+    resolver = gaiax_ports.GaiaXTrustAnchorAdapterPort(_settings())
+    await resolver.list_active("")
+
+    assert resolver._client.federations == ["gaia-x-eu"]

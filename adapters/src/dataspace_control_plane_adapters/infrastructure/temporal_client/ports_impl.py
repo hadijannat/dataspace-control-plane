@@ -28,7 +28,8 @@ from dataspace_control_plane_core.procedure_runtime.messages import (
 
 if TYPE_CHECKING:
     import temporalio.client
-    from dataspace_control_plane_core.procedure_runtime.contracts import (
+    # Use the canonical workflow_contracts module; contracts.py is a deprecated facade.
+    from dataspace_control_plane_core.procedure_runtime.workflow_contracts import (
         ProcedureHandle,
         ProcedureInput,
         ProcedureResult,
@@ -163,7 +164,7 @@ class TemporalWorkflowGateway:
             WorkflowNotFoundError: Workflow does not exist.
             TemporalRpcError: Any other Temporal error.
         """
-        from dataspace_control_plane_core.procedure_runtime.contracts import (
+        from dataspace_control_plane_core.procedure_runtime.workflow_contracts import (
             ProcedureResult,
             ProcedureStatus,
         )

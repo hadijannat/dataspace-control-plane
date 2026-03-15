@@ -2,15 +2,14 @@
  * API client wrapper.
  * The generated SDK from control-api's OpenAPI document lives in
  * src/generated/control-api-sdk/ (regenerated in CI on contract changes).
- * This module re-exports the client and injects the auth token.
- *
- * Until SDK generation is set up, this stub provides a typed base fetch.
+ * This module provides the shared authenticated fetch primitive used by the
+ * generated client and other transport helpers.
  */
 import { getSession } from '../../auth/session-store';
 import { getRuntimeConfig } from '../../app/runtime-config';
 
 interface ApiRequestInit extends Omit<RequestInit, 'body' | 'headers'> {
-  body?: BodyInit | Record<string, unknown>;
+  body?: BodyInit | object;
   headers?: Record<string, string>;
 }
 

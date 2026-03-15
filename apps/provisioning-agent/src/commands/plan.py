@@ -12,7 +12,9 @@ import structlog
 from rich.console import Console
 from rich.table import Table
 
+from src.drivers.control_api import ControlApiDriver
 from src.drivers.keycloak_admin import KeycloakAdminDriver
+from src.drivers.kubernetes import KubernetesDriver
 from src.settings import settings
 from src.models.actual_state import ActualState, KeycloakRealmActual
 from src.models.desired_state import DesiredState, KeycloakClientSpec, KeycloakRealmSpec
@@ -21,6 +23,8 @@ from src.state.checkpoints import CheckpointManager
 
 logger = structlog.get_logger(__name__)
 console = Console()
+_IN_FLIGHT_STATUSES = {"STARTED", "RUNNING"}
+_SUCCESS_STATUSES = _IN_FLIGHT_STATUSES | {"COMPLETED"}
 
 
 def load_desired_state(desired_state_dir: str) -> DesiredState:
@@ -58,19 +62,18 @@ async def discover_actual_state(desired: DesiredState) -> ActualState:
     actual = ActualState()
     checkpoints = CheckpointManager(settings.checkpoint_dir)
 
+    try:
+        kubernetes = KubernetesDriver()
+    except Exception as exc:
+        kubernetes = None
+        logger.warning("plan.kubernetes_discovery_unavailable", error=str(exc))
+
     for namespace in desired.worker_namespaces:
-        if checkpoints.load(f"k8s_namespace/{namespace}") is not None:
+        if kubernetes and kubernetes.namespace_exists(namespace):
             actual.worker_namespaces.append(namespace)
-    for index, registration in enumerate(desired.edc_registrations):
-        identifier = registration.get("name") or registration.get("participant_id") or f"registration-{index}"
-        if checkpoints.load(f"edc_registration/{identifier}") is not None:
-            actual.edc_registrations.append(registration)
-    for index, bootstrap in enumerate(desired.tenant_bootstraps):
-        identifier = bootstrap.get("tenant_id") or bootstrap.get("name") or f"tenant-bootstrap-{index}"
-        if checkpoints.load(f"tenant_bootstrap/{identifier}") is not None:
-            actual.tenant_bootstraps.append(bootstrap)
 
     if not desired.keycloak_realms:
+        await _discover_control_plane_resources(desired, actual, checkpoints)
         return actual
 
     driver = KeycloakAdminDriver(
@@ -101,7 +104,58 @@ async def discover_actual_state(desired: DesiredState) -> ActualState:
     finally:
         await driver.close()
 
+    await _discover_control_plane_resources(desired, actual, checkpoints)
     return actual
+
+
+async def _discover_control_plane_resources(
+    desired: DesiredState,
+    actual: ActualState,
+    checkpoints: CheckpointManager,
+) -> None:
+    if not settings.control_api_url:
+        return
+
+    driver = ControlApiDriver(settings.control_api_url, settings.control_api_token)
+    try:
+        for index, registration in enumerate(desired.edc_registrations):
+            identifier = registration.get("name") or registration.get("participant_id") or f"registration-{index}"
+            checkpoint = checkpoints.load(f"edc_registration/{identifier}")
+            if await _resource_is_present_via_control_api(driver, checkpoint):
+                actual.edc_registrations.append(registration)
+
+        for index, bootstrap in enumerate(desired.tenant_bootstraps):
+            identifier = bootstrap.get("tenant_id") or bootstrap.get("name") or f"tenant-bootstrap-{index}"
+            checkpoint = checkpoints.load(f"tenant_bootstrap/{identifier}")
+            if await _resource_is_present_via_control_api(driver, checkpoint):
+                actual.tenant_bootstraps.append(bootstrap)
+    finally:
+        await driver.close()
+
+
+async def _resource_is_present_via_control_api(
+    driver: ControlApiDriver,
+    checkpoint: dict | None,
+) -> bool:
+    if not checkpoint:
+        return False
+
+    workflow_id = checkpoint.get("workflow_id")
+    if not workflow_id:
+        logger.warning("plan.legacy_checkpoint_ignored", checkpoint=checkpoint)
+        return False
+
+    try:
+        status = await driver.get_procedure_status(workflow_id)
+    except Exception as exc:
+        logger.warning(
+            "plan.control_api_discovery_failed",
+            workflow_id=workflow_id,
+            error=str(exc),
+        )
+        return False
+
+    return status.get("status") in _SUCCESS_STATUSES
 
 
 def compute_state_diff(desired: DesiredState, actual: ActualState) -> StateDiff:

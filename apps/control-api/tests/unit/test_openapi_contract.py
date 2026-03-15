@@ -9,4 +9,8 @@ def test_openapi_exposes_operator_and_stream_paths():
     assert "/api/v1/operator/procedures/{workflow_id}" in schema["paths"]
     assert "/api/v1/operator/tenants/" in schema["paths"]
     assert "/api/v1/operator/tenants/{tenant_id}" in schema["paths"]
+    assert "/api/v1/public/procedures/start" in schema["paths"]
+    assert "/api/v1/public/procedures/{workflow_id}" in schema["paths"]
+    assert "/api/v1/streams/tickets" in schema["paths"]
     assert "/api/v1/streams/workflows/{workflow_id}" in schema["paths"]
+    assert "/api/v1/webhooks/management" in schema["paths"]

@@ -3,6 +3,8 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.docs import register_docs_routes
+from app.api.routers.runtime_config import router as runtime_config_router
 from app.settings import settings
 from app.lifespan import lifespan
 from app.middleware.correlation import CorrelationMiddleware
@@ -22,9 +24,9 @@ def create_app() -> FastAPI:
         title="Dataspace Control Plane API",
         version="0.1.0",
         description="Single backend entrypoint for human operators and automation.",
-        openapi_url="/openapi.json",
-        docs_url="/docs",
-        redoc_url="/redoc",
+        openapi_url=None,
+        docs_url=None,
+        redoc_url=None,
         lifespan=lifespan,
     )
 
@@ -40,9 +42,11 @@ def create_app() -> FastAPI:
     )
 
     install_exception_handlers(app)
+    register_docs_routes(app)
 
     # Routers
     app.include_router(health_router)
+    app.include_router(runtime_config_router)
     app.include_router(operator_router, prefix="/api/v1/operator", tags=["operator"])
     app.include_router(public_router, prefix="/api/v1/public", tags=["public"])
     app.include_router(streams_router, prefix="/api/v1/streams", tags=["streams"])

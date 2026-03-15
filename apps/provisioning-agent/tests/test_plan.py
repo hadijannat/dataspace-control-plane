@@ -1,8 +1,10 @@
 from pathlib import Path
 
-from src.commands.plan import compute_state_diff, load_desired_state
+import pytest
+
+from src.commands.plan import compute_state_diff, discover_actual_state, load_desired_state, _resource_is_present_via_control_api
 from src.models.actual_state import ActualState, KeycloakRealmActual
-from src.models.desired_state import KeycloakClientSpec, KeycloakRealmSpec
+from src.models.desired_state import DesiredState, KeycloakClientSpec, KeycloakRealmSpec
 
 
 def test_load_desired_state_from_yaml(tmp_path: Path):
@@ -49,3 +51,38 @@ def test_compute_state_diff_detects_missing_realm_and_client(tmp_path: Path):
     resource_types = {(change.resource_type, change.operation) for change in diff.changes}
     assert ("keycloak_realm", "create") in resource_types
     assert ("keycloak_client", "create") in resource_types
+
+
+@pytest.mark.asyncio
+async def test_control_api_checkpoint_is_revalidated_live():
+    class _ControlApiDriverDouble:
+        async def get_procedure_status(self, workflow_id: str):
+            assert workflow_id == "wf-123"
+            return {"status": "RUNNING"}
+
+    present = await _resource_is_present_via_control_api(
+        _ControlApiDriverDouble(),
+        {"workflow_id": "wf-123", "resource": {"tenant_id": "tenant-a"}},
+    )
+
+    assert present is True
+
+
+@pytest.mark.asyncio
+async def test_discover_actual_state_uses_live_namespace_checks(monkeypatch):
+    desired = DesiredState(worker_namespaces=["onboarding"])
+
+    class _KubernetesDriverDouble:
+        def namespace_exists(self, name: str) -> bool:
+            return name == "onboarding"
+
+    class _ControlApiDriverDouble:
+        async def close(self) -> None:
+            return None
+
+    monkeypatch.setattr("src.commands.plan.KubernetesDriver", _KubernetesDriverDouble)
+    monkeypatch.setattr("src.commands.plan.ControlApiDriver", lambda *_args: _ControlApiDriverDouble())
+
+    actual = await discover_actual_state(desired)
+
+    assert actual.worker_namespaces == ["onboarding"]

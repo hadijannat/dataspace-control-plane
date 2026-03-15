@@ -3,7 +3,6 @@ from __future__ import annotations
 from fastapi import HTTPException, Request, status
 
 from app.services.procedure_catalog import ProcedureCatalog
-from app.services.sse_broker import SSEBroker
 from app.services.temporal_gateway import TemporalGateway
 
 
@@ -41,15 +40,6 @@ def maybe_get_database_pool(request: Request):
 def maybe_get_temporal_gateway(request: Request) -> TemporalGateway | None:
     client = getattr(request.app.state, "temporal_client", None)
     return TemporalGateway(client) if client is not None else None
-
-
-def get_sse_broker(request: Request) -> SSEBroker:
-    return _require_state_attr(
-        request,
-        "sse_broker",
-        "stream broker not available",
-    )
-
 
 def get_procedure_catalog(request: Request) -> ProcedureCatalog:
     return _require_state_attr(

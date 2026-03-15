@@ -85,6 +85,35 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secrets.keycloakSecretName }}
                   key: CLIENT_SECRET
+            # --- New settings from PR #1 ---
+            - name: CONTROL_API_STREAM_TICKET_TTL_SECONDS
+              value: {{ .Values.env.streamTicketTtlSeconds | quote }}
+            - name: CONTROL_API_STREAM_POLL_INTERVAL_SECONDS
+              value: {{ .Values.env.streamPollIntervalSeconds | quote }}
+            - name: CONTROL_API_DOCS_PUBLIC
+              value: {{ .Values.env.docsPublic | quote }}
+            - name: CONTROL_API_TENANT_BANNER
+              value: {{ .Values.env.tenantBanner | quote }}
+            - name: CONTROL_API_KEYCLOAK_BROWSER_URL
+              value: {{ .Values.env.keycloakBrowserUrl | quote }}
+            - name: CONTROL_API_KEYCLOAK_BROWSER_REALM
+              value: {{ .Values.env.keycloakBrowserRealm | quote }}
+            - name: CONTROL_API_KEYCLOAK_BROWSER_CLIENT_ID
+              value: {{ .Values.env.keycloakBrowserClientId | quote }}
+            - name: CONTROL_API_PUBLIC_BASE_URL
+              value: {{ .Values.env.publicBaseUrl | quote }}
+            # Secrets — sourced from the control-api-secrets Secret, not values.yaml
+            - name: CONTROL_API_STREAM_TICKET_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: control-api-secrets
+                  key: STREAM_TICKET_SECRET
+            - name: CONTROL_API_WEBHOOK_SHARED_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: control-api-secrets
+                  key: WEBHOOK_SHARED_SECRET
+                  optional: true
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:

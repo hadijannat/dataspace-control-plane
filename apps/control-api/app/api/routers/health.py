@@ -21,7 +21,7 @@ async def readiness(request: Request) -> JSONResponse:
     dependencies = getattr(request.app.state, "resource_status", {})
     ready = all(
         dependencies.get(name, False)
-        for name in ("temporal", "database", "procedure_catalog", "sse_broker")
+        for name in ("temporal", "database", "procedure_catalog")
     )
     body = HealthResponse(
         status="ok" if ready else "degraded",

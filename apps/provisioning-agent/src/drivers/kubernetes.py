@@ -38,6 +38,16 @@ class KubernetesDriver:
             else:
                 raise
 
+    def namespace_exists(self, name: str) -> bool:
+        from kubernetes.client.exceptions import ApiException
+        try:
+            self._core.read_namespace(name)
+            return True
+        except ApiException as e:
+            if e.status == 404:
+                return False
+            raise
+
     def ensure_secret(self, namespace: str, name: str, data: dict[str, str], secret_type: str = "Opaque") -> None:
         """Create or replace a k8s Secret. Values in data are plain strings — will be base64-encoded."""
         from kubernetes.client.exceptions import ApiException

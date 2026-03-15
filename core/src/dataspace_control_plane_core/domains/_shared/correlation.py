@@ -1,33 +1,41 @@
-"""
-CorrelationContext: propagates request/workflow/causation chain across domain boundaries.
-Every command and event should carry a CorrelationContext.
-"""
+"""Correlation metadata shared across commands, events, audit, and procedures."""
 from __future__ import annotations
+
 from dataclasses import dataclass, field
-from uuid import UUID, uuid4
+from uuid import UUID
+
+from .ids import WorkflowId, default_id_factory
 
 
 @dataclass(frozen=True)
 class CorrelationContext:
     """
-    Carries identifiers that link a request/event chain:
-    - correlation_id: stable across all steps of a single business operation
-    - causation_id: ID of the event/command that caused this one
-    - workflow_id: Temporal workflow execution ID (if this action is inside a workflow)
-    - request_id: HTTP/gRPC request ID (outermost boundary)
+    Correlates related operations without encoding runtime-specific types.
+
+    ``correlation_id`` links all work for one business operation.
+    ``causation_id`` points to the command/event that produced the current step.
+    ``workflow_id`` references durable procedure execution when present.
+    ``request_id`` links to the boundary request or envelope identifier.
     """
-    correlation_id: UUID = field(default_factory=uuid4)
+
+    correlation_id: UUID = field(default_factory=lambda: default_id_factory().new_event_id())
     causation_id: UUID | None = None
-    workflow_id: str | None = None
+    workflow_id: WorkflowId | None = None
     request_id: str | None = None
 
     @classmethod
-    def new(cls) -> "CorrelationContext":
-        """Create a fresh root-level correlation context."""
-        return cls(correlation_id=uuid4())
+    def new(
+        cls,
+        workflow_id: WorkflowId | None = None,
+        request_id: str | None = None,
+    ) -> "CorrelationContext":
+        return cls(
+            correlation_id=default_id_factory().new_event_id(),
+            workflow_id=workflow_id,
+            request_id=request_id or default_id_factory().new_request_id(),
+        )
 
     def caused_by(self, causation_id: UUID) -> "CorrelationContext":
-        """Return a child context caused by the given event/command ID."""
         return CorrelationContext(
             correlation_id=self.correlation_id,
             causation_id=causation_id,

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from dataspace_control_plane_core.canonical_models.mapping import FieldMapping as CanonicalFieldMapping
+
 from .enums import TransformType
 
 
@@ -15,7 +17,7 @@ class MappingRule:
     source_path: str
     target_path: str
     transform: TransformType
-    transform_args: dict[str, str] = field(default_factory=dict)
+    transform_args: dict[str, str] = field(default_factory=dict, hash=False)
     is_required: bool = True
 
 
@@ -40,3 +42,6 @@ class CompatibilityVector:
     forward_compatible: bool
     backward_compatible: bool
     breaking_changes: tuple[str, ...] = ()
+
+
+FieldMapping = CanonicalFieldMapping

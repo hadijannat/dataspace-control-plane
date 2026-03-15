@@ -34,3 +34,13 @@ class TransferAuthorization:
     granted_at: datetime
     valid_until: datetime | None = None
     is_revoked: bool = False
+
+
+CounterOffer = OfferSnapshot
+
+
+@dataclass(frozen=True)
+class ContractReference:
+    agreement_id: str
+    policy_snapshot_id: str
+    asset_id: str

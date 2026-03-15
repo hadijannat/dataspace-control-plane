@@ -42,3 +42,8 @@ class ComplianceReportPort(Protocol):
     ) -> str:
         """Export a compliance report for the given record. Returns a URI or serialized report."""
         ...
+
+
+RequirementProvider = GapScannerPort
+EvidenceLocatorPort = ComplianceReportPort
+AssessmentEnginePort = GapScannerPort

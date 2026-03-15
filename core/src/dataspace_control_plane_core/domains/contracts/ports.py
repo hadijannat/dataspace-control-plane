@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 from dataspace_control_plane_core.domains._shared.ids import AggregateId, TenantId, LegalEntityId
 from .model.aggregates import NegotiationCase, Entitlement
+from .model.value_objects import OfferSnapshot, TransferAuthorization
 
 
 @runtime_checkable
@@ -38,3 +39,11 @@ class CatalogLookupPort(Protocol):
     """Cross-boundary port: look up offer and asset metadata from the adapter layer."""
     async def get_asset_ref(self, tenant_id: TenantId, asset_id: str) -> dict: ...
     async def get_offer_policy_id(self, tenant_id: TenantId, offer_id: str) -> str: ...
+
+
+class NegotiationPort(Protocol):
+    async def submit_counter_offer(self, tenant_id: TenantId, negotiation_id: AggregateId, offer: OfferSnapshot) -> None: ...  # noqa: F821
+
+
+class TransferObservationPort(Protocol):
+    async def record_transfer_authorization(self, tenant_id: TenantId, authorization: "TransferAuthorization") -> None: ...  # noqa: F821

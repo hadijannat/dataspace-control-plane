@@ -1,9 +1,10 @@
-"""
-ActorRef: typed reference to any actor that can initiate a command or receive an event.
-"""
+"""Typed references to humans, services, workflows, and external participants."""
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
+
+from .ids import TenantId
 
 
 class ActorType(str, Enum):
@@ -17,16 +18,20 @@ class ActorType(str, Enum):
 @dataclass(frozen=True)
 class ActorRef:
     """
-    Immutable reference to an actor.
-    subject: the unique identifier (user sub, service account name, workflow ID, participant BPN)
-    actor_type: category for policy evaluation and audit
-    tenant_id: optional — system actors may not be tenant-scoped
-    display_name: human-readable label for audit display
+    Immutable reference to an actor that initiated or approved an action.
+
+    ``subject`` remains a transport-neutral opaque identifier. Runtime-specific
+    token parsing stays outside ``core``.
     """
+
     subject: str
     actor_type: ActorType
-    tenant_id: str | None = None
+    tenant_id: TenantId | None = None
     display_name: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.subject.strip():
+            raise ValueError("ActorRef.subject must not be blank")
 
     def is_human(self) -> bool:
         return self.actor_type == ActorType.HUMAN

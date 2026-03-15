@@ -40,6 +40,7 @@ class TenantTopologyService:
             issuer=cmd.issuer, valid_from=cmd.valid_from, valid_to=cmd.valid_to,
         )
         topology.add_external_identifier(identifier)
+        topology.updated_at = self._clock.now()
         topology._raise_event(ExternalIdentifierAdded(
             tenant_id=cmd.tenant_id,
             legal_entity_id=cmd.legal_entity_id,
@@ -54,6 +55,24 @@ class TenantTopologyService:
         topology._raise_event(LegalEntityActivated(
             tenant_id=cmd.tenant_id,
             legal_entity_id=cmd.legal_entity_id,
+        ))
+        await self._repo.save(topology, expected_version=topology.version)
+        return topology
+
+    async def register_environment(self, cmd: RegisterEnvironmentCommand) -> LegalEntityTopology:
+        topology = await self._repo.get(cmd.tenant_id, cmd.legal_entity_id)
+        environment = Environment(
+            environment_id=cmd.environment_id,
+            legal_entity_id=cmd.legal_entity_id,
+            tier=cmd.tier,
+            display_name=cmd.display_name,
+            connector_url=cmd.connector_url,
+        )
+        topology.register_environment(environment)
+        topology._raise_event(EnvironmentRegistered(
+            tenant_id=cmd.tenant_id,
+            legal_entity_id=cmd.legal_entity_id,
+            environment_id=str(cmd.environment_id),
         ))
         await self._repo.save(topology, expected_version=topology.version)
         return topology

@@ -41,3 +41,47 @@ class SchemaMapping(AggregateRoot):
         """
         self.rules = [r for r in self.rules if r.source_path != source_path]
         self.version += 1
+
+
+SchemaMappingSpec = SchemaMapping
+
+
+@dataclass(frozen=True)
+class MappingRevision:
+    mapping_id: str
+    revision: int
+
+
+@dataclass(frozen=True)
+class SourceSchema:
+    schema_id: str
+    system_name: str
+
+
+@dataclass(frozen=True)
+class TargetSemanticModel:
+    model_id: str
+    namespace: str
+
+
+@dataclass(frozen=True)
+class TransformationPipeline:
+    steps: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class LineageGraph:
+    edges: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class MappingApproval:
+    approved: bool
+    approved_by: str = ""
+
+
+@dataclass(frozen=True)
+class SuggestionRecord:
+    suggestion_id: str
+    confidence: float
+    explanation: str = ""

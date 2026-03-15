@@ -1,9 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 
 from dataspace_control_plane_core.domains._shared.aggregate import AggregateRoot
 from dataspace_control_plane_core.domains._shared.ids import AggregateId, TenantId
+from dataspace_control_plane_core.domains._shared.time import utc_now
 from dataspace_control_plane_core.canonical_models.policy import CanonicalPolicy
 from .enums import PolicySetStatus
 from .value_objects import LossyClause, PurposeCode
@@ -16,7 +17,7 @@ class PolicyTemplate(AggregateRoot):
     description: str | None = None
     canonical_policy: CanonicalPolicy | None = None
     status: PolicySetStatus = PolicySetStatus.DRAFT
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=utc_now)
 
     def activate(self) -> None:
         if self.canonical_policy is None:
@@ -40,4 +41,7 @@ class PolicyDecision(AggregateRoot):
     resource: str = ""
     allowed: bool = False
     reason: str = ""
-    evaluated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    evaluated_at: datetime = field(default_factory=utc_now)
+
+
+PolicySet = PolicyTemplate

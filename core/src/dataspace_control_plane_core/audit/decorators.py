@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+
 from dataspace_control_plane_core.domains._shared.ids import TenantId
 from dataspace_control_plane_core.domains._shared.actor import ActorRef
 from dataspace_control_plane_core.domains._shared.correlation import CorrelationContext
-from .record import AuditCategory, AuditOutcome
+from .records import AuditCategory, AuditOutcome
 from .service import AuditService
 
 

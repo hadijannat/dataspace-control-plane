@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Protocol
 from dataspace_control_plane_core.domains._shared.ids import TenantId, LegalEntityId
 from dataspace_control_plane_core.canonical_models.identity import DidUri, PresentationEnvelope
-from .model.aggregates import TrustParticipant, PresentationVerification
+from .model.aggregates import PresentationVerification, TrustParticipant
 
 
 class TrustParticipantRepository(Protocol):

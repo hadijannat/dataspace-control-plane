@@ -85,3 +85,39 @@ class QuotaAllocation(AggregateRoot):
                     return QuotaStatus.APPROACHING_LIMIT
                 return QuotaStatus.WITHIN_QUOTA
         return QuotaStatus.WITHIN_QUOTA
+
+
+UsageLedger = MeteringLedger
+
+
+@dataclass(frozen=True)
+class QuotaWindow:
+    starts_at: datetime
+    ends_at: datetime
+
+
+@dataclass(frozen=True)
+class RatingRule:
+    rule_id: str
+    dimension: MeteringDimension
+    price_per_unit_minor: int
+
+
+@dataclass(frozen=True)
+class ChargeStatement:
+    statement_id: str
+    ledger_id: str
+    total_events: int
+
+
+@dataclass(frozen=True)
+class SettlementBatch:
+    batch_id: str
+    statement_ids: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class AdjustmentEvent:
+    event_id: str
+    reason: str
+    delta_quantity: int

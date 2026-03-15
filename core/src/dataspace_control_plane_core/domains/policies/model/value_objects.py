@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from dataspace_control_plane_core.canonical_models.policy import ConstraintExpression
+from dataspace_control_plane_core.canonical_models.policy import ConstraintExpression, Duty as CanonicalDuty
 
 
 @dataclass(frozen=True)
@@ -19,3 +19,21 @@ class LossyClause:
     original_json: str
     reason: str
     field_path: str | None = None
+
+
+Constraint = ConstraintExpression
+Duty = CanonicalDuty
+
+
+@dataclass(frozen=True)
+class PolicyOffer:
+    offer_id: str
+    policy_id: str
+    purpose: PurposeCode | None = None
+    needs_review: bool = False
+
+
+@dataclass(frozen=True)
+class PolicyParseReport:
+    parse_losses: tuple[LossyClause, ...] = ()
+    needs_review: bool = False

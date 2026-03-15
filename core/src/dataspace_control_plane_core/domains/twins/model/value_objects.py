@@ -42,3 +42,6 @@ class EndpointHealth:
     endpoint_url: str
     is_reachable: bool
     last_checked_at: datetime | None
+
+
+RegistryEntryRef = str

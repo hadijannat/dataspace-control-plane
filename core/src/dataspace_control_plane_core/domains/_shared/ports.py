@@ -1,13 +1,10 @@
-"""
-Generic repository and unit-of-work protocols used by all aggregate roots.
-Adapters implement these; core only defines the interface.
-"""
+"""Framework-neutral repository and unit-of-work protocols."""
 from __future__ import annotations
-from typing import Generic, Protocol, TypeVar, runtime_checkable
-from uuid import UUID
 
-from .ids import AggregateId, TenantId
+from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+
 from .aggregate import AggregateRoot
+from .ids import AggregateId, TenantId
 
 AggT = TypeVar("AggT", bound=AggregateRoot)
 
@@ -15,10 +12,10 @@ AggT = TypeVar("AggT", bound=AggregateRoot)
 @runtime_checkable
 class Repository(Protocol[AggT]):
     """
-    Generic repository protocol.
-    - get: load by aggregate ID; raises NotFoundError if absent
-    - save: persist with optimistic concurrency; raises StaleAggregateError on version mismatch
-    - list: filtered listing; filters is a domain-specific dict, adapter translates to SQL/query
+    Generic optimistic-concurrency repository contract.
+
+    Domain-specific repositories may extend this protocol with richer read
+    queries, but aggregate persistence stays consistent across the kernel.
     """
 
     async def get(self, id: AggregateId, tenant_id: TenantId) -> AggT:
@@ -27,15 +24,18 @@ class Repository(Protocol[AggT]):
     async def save(self, aggregate: AggT, expected_version: int) -> None:
         ...
 
-    async def list(self, tenant_id: TenantId, filters: dict | None = None, limit: int = 50, offset: int = 0) -> list[AggT]:
+    async def list(
+        self,
+        tenant_id: TenantId,
+        filters: dict[str, Any] | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[AggT]:
         ...
 
 
 class UnitOfWork(Protocol):
-    """
-    Optional unit-of-work boundary for multi-aggregate operations.
-    Adapters implement this; core defines the interface only.
-    """
+    """Optional transaction boundary for multi-aggregate use cases."""
 
     async def __aenter__(self) -> "UnitOfWork":
         ...

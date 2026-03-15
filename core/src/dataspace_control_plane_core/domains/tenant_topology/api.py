@@ -9,7 +9,15 @@ from .events import (
     LegalEntityRegistered, LegalEntityActivated,
     ExternalIdentifierAdded, EnvironmentRegistered,
 )
-from .model.aggregates import LegalEntityTopology, Site, Environment
+from .model.aggregates import (
+    EnterpriseGroup,
+    Environment,
+    LegalEntity,
+    LegalEntityTopology,
+    Site,
+    Tenant,
+    TenantTopology,
+)
 from .model.value_objects import ExternalIdentifier, TopologySnapshot, Address
 from .model.enums import TenantStatus, EnvironmentTier, IdentifierScheme
 from .errors import LegalEntityNotFoundError, DuplicateLegalEntityError
@@ -21,7 +29,8 @@ __all__ = [
     "ActivateLegalEntityCommand", "RegisterEnvironmentCommand",
     "LegalEntityRegistered", "LegalEntityActivated",
     "ExternalIdentifierAdded", "EnvironmentRegistered",
-    "LegalEntityTopology", "Site", "Environment",
+    "EnterpriseGroup", "Tenant", "LegalEntity",
+    "TenantTopology", "LegalEntityTopology", "Site", "Environment",
     "ExternalIdentifier", "TopologySnapshot", "Address",
     "TenantStatus", "EnvironmentTier", "IdentifierScheme",
     "LegalEntityNotFoundError", "DuplicateLegalEntityError",

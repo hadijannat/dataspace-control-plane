@@ -98,7 +98,8 @@ class PackResolver:
         providers: dict[PackCapability, list[Any]] = {}
         for manifest in manifests:
             for capability in _unique_declared_capabilities(manifest):
-                instances = self._registry.providers_for_pack(
+                # Use the no-copy tuple accessor; we only extend into our own list.
+                instances = self._registry._providers_for_pack_tuple(
                     manifest.pack_id,
                     capability,
                 )
@@ -128,23 +129,29 @@ class PackResolver:
 
             visiting.add(pack_id)
             manifest = self._registry.manifest(pack_id)
-            dependencies = sorted(
-                (dep for dep in manifest.dependencies if dep.required),
-                key=lambda dep: (
-                    self._registry.manifest(dep.pack_id).default_priority
-                    if self._registry.has_pack(dep.pack_id)
-                    else 999,
-                    dep.pack_id,
-                ),
-            )
 
-            for dep in dependencies:
+            # Fetch all required-dep manifests once; avoids repeated has_pack +
+            # manifest lookups both inside the sort key and in the loop below.
+            required_deps = [dep for dep in manifest.dependencies if dep.required]
+            dep_manifests: dict[str, object] = {}
+            for dep in required_deps:
                 if not self._registry.has_pack(dep.pack_id):
                     raise PackDependencyError(
                         f"Pack {pack_id!r} requires {dep.pack_id!r} "
                         f"({dep.version_spec}) but it is not registered."
                     )
-                dep_manifest = self._registry.manifest(dep.pack_id)
+                dep_manifests[dep.pack_id] = self._registry.manifest(dep.pack_id)
+
+            dependencies = sorted(
+                required_deps,
+                key=lambda dep: (
+                    dep_manifests[dep.pack_id].default_priority,
+                    dep.pack_id,
+                ),
+            )
+
+            for dep in dependencies:
+                dep_manifest = dep_manifests[dep.pack_id]
                 if not versions_compatible(dep_manifest.version, dep.version_spec):
                     raise PackVersionError(
                         f"Pack {pack_id!r} requires {dep.pack_id!r} {dep.version_spec} "

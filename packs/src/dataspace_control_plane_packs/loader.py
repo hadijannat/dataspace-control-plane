@@ -114,16 +114,67 @@ def discover_pack_modules() -> list[str]:
     return discovered
 
 
+_VALID_MODULE_NAME_RE = __import__("re").compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+"""Regex for a single Python identifier component — no dots, no path separators."""
+
+_ALLOWED_ENTRY_POINT_PREFIXES: tuple[str, ...] = (
+    "dataspace_control_plane_packs.",
+)
+"""Entry-point module paths must begin with one of these prefixes.
+
+This prevents third-party packages from injecting arbitrary module paths
+via the ``dataspace_control_plane_packs.packs`` entry-point group.
+"""
+
+
 def _discover_inrepo_custom_modules() -> list[str]:
     module_paths: list[str] = []
     for root, prefix in _CUSTOM_DISCOVERY_ROOTS:
-        if not root.is_dir():
+        # Resolve the root once and refuse to walk outside it.
+        try:
+            resolved_root = root.resolve(strict=True)
+        except (OSError, RuntimeError):
             continue
-        for child in sorted(root.iterdir(), key=lambda path: path.name):
+
+        if not resolved_root.is_dir():
+            continue
+
+        for child in sorted(resolved_root.iterdir(), key=lambda path: path.name):
+            # Guard 1: must be a real directory, not a symlink pointing outside.
+            if child.is_symlink():
+                logger.warning(
+                    "Custom pack discovery: skipping symlink %s — symlinks are not allowed "
+                    "in custom pack roots.",
+                    child,
+                )
+                continue
             if not child.is_dir():
                 continue
+
+            # Guard 2: directory name must be a plain Python identifier.
+            if not _VALID_MODULE_NAME_RE.match(child.name):
+                logger.warning(
+                    "Custom pack discovery: skipping directory %r — name is not a valid "
+                    "Python identifier and cannot be used as a module name component.",
+                    child.name,
+                )
+                continue
+
+            # Guard 3: the child must still resolve inside the declared root
+            # (defence against TOCTOU races and unusual filesystem behaviour).
+            try:
+                child.resolve(strict=True).relative_to(resolved_root)
+            except ValueError:
+                logger.warning(
+                    "Custom pack discovery: skipping %s — resolved path escapes root %s.",
+                    child,
+                    resolved_root,
+                )
+                continue
+
             if (child / "__init__.py").is_file() and (child / "api.py").is_file():
                 module_paths.append(f"{prefix}.{child.name}.api")
+
     return module_paths
 
 
@@ -135,5 +186,17 @@ def _discover_entry_point_modules() -> list[str]:
 
     module_paths: list[str] = []
     for entry_point in sorted(entry_points, key=lambda item: item.name):
-        module_paths.append(entry_point.value)
+        module_path = entry_point.value
+        # Guard: only accept module paths within the allowed namespace prefixes.
+        if not any(module_path.startswith(pfx) for pfx in _ALLOWED_ENTRY_POINT_PREFIXES):
+            logger.warning(
+                "Entry-point pack %r advertises module path %r which is outside the "
+                "allowed prefix list %s — skipping.",
+                entry_point.name,
+                module_path,
+                _ALLOWED_ENTRY_POINT_PREFIXES,
+            )
+            continue
+        module_paths.append(module_path)
+
     return module_paths

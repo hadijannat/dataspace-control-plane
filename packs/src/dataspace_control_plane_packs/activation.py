@@ -63,6 +63,10 @@ class ActivationState:
     def set(self, scope_key: str, cached: CachedActivation) -> None:
         self._profiles[scope_key] = cached
 
+    def delete(self, scope_key: str) -> None:
+        """Remove the cached activation for ``scope_key`` if present."""
+        self._profiles.pop(scope_key, None)
+
     def scope_keys(self) -> list[str]:
         return list(self._profiles.keys())
 
@@ -87,16 +91,35 @@ class PackActivationManager:
         self._resolver = PackResolver(registry)
         self._state = ActivationState()
 
+    @staticmethod
+    def _make_scope_key(scope_kind: str, scope_id: str) -> str:
+        """Build a collision-resistant cache key for a (scope_kind, scope_id) pair.
+
+        Using a simple ``f"{scope_kind}:{scope_id}"`` string is unsafe: a
+        ``scope_id`` value of ``"legal_entity:acme"`` combined with
+        ``scope_kind="tenant"`` produces ``"tenant:legal_entity:acme"``, which is
+        indistinguishable from ``scope_kind="tenant:legal_entity"``,
+        ``scope_id="acme"`` — a cross-tenant cache collision.
+
+        The SHA-256 digest of the JSON-serialised pair is used instead:
+        - Collision-resistant across all (scope_kind, scope_id) combinations.
+        - Avoids leaking raw tenant identifiers in cache introspection or logs.
+        """
+        encoded = json.dumps(
+            {"scope_kind": scope_kind, "scope_id": scope_id}, sort_keys=True
+        ).encode()
+        return hashlib.sha256(encoded).hexdigest()
+
     def activate(self, request: ActivationRequest) -> ResolvedPackProfile:
         """Resolve and cache the pack profile for the given activation request.
 
-        Returns the cached profile if the scope_key is already activated.
-        Call ``deactivate`` to force re-resolution.
+        Returns the cached profile if the scope_key is already activated with
+        the same fingerprint.  Call ``deactivate`` to force re-resolution.
 
         Raises:
             PackActivationError: If resolution fails.
         """
-        scope_key = f"{request.scope_kind}:{request.scope_id}"
+        scope_key = self._make_scope_key(request.scope_kind, request.scope_id)
         fingerprint = self._fingerprint_request(request)
         existing = self._state.get(scope_key)
         if existing is not None and existing.fingerprint == fingerprint:
@@ -118,26 +141,25 @@ class PackActivationManager:
         except Exception as exc:
             raise PackActivationError(
                 f"Failed to activate packs {request.requested_packs} "
-                f"for scope {scope_key!r}: {exc}"
+                f"for scope_kind={request.scope_kind!r}, scope_id=<redacted>: {exc}"
             ) from exc
 
         self._state.set(scope_key, CachedActivation(fingerprint=fingerprint, profile=profile))
         logger.info(
-            "Activated packs %s for scope %s",
+            "Activated packs %s for scope_kind=%s",
             profile.pack_ids(),
-            scope_key,
+            request.scope_kind,
         )
         return profile
 
     def deactivate(self, scope_kind: ScopeKind, scope_id: str) -> None:
         """Remove the cached activation for the given scope (forces re-resolution next access)."""
-        scope_key = f"{scope_kind}:{scope_id}"
-        if scope_key in self._state.scope_keys():
-            del self._state._profiles[scope_key]
+        scope_key = self._make_scope_key(scope_kind, scope_id)
+        self._state.delete(scope_key)
 
     def get_profile(self, scope_kind: ScopeKind, scope_id: str) -> ResolvedPackProfile | None:
         """Return the cached resolved profile, or None if not yet activated."""
-        cached = self._state.get(f"{scope_kind}:{scope_id}")
+        cached = self._state.get(self._make_scope_key(scope_kind, scope_id))
         return cached.profile if cached is not None else None
 
     def _validate_scope(self, request: ActivationRequest) -> None:

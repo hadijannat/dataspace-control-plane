@@ -71,9 +71,10 @@ def reduce_evidence(
     for augmenter in augmenters:
         augmented = augmenter.augment(evidence, activation_scope=activation_scope)
         # Safety: ensure no existing fields were removed.
-        for key in list(evidence.keys()):
+        # Iterate the dict view directly — no need to copy keys into a list.
+        for key, value in evidence.items():
             if key not in augmented:
-                augmented[key] = evidence[key]
+                augmented[key] = value
         evidence = augmented
     return evidence
 

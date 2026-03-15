@@ -88,11 +88,40 @@ class CatenaxPolicyDialectProvider:
         return parse_cx_policy(dialect_policy)
 
 
+_CANONICAL_PERMISSION_KEYS = frozenset({
+    "action",
+    "target",
+    "purposes",
+    "odrl:constraint",
+    "unsupported_constraints",
+    "cx_purposes",
+    "review_flags",
+})
+"""Keys on a canonical permission dict that this compiler knows how to handle.
+
+Any other key is treated as unknown and is dropped with a warning rather than
+being passed into the compiled output.  This prevents crafted input dicts from
+injecting arbitrary ODRL keys into the compiled policy.
+"""
+
+import logging as _logging
+_compiler_logger = _logging.getLogger(__name__)
+
+
 def _compile_permissions(
     permissions: list[dict[str, Any]],
     purpose_index: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Compile canonical permissions, injecting cx-policy purpose constraints."""
+    """Compile canonical permissions, injecting cx-policy purpose constraints.
+
+    Security: Only known canonical permission keys are mapped to the output.
+    Unknown keys are dropped and a warning is emitted.  This prevents caller-
+    controlled data from injecting arbitrary ODRL keys (policy injection).
+
+    Unsupported constraints (collected by the parser for manual review) are
+    intentionally excluded from the compiled output; they should not be
+    forwarded to downstream ODRL evaluators because their semantics are unknown.
+    """
     compiled: list[dict[str, Any]] = []
     for perm in permissions:
         cx_perm: dict[str, Any] = {}
@@ -105,8 +134,15 @@ def _compile_permissions(
         constraints: list[dict[str, Any]] = []
 
         for purpose_id in perm.get("purposes", []):
-            resolved = purpose_index.get(purpose_id)
-            if resolved:
+            if not isinstance(purpose_id, str):
+                _compiler_logger.warning(
+                    "Skipping non-string purpose_id %r in cx policy compilation.", purpose_id
+                )
+                continue
+            # Emit the purpose constraint only when the purpose is in the
+            # known-good purpose catalog.  Unknown purpose IDs are not emitted
+            # so that arbitrary strings cannot be injected as ODRL right operands.
+            if purpose_id in purpose_index:
                 constraints.append(
                     {
                         "odrl:leftOperand": _CX_USAGE_PURPOSE_LEFT_OPERAND,
@@ -115,25 +151,29 @@ def _compile_permissions(
                     }
                 )
             else:
-                constraints.append(
-                    {
-                        "odrl:leftOperand": _CX_USAGE_PURPOSE_LEFT_OPERAND,
-                        "odrl:operator": {"@id": "odrl:eq"},
-                        "odrl:rightOperand": purpose_id,
-                    }
+                _compiler_logger.warning(
+                    "Catena-X policy compiler: purpose_id %r is not in the purpose catalog "
+                    "and will not be emitted in the compiled output.",
+                    purpose_id,
                 )
 
+        # Pass through only already-parsed, non-cx ODRL constraints.
+        # Do NOT forward unsupported_constraints — those have unknown semantics
+        # and must not be emitted into valid ODRL payloads.
         for raw_constraint in perm.get("odrl:constraint", []):
             constraints.append(raw_constraint)
-        for unsupported_constraint in perm.get("unsupported_constraints", []):
-            constraints.append(unsupported_constraint)
 
         if constraints:
             cx_perm["odrl:constraint"] = constraints
 
-        for key, value in perm.items():
-            if key not in ("action", "target", "purposes", "odrl:constraint"):
-                cx_perm[key] = value
+        # Explicitly drop unknown keys rather than using a catch-all copy.
+        unknown_keys = set(perm.keys()) - _CANONICAL_PERMISSION_KEYS
+        if unknown_keys:
+            _compiler_logger.warning(
+                "Catena-X policy compiler: dropping unknown permission keys %s — "
+                "only declared canonical keys are forwarded to compiled output.",
+                sorted(unknown_keys),
+            )
 
         compiled.append(cx_perm)
 

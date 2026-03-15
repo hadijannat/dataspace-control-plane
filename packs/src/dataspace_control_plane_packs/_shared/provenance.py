@@ -126,6 +126,29 @@ def compute_sha256(path: Path) -> str:
     return hasher.hexdigest()
 
 
+# Cache: (absolute_path_str, mtime_ns) -> sha256_hex
+# Avoids re-hashing large pinned files (e.g. 25k-line HTML) on every
+# validate_manifest_sources call when the file has not changed on disk.
+_sha256_cache: dict[tuple[str, int], str] = {}
+
+
+def _compute_sha256_cached(path: Path) -> str:
+    """Return the SHA-256 hex digest of ``path``, using an mtime-keyed cache.
+
+    The cache is keyed by ``(str(path), mtime_ns)`` so that any on-disk change
+    is detected and the digest is recomputed. This avoids repeatedly reading
+    large pinned normative-source files (e.g. 25k-line regulation HTML) during
+    startup or test teardown/re-setup cycles.
+    """
+    key = (str(path), path.stat().st_mtime_ns)
+    cached = _sha256_cache.get(key)
+    if cached is not None:
+        return cached
+    digest = compute_sha256(path)
+    _sha256_cache[key] = digest
+    return digest
+
+
 def validate_manifest_sources(manifest: Any) -> None:
     """Validate all pinned source files declared by ``manifest``.
 
@@ -156,7 +179,7 @@ def validate_manifest_sources(manifest: Any) -> None:
                 f"Pack {manifest.pack_id!r} source file is missing: {source.local_filename!r}"
             )
 
-        actual_sha256 = compute_sha256(local_path)
+        actual_sha256 = _compute_sha256_cached(local_path)
         if actual_sha256.lower() != source.sha256.lower():
             raise NormativeSourceError(
                 f"Pack {manifest.pack_id!r} source checksum mismatch for "

@@ -125,6 +125,17 @@ class PackRegistry:
         """Return all capability providers registered for a specific pack."""
         return list(self._raw_providers.get(pack_id, {}).get(capability, ()))
 
+    def _providers_for_pack_tuple(
+        self, pack_id: str, capability: PackCapability
+    ) -> tuple[Any, ...]:
+        """Internal: return providers as the stored tuple — no copy.
+
+        Use this in hot paths (e.g., resolver.resolve) where the caller only
+        iterates or extends from the result and does not need a mutable list.
+        Callers must not mutate the returned tuple.
+        """
+        return self._raw_providers.get(pack_id, {}).get(capability, ())
+
     @staticmethod
     def _normalize_providers(raw_provider: Any) -> tuple[Any, ...]:
         if raw_provider is None:

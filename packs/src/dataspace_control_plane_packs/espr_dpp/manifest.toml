@@ -25,7 +25,7 @@ interface_class = "dataspace_control_plane_packs.espr_dpp.api.EsprAasTwinTemplat
 [[normative_sources]]
 source_uri = "https://eur-lex.europa.eu/legal-content/EN-DE/TXT/?from=EN&uri=CELEX:32024R1781"
 version = "2024/1781"
-retrieval_date = "2026-03-14"
-sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
-local_filename = "rules/requirements.yaml"
+retrieval_date = "2026-03-15"
+sha256 = "fadb2065d05b2a8cfdb8047c891cffa988bfb0b8d74680dd03e8ced9ab4783f6"
+local_filename = "vocab/pinned/regulation_2024_1781.html"
 effective_from = "2024-07-19"

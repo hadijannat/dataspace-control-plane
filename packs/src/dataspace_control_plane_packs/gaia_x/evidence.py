@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .._shared.interfaces import EvidenceAugmenter
+from .._shared.provenance import attach_module_provenance
 from .baseline.trust_framework import GX_TRUST_FRAMEWORK_VERSION
 
 
@@ -19,4 +19,9 @@ class GaiaXEvidenceAugmenter:
         result["gx:trust_framework_version"] = GX_TRUST_FRAMEWORK_VERSION
         result["gx:pack_version"] = "22.10.0"
         result["gx:activation_scope"] = activation_scope
-        return result
+        return attach_module_provenance(
+            result,
+            module_file=__file__,
+            rule_ids=["gaia_x:trust-framework-baseline", "gaia_x:compliance-rules"],
+            activation_scope=activation_scope,
+        )

@@ -5,9 +5,8 @@ import pathlib
 from typing import Any
 
 from .._shared.capabilities import PackCapability
-from .._shared.interfaces import TwinTemplateProvider
 from .._shared.manifest import PackManifest
-from .._shared.rule_model import ValidationResult
+from .._shared.provenance import attach_module_provenance
 from .annex_xiii.access_matrix import build_battery_access_matrix
 from .annex_xiii.public_fields import PUBLIC_FIELDS
 from .annex_xiii.authority_fields import AUTHORITY_FIELDS
@@ -22,19 +21,34 @@ from .requirements import BatteryRequirementProvider
 
 _MANIFEST_PATH = pathlib.Path(__file__).parent / "manifest.toml"
 MANIFEST: PackManifest = PackManifest.from_toml(_MANIFEST_PATH)
+_TEMPLATE_RULE_IDS = [
+    "battery_passport:identifier-required",
+    "battery_passport:qr-access-required",
+    "battery_passport:lifecycle-model",
+    "battery_passport:annex-xiii-access-matrix",
+]
 
 
 class BatteryAasTwinTemplateProvider:
     """TwinTemplateProvider for battery passport AAS submodels."""
 
     def templates(self, *, context: dict[str, Any]) -> list[dict[str, Any]]:
-        return [
+        templates = [
             {
                 "template_id": "battery_passport_v1",
                 "submodel": "BatteryPassport",
                 "semantic_id": "https://admin-shell.io/idta/battery-passport/1/0",
                 "description": "EU Battery Regulation Annex XIII battery passport submodel",
             }
+        ]
+        return [
+            attach_module_provenance(
+                template,
+                module_file=__file__,
+                rule_ids=_TEMPLATE_RULE_IDS,
+                activation_scope="template_catalog",
+            )
+            for template in templates
         ]
 
     def apply_template(
@@ -45,7 +59,13 @@ class BatteryAasTwinTemplateProvider:
         activation_scope: str,
     ) -> dict[str, Any]:
         battery_id = subject.get("battery_id", "unknown")
-        return build_battery_passport_submodel(battery_id, subject)
+        submodel = build_battery_passport_submodel(battery_id, subject)
+        return attach_module_provenance(
+            submodel,
+            module_file=__file__,
+            rule_ids=_TEMPLATE_RULE_IDS,
+            activation_scope=activation_scope,
+        )
 
 
 PROVIDERS: dict[PackCapability, Any] = {

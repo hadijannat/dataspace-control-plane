@@ -27,6 +27,14 @@ capability = "IdentifierSchemeProvider"
 interface_class = "dataspace_control_plane_packs.catenax.api.BpnlSchemeProvider"
 
 [[capabilities]]
+capability = "IdentifierSchemeProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.BpnsSchemeProvider"
+
+[[capabilities]]
+capability = "IdentifierSchemeProvider"
+interface_class = "dataspace_control_plane_packs.catenax.api.BpnaSchemeProvider"
+
+[[capabilities]]
 capability = "CredentialProfileProvider"
 interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxCredentialProfileProvider"
 
@@ -42,7 +50,7 @@ interface_class = "dataspace_control_plane_packs.catenax.api.CatenaxEvidenceAugm
 source_uri = "https://catenax-ev.github.io/docs/operating-model/how-data-space-operations"
 version = "4.0"
 retrieval_date = "2026-03-14"
-sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+sha256 = "b50a6917c82acac1997730c5918ec55e671d2a37a8680f75786162b8905a4e37"
 local_filename = "vocab/pinned/cx_operating_model_4.0.html"
 effective_from = "2024-01-01"
 
@@ -50,6 +58,6 @@ effective_from = "2024-01-01"
 source_uri = "https://github.com/catenax-eV/cx-odrl-profile"
 version = "24.05"
 retrieval_date = "2026-03-14"
-sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+sha256 = "5f797043536b7394ce2e7f55f1f7a22ffbc77095a3c4133bcb2ba5dbc08256df"
 local_filename = "policy_profile/vendor/cx_odrl_profile.ttl"
 effective_from = "2024-05-01"

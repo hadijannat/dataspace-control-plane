@@ -6,7 +6,7 @@ appear in sets. They are parsed from ``manifest.toml`` at pack load time.
 from __future__ import annotations
 
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
@@ -70,6 +70,8 @@ class PackManifest:
     normative_sources: tuple[NormativeSource, ...]
     default_priority: int
     """Lower number = higher priority in reducers. Default 100."""
+    root_dir: str = field(repr=False, compare=False, hash=False, default=".")
+    """Filesystem directory that owns this manifest and its pinned assets."""
 
     @classmethod
     def from_toml(cls, path: Path) -> "PackManifest":
@@ -126,6 +128,7 @@ class PackManifest:
                 capabilities=caps,
                 normative_sources=sources,
                 default_priority=data.get("default_priority", 100),
+                root_dir=str(path.parent),
             )
         except (KeyError, ValueError, TypeError) as exc:
             raise PackValidationError(
@@ -155,4 +158,5 @@ def _minimal_manifest(
         capabilities=tuple(capabilities or []),
         normative_sources=(),
         default_priority=100,
+        root_dir=".",
     )

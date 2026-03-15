@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..._shared.provenance import attach_module_provenance
 from .trust_framework import GX_VOCABULARY_URI, GX_W3C_VC_CONTEXT
 
 # ---------------------------------------------------------------------------
@@ -57,6 +58,11 @@ _FIELD_MAPS: dict[str, dict[str, str]] = {
     "participant": _PARTICIPANT_FIELD_MAP,
     "service": _SERVICE_FIELD_MAP,
     "resource": _RESOURCE_FIELD_MAP,
+}
+_CREDENTIAL_RULE_IDS = {
+    "participant": ["gaia_x:gx23-legal-participant"],
+    "service": ["gaia_x:gx23-service-offering"],
+    "resource": ["gaia_x:gx23-data-resource"],
 }
 
 
@@ -140,7 +146,12 @@ class GaiaXCredentialProfileProvider:
             "_gx_pack_version": "22.10.0",
             "_gx_activation_scope": activation_scope,
         }
-        return payload
+        return attach_module_provenance(
+            payload,
+            module_file=__file__,
+            rule_ids=_CREDENTIAL_RULE_IDS.get(canonical_key, [gx_type]),
+            activation_scope=activation_scope,
+        )
 
     # ------------------------------------------------------------------
     # Internal helpers

@@ -11,7 +11,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .._shared.capabilities import PackCapability
 from .._shared.manifest import PackManifest
+from .._shared.provenance import attach_module_provenance
 from .core_rules.evidence import EsprEvidenceAugmenter
 from .implementation_profiles.aas_dpp4o.dpp_submodels import build_espr_dpp_submodel
 from .requirements import EsprRequirementProvider
@@ -21,6 +23,13 @@ from .requirements import EsprRequirementProvider
 # ---------------------------------------------------------------------------
 
 MANIFEST = PackManifest.from_toml(Path(__file__).parent / "manifest.toml")
+_TEMPLATE_RULE_IDS = [
+    "espr_dpp:identifier-obligation",
+    "espr_dpp:data-carrier-obligation",
+    "espr_dpp:registry-obligation",
+    "espr_dpp:backup-copy-obligation",
+    "espr_dpp:accessibility-obligation",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -33,7 +42,7 @@ class EsprAasTwinTemplateProvider:
 
     def templates(self, *, context: dict[str, Any]) -> list[dict[str, Any]]:
         """Return ESPR DPP twin template descriptors."""
-        return [
+        templates = [
             {
                 "template_id": "espr_dpp_v1",
                 "submodel": "espr_dpp",
@@ -44,6 +53,15 @@ class EsprAasTwinTemplateProvider:
                     "backup, and accessibility."
                 ),
             }
+        ]
+        return [
+            attach_module_provenance(
+                template,
+                module_file=__file__,
+                rule_ids=_TEMPLATE_RULE_IDS,
+                activation_scope="template_catalog",
+            )
+            for template in templates
         ]
 
     def apply_template(
@@ -74,17 +92,23 @@ class EsprAasTwinTemplateProvider:
                 "Available templates: ['espr_dpp_v1']"
             )
         product_id = subject.get("product_id", "")
-        return build_espr_dpp_submodel(product_id=str(product_id), dpp_data=subject)
+        submodel = build_espr_dpp_submodel(product_id=str(product_id), dpp_data=subject)
+        return attach_module_provenance(
+            submodel,
+            module_file=__file__,
+            rule_ids=_TEMPLATE_RULE_IDS,
+            activation_scope=activation_scope,
+        )
 
 
 # ---------------------------------------------------------------------------
 # Providers registry
 # ---------------------------------------------------------------------------
 
-PROVIDERS: dict[str, Any] = {
-    "RequirementProvider": EsprRequirementProvider(),
-    "EvidenceAugmenter": EsprEvidenceAugmenter(),
-    "TwinTemplateProvider": EsprAasTwinTemplateProvider(),
+PROVIDERS: dict[PackCapability, Any] = {
+    PackCapability.REQUIREMENT_PROVIDER: EsprRequirementProvider(),
+    PackCapability.EVIDENCE_AUGMENTER: EsprEvidenceAugmenter(),
+    PackCapability.TWIN_TEMPLATE: EsprAasTwinTemplateProvider(),
 }
 
 __all__ = [

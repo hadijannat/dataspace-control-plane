@@ -10,11 +10,10 @@ core/ or other layers.
 from __future__ import annotations
 
 import pathlib
-import tomllib
 from typing import Any
 
-from .._shared.manifest import PackManifest
 from .._shared.capabilities import PackCapability
+from .._shared.manifest import PackManifest
 
 from .credential_profiles import CatenaxCredentialProfileProvider
 from .evidence import CatenaxEvidenceAugmenter
@@ -31,16 +30,17 @@ from .requirements import CatenaxRequirementProvider
 
 _MANIFEST_PATH = pathlib.Path(__file__).parent / "manifest.toml"
 
-with open(_MANIFEST_PATH, "rb") as _f:
-    _MANIFEST_DATA = tomllib.load(_f)
-
 MANIFEST: PackManifest = PackManifest.from_toml(_MANIFEST_PATH)
 
 PROVIDERS: dict[PackCapability, Any] = {
     PackCapability.REQUIREMENT_PROVIDER: CatenaxRequirementProvider(),
     PackCapability.POLICY_DIALECT: CatenaxPolicyDialectProvider(),
     PackCapability.PURPOSE_CATALOG: CatenaxPurposeCatalogProvider(),
-    PackCapability.IDENTIFIER_SCHEME: BpnlSchemeProvider(),
+    PackCapability.IDENTIFIER_SCHEME: [
+        BpnlSchemeProvider(),
+        BpnsSchemeProvider(),
+        BpnaSchemeProvider(),
+    ],
     PackCapability.CREDENTIAL_PROFILE: CatenaxCredentialProfileProvider(),
     PackCapability.PROCEDURE_HOOK: CatenaxProcedureHooks(),
     PackCapability.EVIDENCE_AUGMENTER: CatenaxEvidenceAugmenter(),

@@ -10,7 +10,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from .._shared.provenance import attach_module_provenance
+
 _MX_PACK_VERSION = "1.0.0"
+_EVIDENCE_RULE_IDS = [
+    "manufacturing_x:mx-port-discovery",
+    "manufacturing_x:mx-port-access-usage",
+]
 
 
 class MxEvidenceAugmenter:
@@ -68,4 +74,9 @@ class MxEvidenceAugmenter:
         # Stamp the activation scope so auditors know which tenant triggered this
         augmented.setdefault("mx:activation_scope", activation_scope)
 
-        return augmented
+        return attach_module_provenance(
+            augmented,
+            module_file=__file__,
+            rule_ids=_EVIDENCE_RULE_IDS,
+            activation_scope=activation_scope,
+        )

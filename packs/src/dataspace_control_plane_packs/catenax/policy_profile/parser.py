@@ -10,7 +10,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..._shared.provenance import attach_module_provenance
+
 _CX_POLICY_PREFIX = "cx-policy:"
+_CX_USAGE_PURPOSE_OPERAND = "cx-policy:UsagePurpose"
 
 
 def parse_cx_policy(dialect_policy: dict[str, Any]) -> dict[str, Any]:
@@ -31,25 +34,47 @@ def parse_cx_policy(dialect_policy: dict[str, Any]) -> dict[str, Any]:
 
     purposes: list[str] = []
     canonical_permissions: list[dict[str, Any]] = []
+    unsupported_constraints: list[dict[str, Any]] = []
+    review_flags: list[dict[str, Any]] = []
 
     for perm in permissions:
         constraints = _normalise_list(perm.get("odrl:constraint", []))
-        cx_purposes, other_constraints = _split_cx_constraints(constraints)
+        (
+            cx_purposes,
+            unsupported,
+            other_constraints,
+            perm_review_flags,
+        ) = _split_cx_constraints(constraints)
         purposes.extend(cx_purposes)
+        unsupported_constraints.extend(unsupported)
+        review_flags.extend(perm_review_flags)
 
         canonical_perm: dict[str, Any] = {k: v for k, v in perm.items() if k != "odrl:constraint"}
         if other_constraints:
             canonical_perm["odrl:constraint"] = other_constraints
         if cx_purposes:
             canonical_perm["cx_purposes"] = cx_purposes
+            canonical_perm["purposes"] = cx_purposes
+        if unsupported:
+            canonical_perm["unsupported_constraints"] = unsupported
+        if perm_review_flags:
+            canonical_perm["review_flags"] = perm_review_flags
         canonical_permissions.append(canonical_perm)
 
-    return {
+    parsed = {
         "permissions": canonical_permissions,
         "prohibitions": prohibitions,
         "obligations": obligations,
         "purposes": purposes,
+        "unsupported_constraints": unsupported_constraints,
+        "review_flags": review_flags,
     }
+    return attach_module_provenance(
+        parsed,
+        module_file=__file__,
+        rule_ids=["catenax:policy-profile", "catenax:policy-review-required"],
+        activation_scope="parse",
+    )
 
 
 def _normalise_list(value: Any) -> list[Any]:
@@ -63,25 +88,48 @@ def _normalise_list(value: Any) -> list[Any]:
 
 def _split_cx_constraints(
     constraints: list[dict[str, Any]],
-) -> tuple[list[str], list[dict[str, Any]]]:
+) -> tuple[list[str], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """Split constraints into cx-policy purpose IDs and all others.
 
     Returns:
-        A tuple of (purpose_ids, remaining_constraints).
+        A tuple of (purpose_ids, unsupported_constraints, remaining_constraints, review_flags).
     """
     purposes: list[str] = []
+    unsupported: list[dict[str, Any]] = []
     remaining: list[dict[str, Any]] = []
+    review_flags: list[dict[str, Any]] = []
 
     for constraint in constraints:
         left_operand = constraint.get("odrl:leftOperand", "")
         right_operand = constraint.get("odrl:rightOperand", "")
 
-        if isinstance(left_operand, str) and left_operand.startswith(_CX_POLICY_PREFIX):
+        if left_operand == _CX_USAGE_PURPOSE_OPERAND:
             if isinstance(right_operand, str):
                 purposes.append(right_operand)
             else:
-                remaining.append(constraint)
+                unsupported.append(constraint)
+                review_flags.append(
+                    {
+                        "code": "unsupported_cx_constraint",
+                        "left_operand": left_operand,
+                        "message": "Catena-X UsagePurpose constraint is malformed and requires review.",
+                        "constraint": constraint,
+                    }
+                )
+        elif isinstance(left_operand, str) and left_operand.startswith(_CX_POLICY_PREFIX):
+            unsupported.append(constraint)
+            review_flags.append(
+                {
+                    "code": "unsupported_cx_constraint",
+                    "left_operand": left_operand,
+                    "message": (
+                        f"Unsupported Catena-X policy operand {left_operand!r} was preserved "
+                        "for manual review."
+                    ),
+                    "constraint": constraint,
+                }
+            )
         else:
             remaining.append(constraint)
 
-    return purposes, remaining
+    return purposes, unsupported, remaining, review_flags

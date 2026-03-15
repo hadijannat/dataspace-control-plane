@@ -29,7 +29,7 @@ interface_class = "dataspace_control_plane_packs.manufacturing_x.api.MxEvidenceA
 [[normative_sources]]
 source_uri = "https://www.plattform-i40.de/IP/Navigation/EN/Manufacturing-X/Manufacturing-X.html"
 version = "2024"
-retrieval_date = "2026-03-14"
-sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
-local_filename = "rules/requirements.yaml"
+retrieval_date = "2026-03-15"
+sha256 = "1c0b4ac1792562d92c1005126e35a36167523cfe492f7a904b814a874783677f"
+local_filename = "vocab/pinned/manufacturing_x_overview.html"
 effective_from = "2024-01-01"

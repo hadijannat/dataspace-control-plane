@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .._shared.capabilities import PackCapability
 from .._shared.manifest import PackManifest
 
 # ---------------------------------------------------------------------------
@@ -35,11 +36,11 @@ from .mx_port.profiles.hercules import HERCULES_PROFILE as _HERCULES_PROFILE
 MxDataExchangeProfileProvider = _MxDataExchangeProfileProvider(_HERCULES_PROFILE)
 
 # Registry-compatible provider dict
-PROVIDERS: dict[str, object] = {
-    "RequirementProvider": MxRequirementProvider(),
-    "DataExchangeProfileProvider": MxDataExchangeProfileProvider,
-    "TwinTemplateProvider": MxTwinTemplateProvider(),
-    "EvidenceAugmenter": MxEvidenceAugmenter(),
+PROVIDERS: dict[PackCapability, object] = {
+    PackCapability.REQUIREMENT_PROVIDER: MxRequirementProvider(),
+    PackCapability.DATA_EXCHANGE_PROFILE: MxDataExchangeProfileProvider,
+    PackCapability.TWIN_TEMPLATE: MxTwinTemplateProvider(),
+    PackCapability.EVIDENCE_AUGMENTER: MxEvidenceAugmenter(),
 }
 
 # ---------------------------------------------------------------------------

@@ -71,14 +71,15 @@ repo or add them to `.gitignore` as appropriate.
 
    ```python
    MANIFEST: PackManifest = _minimal_manifest(...)
-   PROVIDERS: dict[str, Any] = {
-       "EvidenceAugmenter": YourAugmenter(),
+   PROVIDERS: dict[PackCapability, Any] = {
+       PackCapability.EVIDENCE_AUGMENTER: YourAugmenter(),
    }
    ```
 
-6. **Register your pack.** Add it to `BUILTIN_PACKS` in the main
-   `loader.py`, or register it via a Python entry-point under the
-   `dataspace_control_plane_packs.packs` group.
+6. **Register your pack.** In-repo custom packs are discovered automatically
+   from `custom/examples/*/api.py` and `custom/org_packs/*/api.py`. External
+   overlay packages may register via the `dataspace_control_plane_packs.packs`
+   entry-point group.
 
 ---
 
@@ -122,19 +123,15 @@ What custom packs **must not** do:
 
 ## Registering a Custom Pack
 
-### Option A — Add to `BUILTIN_PACKS`
+### Option A — In-repo discovery
 
-In `packs/src/dataspace_control_plane_packs/loader.py`, extend the
-`BUILTIN_PACKS` mapping with your pack's module path:
+Place the pack under one of these directories:
 
-```python
-BUILTIN_PACKS = {
-    ...
-    "example_enterprise_policy_overlay": (
-        "dataspace_control_plane_packs.custom.examples.enterprise_policy_overlay.api"
-    ),
-}
-```
+- `packs/src/dataspace_control_plane_packs/custom/examples/<pack_id>/api.py`
+- `packs/src/dataspace_control_plane_packs/custom/org_packs/<pack_id>/api.py`
+
+If the package contains both `__init__.py` and `api.py`, the loader discovers
+it automatically in deterministic path order.
 
 ### Option B — Python entry-points (recommended for org packs)
 

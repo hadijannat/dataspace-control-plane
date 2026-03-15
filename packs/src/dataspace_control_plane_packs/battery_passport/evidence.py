@@ -3,7 +3,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from .._shared.interfaces import EvidenceAugmenter
+from .._shared.provenance import attach_module_provenance
+
+_EVIDENCE_RULE_IDS = [
+    "battery_passport:identifier-required",
+    "battery_passport:qr-access-required",
+    "battery_passport:lifecycle-model",
+    "battery_passport:passport-linkage",
+]
 
 
 class BatteryEvidenceAugmenter:
@@ -23,4 +30,9 @@ class BatteryEvidenceAugmenter:
         result["bat:regulation_version"] = self._REGULATION_VERSION
         result["bat:pack_version"] = self._PACK_VERSION
         result["bat:activation_scope"] = activation_scope
-        return result
+        return attach_module_provenance(
+            result,
+            module_file=__file__,
+            rule_ids=_EVIDENCE_RULE_IDS,
+            activation_scope=activation_scope,
+        )

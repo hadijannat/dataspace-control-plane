@@ -91,6 +91,6 @@ MANIFEST: PackManifest = _minimal_manifest(
     ],
 )
 
-PROVIDERS: dict[str, Any] = {
-    "TrustAnchorOverlayProvider": ExampleFederationTrustAnchorOverlay(),
+PROVIDERS: dict[PackCapability, Any] = {
+    PackCapability.TRUST_ANCHOR_OVERLAY: ExampleFederationTrustAnchorOverlay(),
 }

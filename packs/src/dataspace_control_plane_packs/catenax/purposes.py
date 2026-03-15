@@ -17,20 +17,24 @@ class CatenaxPurposeCatalogProvider:
     """PurposeCatalogProvider backed by purposes.yaml."""
 
     def __init__(self) -> None:
-        self._data: dict[str, Any] | None = None
+        self._purposes: list[dict[str, Any]] | None = None
+        self._purposes_by_id: dict[str, dict[str, Any]] | None = None
 
-    def _load(self) -> dict[str, Any]:
-        if self._data is None:
-            self._data = load_purposes()
-        return self._data
+    def _load(self) -> None:
+        if self._purposes is None:
+            data = load_purposes()
+            self._purposes = data.get("purposes", [])
+            # Build an O(1) lookup index so resolve_purpose is not O(n).
+            self._purposes_by_id = {
+                p["id"]: p for p in self._purposes if "id" in p
+            }
 
     def purposes(self) -> list[dict[str, Any]]:
         """Return all declared Catena-X purposes."""
-        return list(self._load().get("purposes", []))
+        self._load()
+        return list(self._purposes)  # type: ignore[arg-type]
 
     def resolve_purpose(self, purpose_id: str) -> dict[str, Any] | None:
         """Return the purpose definition matching ``purpose_id``, or None."""
-        for purpose in self.purposes():
-            if purpose.get("id") == purpose_id:
-                return purpose
-        return None
+        self._load()
+        return self._purposes_by_id.get(purpose_id)  # type: ignore[union-attr]

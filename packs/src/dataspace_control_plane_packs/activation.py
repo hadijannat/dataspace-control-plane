@@ -11,6 +11,8 @@ to get the ResolvedPackProfile for the current tenant/entity.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -38,19 +40,32 @@ class ActivationRequest:
     pack_options: dict[str, Any] = field(default_factory=dict)
     """Pack-specific option overrides keyed by pack_id."""
 
+    compatibility_context: dict[str, Any] = field(default_factory=dict)
+    """Optional layer-version metadata used for manifest compatibility checks."""
+
+
+@dataclass
+class CachedActivation:
+    fingerprint: str
+    profile: ResolvedPackProfile
+
 
 @dataclass
 class ActivationState:
     """Stores resolved profiles for all active scopes."""
 
-    _profiles: dict[str, ResolvedPackProfile] = field(default_factory=dict)
+    _profiles: dict[str, CachedActivation] = field(default_factory=dict)
 
-    def get(self, scope_key: str) -> ResolvedPackProfile | None:
+    def get(self, scope_key: str) -> CachedActivation | None:
         """Return the resolved profile for ``scope_key``, or None."""
         return self._profiles.get(scope_key)
 
-    def set(self, scope_key: str, profile: ResolvedPackProfile) -> None:
-        self._profiles[scope_key] = profile
+    def set(self, scope_key: str, cached: CachedActivation) -> None:
+        self._profiles[scope_key] = cached
+
+    def delete(self, scope_key: str) -> None:
+        """Remove the cached activation for ``scope_key`` if present."""
+        self._profiles.pop(scope_key, None)
 
     def scope_keys(self) -> list[str]:
         return list(self._profiles.keys())
@@ -76,54 +91,76 @@ class PackActivationManager:
         self._resolver = PackResolver(registry)
         self._state = ActivationState()
 
+    @staticmethod
+    def _make_scope_key(scope_kind: str, scope_id: str) -> str:
+        """Build a collision-resistant cache key for a (scope_kind, scope_id) pair.
+
+        Using a simple ``f"{scope_kind}:{scope_id}"`` string is unsafe: a
+        ``scope_id`` value of ``"legal_entity:acme"`` combined with
+        ``scope_kind="tenant"`` produces ``"tenant:legal_entity:acme"``, which is
+        indistinguishable from ``scope_kind="tenant:legal_entity"``,
+        ``scope_id="acme"`` — a cross-tenant cache collision.
+
+        The SHA-256 digest of the JSON-serialised pair is used instead:
+        - Collision-resistant across all (scope_kind, scope_id) combinations.
+        - Avoids leaking raw tenant identifiers in cache introspection or logs.
+        """
+        encoded = json.dumps(
+            {"scope_kind": scope_kind, "scope_id": scope_id}, sort_keys=True
+        ).encode()
+        return hashlib.sha256(encoded).hexdigest()
+
     def activate(self, request: ActivationRequest) -> ResolvedPackProfile:
         """Resolve and cache the pack profile for the given activation request.
 
-        Returns the cached profile if the scope_key is already activated.
-        Call ``deactivate`` to force re-resolution.
+        Returns the cached profile if the scope_key is already activated with
+        the same fingerprint.  Call ``deactivate`` to force re-resolution.
 
         Raises:
             PackActivationError: If resolution fails.
         """
-        scope_key = f"{request.scope_kind}:{request.scope_id}"
+        scope_key = self._make_scope_key(request.scope_kind, request.scope_id)
+        fingerprint = self._fingerprint_request(request)
         existing = self._state.get(scope_key)
-        if existing is not None:
-            return existing
+        if existing is not None and existing.fingerprint == fingerprint:
+            return existing.profile
 
         try:
             self._validate_scope(request)
+            metadata = {
+                "scope_kind": request.scope_kind,
+                "scope_id": request.scope_id,
+                "pack_options": request.pack_options,
+                **request.compatibility_context,
+            }
             profile = self._resolver.resolve(
                 activation_id=scope_key,
                 requested_packs=request.requested_packs,
-                metadata={
-                    "scope_kind": request.scope_kind,
-                    "scope_id": request.scope_id,
-                    "pack_options": request.pack_options,
-                },
+                metadata=metadata,
             )
         except Exception as exc:
             raise PackActivationError(
                 f"Failed to activate packs {request.requested_packs} "
-                f"for scope {scope_key!r}: {exc}"
+                f"for scope_kind={request.scope_kind!r}, scope_id=<redacted>: {exc}"
             ) from exc
 
-        self._state.set(scope_key, profile)
+        self._state.set(scope_key, CachedActivation(fingerprint=fingerprint, profile=profile))
         logger.info(
-            "Activated packs %s for scope %s",
+            "Activated packs %s for scope_kind=%s",
             profile.pack_ids(),
-            scope_key,
+            request.scope_kind,
         )
         return profile
 
     def deactivate(self, scope_kind: ScopeKind, scope_id: str) -> None:
         """Remove the cached activation for the given scope (forces re-resolution next access)."""
-        scope_key = f"{scope_kind}:{scope_id}"
-        if scope_key in self._state.scope_keys():
-            del self._state._profiles[scope_key]
+        scope_key = self._make_scope_key(scope_kind, scope_id)
+        self._state.delete(scope_key)
 
     def get_profile(self, scope_kind: ScopeKind, scope_id: str) -> ResolvedPackProfile | None:
         """Return the cached resolved profile, or None if not yet activated."""
-        return self._state.get(f"{scope_kind}:{scope_id}")
+        cached = self._state.get(self._make_scope_key(scope_kind, scope_id))
+        return cached.profile if cached is not None else None
 
     def _validate_scope(self, request: ActivationRequest) -> None:
         """Check that all requested packs support the requested scope kind."""
@@ -139,3 +176,15 @@ class PackActivationManager:
                     manifest.activation_scope,
                     request.scope_kind,
                 )
+
+    @staticmethod
+    def _fingerprint_request(request: ActivationRequest) -> str:
+        payload = {
+            "scope_kind": request.scope_kind,
+            "scope_id": request.scope_id,
+            "requested_packs": sorted(request.requested_packs),
+            "pack_options": request.pack_options,
+            "compatibility_context": request.compatibility_context,
+        }
+        encoded = json.dumps(payload, sort_keys=True, default=str).encode()
+        return hashlib.sha256(encoded).hexdigest()

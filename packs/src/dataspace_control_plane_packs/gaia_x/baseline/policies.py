@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..._shared.provenance import attach_module_provenance
 from .trust_framework import GX_ODRL_CONTEXT, GX_VOCABULARY_URI
 
 _GX_CONTEXT = [GX_ODRL_CONTEXT, {"gx": GX_VOCABULARY_URI}]
@@ -75,7 +76,12 @@ class GaiaXPolicyDialectProvider:
         odrl_policy["_gx_dialect"] = self.dialect_id
         odrl_policy["_gx_activation_scope"] = activation_scope
 
-        return odrl_policy
+        return attach_module_provenance(
+            odrl_policy,
+            module_file=__file__,
+            rule_ids=["gaia_x:policy-dialect"],
+            activation_scope=activation_scope,
+        )
 
     def parse(self, dialect_policy: dict[str, Any]) -> dict[str, Any]:
         """Parse a Gaia-X ODRL/JSON-LD policy back to a canonical policy dict.
@@ -106,4 +112,9 @@ class GaiaXPolicyDialectProvider:
             else:
                 canonical[odrl_key] = value
 
-        return canonical
+        return attach_module_provenance(
+            canonical,
+            module_file=__file__,
+            rule_ids=["gaia_x:policy-dialect"],
+            activation_scope="parse",
+        )

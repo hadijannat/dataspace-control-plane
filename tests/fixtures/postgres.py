@@ -4,6 +4,7 @@ Depends on postgres_container from fixtures/containers.py.
 """
 from __future__ import annotations
 
+import re
 import urllib.parse
 import uuid
 from typing import Any
@@ -94,13 +95,19 @@ def postgres_role_connection_factory(postgres_url: str):
         password: str = "tenantpass",
     ):
         safe_role_name = role_name or f"rls_{uuid.uuid4().hex[:10]}"
+        # Allowlist guard: reject names that could inject DDL via the identifier
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,62}", safe_role_name):
+            raise ValueError(
+                f"role_name must match [a-z][a-z0-9_]{{0,62}}, got: {safe_role_name!r}"
+            )
 
         admin_conn = psycopg2.connect(postgres_url)
         admin_conn.autocommit = True
         admin_cur = admin_conn.cursor()
+        quoted_role = psycopg2.extensions.quote_ident(safe_role_name, admin_conn)
         admin_cur.execute(
             f"""
-            CREATE ROLE {safe_role_name}
+            CREATE ROLE {quoted_role}
             LOGIN
             PASSWORD %s
             {"SUPERUSER" if superuser else "NOSUPERUSER"}
@@ -140,7 +147,8 @@ def postgres_role_connection_factory(postgres_url: str):
     cleanup_conn.autocommit = True
     cleanup_cur = cleanup_conn.cursor()
     for role_name in reversed(created_roles):
-        cleanup_cur.execute(f"DROP ROLE IF EXISTS {role_name}")
+        quoted = psycopg2.extensions.quote_ident(role_name, cleanup_conn)
+        cleanup_cur.execute(f"DROP ROLE IF EXISTS {quoted}")
     cleanup_cur.close()
     cleanup_conn.close()
 

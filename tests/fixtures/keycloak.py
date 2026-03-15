@@ -17,6 +17,8 @@ OPERATOR_ROLE_NAME = "operator"
 OPERATOR_USERNAME = "operator@test.local"
 OPERATOR_PASSWORD = "TestPassword123!"
 
+_token_cache: dict[str, str] = {}
+
 
 def _requests():
     return pytest.importorskip("requests", reason="requests required for keycloak fixtures")
@@ -28,7 +30,9 @@ def _auth_headers(base_url: str) -> dict[str, str]:
 
 
 def _get_admin_token(base_url: str) -> str:
-    """Obtain a master realm admin token."""
+    """Obtain a master realm admin token, cached for the process lifetime."""
+    if base_url in _token_cache:
+        return _token_cache[base_url]
     requests = _requests()
     resp = requests.post(
         f"{base_url}/realms/master/protocol/openid-connect/token",
@@ -41,7 +45,9 @@ def _get_admin_token(base_url: str) -> str:
         timeout=10,
     )
     resp.raise_for_status()
-    return resp.json()["access_token"]
+    token = resp.json()["access_token"]
+    _token_cache[base_url] = token
+    return token
 
 
 def _get_client(base_url: str, realm: str, client_id: str) -> dict[str, Any] | None:

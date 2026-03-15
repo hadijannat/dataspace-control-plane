@@ -310,5 +310,5 @@ def test_dedupe_state_max_size_eviction_does_not_raise() -> None:
 
     # Must not raise and must still accept new entries
     state.mark_handled("msg-final")
-    # The set of handled messages should not exceed 2× max_size
-    assert len(state._handled) <= 20
+    # The set of handled messages must not exceed max_size after eviction completes
+    assert len(state._handled) <= state.max_size

@@ -42,7 +42,7 @@ def test_signing_fails_gracefully_when_vault_down(
     error_raised = False
     error_message = ""
 
-    import hvac  # type: ignore
+    hvac = pytest.importorskip("hvac")
 
     host = proxied_vault_client.url
     slow_client = hvac.Client(url=host, token="dev-root-token")
@@ -64,6 +64,7 @@ def test_signing_fails_gracefully_when_vault_down(
     # Verify no key material in error message
     private_key_indicators = [
         "-----BEGIN PRIVATE KEY-----",
+        "-----BEGIN RSA PRIVATE KEY-----",
         "-----BEGIN EC PRIVATE KEY-----",
         "privateKey",
         "private_key",

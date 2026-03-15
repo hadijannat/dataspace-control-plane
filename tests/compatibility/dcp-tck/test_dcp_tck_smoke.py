@@ -88,6 +88,8 @@ def test_dcp_tck_wrapper_dry_run_writes_actor_specific_reports() -> None:
     for actor in ACTORS.values():
         env[actor["env_var"]] = actor["url"]
 
+    assert os.access(RUN_SCRIPT, os.X_OK), f"wrapper must be executable: {RUN_SCRIPT}"
+
     result = subprocess.run(
         ["bash", str(RUN_SCRIPT)],
         cwd=REPO_ROOT,
@@ -98,7 +100,6 @@ def test_dcp_tck_wrapper_dry_run_writes_actor_specific_reports() -> None:
     )
 
     assert result.returncode == 0, result.stderr or result.stdout
-    assert os.access(RUN_SCRIPT, os.X_OK), f"wrapper must be executable: {RUN_SCRIPT}"
 
     for actor_name, actor in ACTORS.items():
         env_file = actor["env_file"].read_text()

@@ -59,6 +59,8 @@ def test_dsp_tck_wrapper_dry_run_writes_config_and_reports() -> None:
         "TCK_DRY_RUN": "1",
     }
 
+    assert os.access(RUN_SCRIPT, os.X_OK), f"wrapper must be executable: {RUN_SCRIPT}"
+
     result = subprocess.run(
         ["bash", str(RUN_SCRIPT)],
         cwd=REPO_ROOT,
@@ -69,7 +71,6 @@ def test_dsp_tck_wrapper_dry_run_writes_config_and_reports() -> None:
     )
 
     assert result.returncode == 0, result.stderr or result.stdout
-    assert os.access(RUN_SCRIPT, os.X_OK), f"wrapper must be executable: {RUN_SCRIPT}"
 
     sut_env = (CONFIG_DIR / "sut.env").read_text()
     assert "DSP_SUT_BASEURL=http://sut.example.test:19191" in sut_env

@@ -20,10 +20,11 @@
 # 1. Claude Code / AI agent tooling
 # =============================================================================
 
-# Ephemeral per-wave handoff artefacts written by agent teammates.
-# The README (protocol template) stays; individual handoffs are session state.
-.claude/handoffs/*.md
-!.claude/handoffs/README.md
+# Keep all Claude Code project state local to each workstation.
+.claude/
+
+# Keep CLAUDE guidance files local rather than publishing them to the remote.
+CLAUDE.md
 
 # Generated audit log written by the audit-config-change hook.
 .claude/config-audit.log
@@ -38,15 +39,7 @@
 # by default; listed here to prevent accidental commits if someone creates one).
 .claude/settings.local.json
 
-# NOTE — the following .claude/ paths ARE committed (team-shared):
-#   .claude/settings.json       project permissions + hook wiring
-#   .claude/team-ownership.yaml ownership map + wave definitions
-#   .claude/hooks/              lifecycle enforcement scripts
-#   .claude/skills/             wave management skills
-#   .claude/agents/             directory-owner subagent definitions
-#   .claude/handoffs/README.md  handoff protocol template
-
-# NOTE — .agents/ (repo-local reusable skills) IS committed.
+# NOTE — .agents/ (repo-local reusable skills) remains committed.
 
 
 # =============================================================================

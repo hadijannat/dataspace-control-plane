@@ -8,6 +8,17 @@ variable "bucket_name" {
   }
 }
 
+variable "mode" {
+  type        = string
+  default     = "external"
+  description = "Infrastructure ownership mode. Object storage is represented as an external durable dependency in this provider-neutral module."
+
+  validation {
+    condition     = contains(["dev-scaffold", "external"], var.mode)
+    error_message = "mode must be one of: dev-scaffold, external."
+  }
+}
+
 variable "region" {
   type        = string
   description = "Cloud region for the bucket (e.g. eu-west-1, europe-west1, westeurope)."
@@ -17,6 +28,12 @@ variable "versioning_enabled" {
   type        = bool
   default     = true
   description = "Enable object versioning for point-in-time recovery."
+}
+
+variable "external_bucket_url" {
+  type        = string
+  default     = "s3://dataspace-example-bucket"
+  description = "Existing bucket URL when mode=external."
 }
 
 variable "labels" {

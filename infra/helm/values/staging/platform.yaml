@@ -2,7 +2,6 @@
 # Applied over charts/platform/values.yaml
 
 global:
-  imageRegistry: ghcr.io/your-org/dataspace-control-plane
   imagePullPolicy: IfNotPresent
   otelEndpoint: "http://otel-collector:4317"
 

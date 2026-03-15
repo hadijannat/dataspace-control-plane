@@ -32,8 +32,8 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ include "temporal-workers.image" . | quote }}
+          imagePullPolicy: {{ include "temporal-workers.imagePullPolicy" . }}
           # Workers do not serve HTTP — no ports exposed except internal metrics
           env:
             - name: LOG_LEVEL

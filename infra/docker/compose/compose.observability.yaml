@@ -16,8 +16,6 @@
 #   3001  — Grafana (avoid conflict with web-console on 3000)
 #   3100  — Loki
 
-version: "3.9"
-
 services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.104.0

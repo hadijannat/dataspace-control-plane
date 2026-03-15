@@ -46,11 +46,3 @@ exporters:
       level: true
     retry_on_failure:
       enabled: true
-
-  # Debug exporter — local troubleshooting ONLY.
-  # NEVER configure in staging or production pipelines.
-  # Verbosity: basic (prints signal type and attribute count, not full payloads).
-  debug:
-    verbosity: basic
-    sampling_initial: 5
-    sampling_thereafter: 200

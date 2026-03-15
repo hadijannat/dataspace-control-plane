@@ -2,7 +2,6 @@
 # Applied over charts/platform/values.yaml
 
 global:
-  imageRegistry: ghcr.io/your-org/dataspace-control-plane
   imagePullPolicy: Always
   otelEndpoint: "http://otel-collector:4317"
 
@@ -11,7 +10,6 @@ control-api:
   replicaCount: 1
   image:
     tag: "dev"
-    pullPolicy: Always
   config:
     logLevel: DEBUG
 
@@ -20,7 +18,6 @@ temporal-workers:
   replicaCount: 1
   image:
     tag: "dev"
-    pullPolicy: Always
   config:
     logLevel: DEBUG
     temporalMaxConcurrentActivities: 5
@@ -31,7 +28,6 @@ web-console:
   replicaCount: 1
   image:
     tag: "dev"
-    pullPolicy: Always
   config:
     keycloakUrl: "http://keycloak.dev.dataspace.local"
 

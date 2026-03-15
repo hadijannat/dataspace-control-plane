@@ -35,9 +35,28 @@ resource "helm_release" "kube_prometheus_stack" {
     value = var.grafana_enabled
   }
 
-  set {
-    name  = "grafana.adminPassword"
-    value = "REPLACE_WITH_SECRET_VALUE"  # In production, inject via grafana.adminPassword from K8s secret
+  dynamic "set" {
+    for_each = var.grafana_admin_secret_name == null ? [] : [var.grafana_admin_secret_name]
+    content {
+      name  = "grafana.admin.existingSecret"
+      value = set.value
+    }
+  }
+
+  dynamic "set" {
+    for_each = var.grafana_admin_secret_name == null ? [] : [1]
+    content {
+      name  = "grafana.admin.userKey"
+      value = "admin-user"
+    }
+  }
+
+  dynamic "set" {
+    for_each = var.grafana_admin_secret_name == null ? [] : [1]
+    content {
+      name  = "grafana.admin.passwordKey"
+      value = "admin-password"
+    }
   }
 
   # Prometheus storage

@@ -1,10 +1,9 @@
 # Production EU umbrella overlay
 # Applied over charts/platform/values.yaml
 #
-# REQUIRED: Update image.tag for each component with sha256 digest before release.
+# REQUIRED: Update image.digest for each component with sha256 digest before release.
 
 global:
-  imageRegistry: ghcr.io/your-org/dataspace-control-plane
   imagePullPolicy: IfNotPresent
   otelEndpoint: "http://otel-collector:4317"
 
@@ -12,7 +11,7 @@ control-api:
   enabled: true
   replicaCount: 3
   image:
-    tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+    digest: "sha256:REPLACE_WITH_REAL_DIGEST"
   config:
     logLevel: WARNING
   autoscaling:
@@ -24,7 +23,7 @@ temporal-workers:
   enabled: true
   replicaCount: 3
   image:
-    tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+    digest: "sha256:REPLACE_WITH_REAL_DIGEST"
   config:
     logLevel: WARNING
     temporalMaxConcurrentActivities: 20
@@ -38,7 +37,7 @@ web-console:
   enabled: true
   replicaCount: 3
   image:
-    tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+    digest: "sha256:REPLACE_WITH_REAL_DIGEST"
   config:
     keycloakUrl: "https://keycloak.eu.dataspace.example.com"
   autoscaling:
@@ -50,6 +49,6 @@ provisioning-agent:
   enabled: true
   replicaCount: 1
   image:
-    tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+    digest: "sha256:REPLACE_WITH_REAL_DIGEST"
   config:
     logLevel: WARNING

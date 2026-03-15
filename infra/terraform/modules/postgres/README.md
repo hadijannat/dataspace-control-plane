@@ -1,32 +1,34 @@
 # Module: postgres
 
-Deploys a PostgreSQL instance. The default implementation creates a single-node Postgres Deployment in Kubernetes, suitable for dev/CI. **Not for production data durability.**
+Provider-neutral Postgres contract with two modes:
 
-Before production deployment, replace `kubernetes_deployment.postgres` and `kubernetes_persistent_volume_claim.postgres_data` with a managed database resource:
+- `dev-scaffold`: deploy a single-node Postgres instance in Kubernetes for local development
+- `external`: reference a durable shared Postgres service by host, port, and secret name
 
-- **Google Cloud SQL**: `google_sql_database_instance` + `google_sql_database` + `google_sql_user`
-- **AWS RDS**: `aws_db_instance`
-- **Azure Database for PostgreSQL Flexible Server**: `azurerm_postgresql_flexible_server`
-- **CloudNativePG operator**: Use a `Cluster` CRD via `kubectl_manifest`
+## Notes
 
-## Inputs
+- The Kubernetes deployment path is for local development only. It is not a production durability story.
+- Shared environments should use `mode = "external"` and inject credentials through an existing Kubernetes Secret or external secret workflow.
+- Secret bodies are intentionally not modeled for shared environments.
 
-| Name | Type | Default | Required | Description |
-|------|------|---------|----------|-------------|
-| `instance_name` | string | — | yes | Name prefix for all resources |
-| `namespace` | string | — | yes | K8s namespace |
-| `database_name` | string | — | yes | Default database name |
-| `username` | string | — | yes | Postgres username |
-| `storage_size` | string | `"10Gi"` | no | PVC size |
-| `version` | string | `"16"` | no | Postgres major version |
-| `backup_enabled` | bool | `true` | no | Enable backups (managed service feature) |
-| `labels` | map(string) | `{}` | no | Resource labels |
+## Key Inputs
+
+| Name | Description |
+|------|-------------|
+| `mode` | `dev-scaffold` or `external` |
+| `instance_name` | Resource name prefix |
+| `namespace` | Kubernetes namespace |
+| `database_name` | Logical database name |
+| `username` | Database username |
+| `external_host` | Shared Postgres hostname when `mode = "external"` |
+| `external_port` | Shared Postgres port when `mode = "external"` |
+| `external_secret_name` | Existing Secret name referenced by workloads when `mode = "external"` |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| `host` | In-cluster hostname |
-| `port` | Port (5432) |
+| `host` | In-cluster or external hostname |
+| `port` | In-cluster or external port |
 | `database_name` | Database name |
-| `secret_name` | K8s Secret name for Helm values |
+| `secret_name` | Secret reference for downstream workloads |

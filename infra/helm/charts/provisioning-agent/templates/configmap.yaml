@@ -6,7 +6,7 @@ metadata:
     {{- include "provisioning-agent.labels" . | nindent 4 }}
 data:
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
-  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.config.otlpEndpoint | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ coalesce .Values.config.otlpEndpoint .Values.global.otelEndpoint "" | quote }}
   EDC_CONTROL_URL: {{ .Values.config.edcControlUrl | quote }}
   EDC_MANAGEMENT_URL: {{ .Values.config.edcManagementUrl | quote }}
   KEYCLOAK_ADMIN_URL: {{ .Values.config.keycloakAdminUrl | quote }}

@@ -1,6 +1,6 @@
 output "registry_url" {
-  value       = "REPLACE_WITH_PROVIDER_REGISTRY_URL"
-  description = "URL of the container registry. Update after substituting the provider-specific resource."
+  value       = var.mode == "dev-scaffold" ? local.scaffold_registry_url : var.external_registry_url
+  description = "URL of the container registry."
 }
 
 output "registry_name" {

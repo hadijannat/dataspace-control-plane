@@ -1,12 +1,12 @@
 # Production EU environment overlay for temporal-workers
 # Applied over charts/temporal-workers/values.yaml
 #
-# REQUIRED: Replace image.tag with the real sha256 digest from CI.
+# REQUIRED: Replace image.digest with the real sha256 digest from CI.
 
 replicaCount: 3
 
 image:
-  tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+  digest: "sha256:REPLACE_WITH_REAL_DIGEST"
   pullPolicy: IfNotPresent
 
 resources:

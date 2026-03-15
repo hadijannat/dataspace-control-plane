@@ -15,6 +15,12 @@ variable "grafana_enabled" {
   description = "Deploy Grafana alongside Prometheus."
 }
 
+variable "grafana_admin_secret_name" {
+  type        = string
+  default     = null
+  description = "Optional existing Kubernetes Secret name for Grafana admin credentials. Leave null to use the chart-managed secret."
+}
+
 variable "loki_enabled" {
   type        = bool
   default     = false

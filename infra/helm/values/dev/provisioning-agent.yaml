@@ -1,0 +1,14 @@
+# Dev environment overlay for provisioning-agent
+# Applied over charts/provisioning-agent/values.yaml
+
+replicaCount: 1
+
+image:
+  tag: "dev"
+  pullPolicy: Always
+
+config:
+  logLevel: DEBUG
+
+autoscaling:
+  enabled: false

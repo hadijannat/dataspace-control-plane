@@ -12,8 +12,8 @@
     },
     "image": {
       "type": "object",
-      "required": ["repository", "tag"],
-      "additionalProperties": true,
+      "required": ["repository"],
+      "additionalProperties": false,
       "properties": {
         "repository": {
           "type": "string",
@@ -21,19 +21,36 @@
         },
         "tag": {
           "type": "string",
-          "minLength": 1,
-          "pattern": "^(sha256:[a-f0-9]{64}|[0-9]+\\.[0-9]+\\.[0-9]+.*)$"
+          "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^(sha256:[a-f0-9]{64}|sha256:REPLACE_WITH_REAL_DIGEST)$"
         },
         "pullPolicy": {
           "type": "string",
           "enum": ["Always", "IfNotPresent", "Never"]
         }
-      }
+      },
+      "oneOf": [
+        {
+          "required": ["tag"],
+          "not": {
+            "required": ["digest"]
+          }
+        },
+        {
+          "required": ["digest"],
+          "not": {
+            "required": ["tag"]
+          }
+        }
+      ]
     },
     "service": {
       "type": "object",
-      "required": ["port"],
-      "additionalProperties": true,
+      "required": ["port", "targetPort"],
+      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -54,69 +71,99 @@
     "secrets": {
       "type": "object",
       "required": ["vaultSecretName", "keycloakAdminSecretName", "edcApiKeySecretName"],
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "vaultSecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret referencing Vault credentials"
+          "minLength": 1
         },
         "keycloakAdminSecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret containing Keycloak admin credentials"
+          "minLength": 1
         },
         "edcApiKeySecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret containing EDC management API key"
+          "minLength": 1
         }
       }
     },
     "config": {
       "type": "object",
-      "additionalProperties": true,
+      "required": ["logLevel", "otlpEndpoint", "edcControlUrl", "edcManagementUrl", "keycloakAdminUrl"],
+      "additionalProperties": false,
       "properties": {
         "logLevel": {
           "type": "string",
           "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]
         },
         "otlpEndpoint": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "edcControlUrl": {
           "type": "string",
-          "description": "EDC connector control plane URL"
+          "minLength": 1
         },
         "edcManagementUrl": {
           "type": "string",
-          "description": "EDC connector management API URL"
+          "minLength": 1
         },
         "keycloakAdminUrl": {
           "type": "string",
-          "description": "Keycloak admin REST API URL"
+          "minLength": 1
         }
       }
     },
     "resources": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "requests": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
-            "cpu": { "type": "string" },
-            "memory": { "type": "string" }
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
           }
         },
         "limits": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
-            "cpu": { "type": "string" },
-            "memory": { "type": "string" }
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
           }
+        }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
         }
       }
     }

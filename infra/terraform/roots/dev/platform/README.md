@@ -1,14 +1,12 @@
 # dev/platform
 
-Platform root for the dev environment. Deploys Postgres, Keycloak, Vault, and NGINX ingress.
+Deploys development scaffolds for Postgres, Keycloak, and Vault, plus the shared ingress controller.
 
-Run after `dev/bootstrap/`.
-
-## Usage
+Use this root after `dev/bootstrap`. It uses the environment backend example because the state namespace already exists.
 
 ```bash
 cd infra/terraform/roots/dev/platform
 terraform init -backend-config=../../../backends/dev.backend.hcl
-terraform plan
-terraform apply
+terraform plan -var-file=terraform.tfvars
+terraform apply -var-file=terraform.tfvars
 ```

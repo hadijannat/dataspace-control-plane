@@ -30,7 +30,7 @@ except ImportError:
 
 SCHEMAS_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = SCHEMAS_ROOT.parent
-DEFAULT_OUT = REPO_ROOT / "docs" / "schemas"
+DEFAULT_OUT = SCHEMAS_ROOT / "_shared" / "derived" / "docs"
 FAMILIES = ["vc", "odrl", "aas", "dpp", "metering", "enterprise-mapping"]
 
 
@@ -88,6 +88,15 @@ def _render_family(family: str, family_dir: Path) -> str:
     if source_schemas:
         lines.append("## Local Source Schemas")
         lines.append("")
+
+    bundle_schemas = sorted((family_dir / "bundles").glob("*.schema.json")) \
+        if (family_dir / "bundles").exists() else []
+    if bundle_schemas:
+        lines.append("## Published Bundles")
+        lines.append("")
+        for bp in bundle_schemas:
+            lines.append(f"- `{bp.relative_to(family_dir)}`")
+        lines.append("")
         lines.append("| File | Title | Description |")
         lines.append("|------|-------|-------------|")
         for sp in source_schemas:
@@ -131,6 +140,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     families = [args.family] if args.family else FAMILIES
+
+    # SECURITY: --out-dir must stay inside SCHEMAS_ROOT.
+    try:
+        args.out_dir.resolve().relative_to(SCHEMAS_ROOT.resolve())
+    except ValueError:
+        print(
+            f"ERROR: --out-dir must be inside SCHEMAS_ROOT ({SCHEMAS_ROOT}): {args.out_dir}",
+            file=sys.stderr,
+        )
+        return 1
+
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     errors = 0
@@ -143,7 +163,11 @@ def main(argv: list[str] | None = None) -> int:
             content = _render_family(family, family_dir)
             out = args.out_dir / f"{family}.md"
             out.write_text(content)
-            print(f"  OK   {out.relative_to(REPO_ROOT)}")
+            try:
+                rel = out.relative_to(REPO_ROOT)
+            except ValueError:
+                rel = out
+            print(f"  OK   {rel}")
         except Exception as exc:
             print(f"  FAIL {family}: {exc}", file=sys.stderr)
             errors += 1
@@ -162,7 +186,12 @@ def main(argv: list[str] | None = None) -> int:
         index_lines.append(f"| [`{family}`]({family}.md) | {desc} |")
     index_lines.append(f"\n---\n*Generated {date.today().isoformat()}*")
     (args.out_dir / "index.md").write_text("\n".join(index_lines) + "\n")
-    print(f"  OK   {(args.out_dir / 'index.md').relative_to(REPO_ROOT)}")
+    index_path = args.out_dir / "index.md"
+    try:
+        rel = index_path.relative_to(REPO_ROOT)
+    except ValueError:
+        rel = index_path
+    print(f"  OK   {rel}")
 
     return 1 if errors else 0
 

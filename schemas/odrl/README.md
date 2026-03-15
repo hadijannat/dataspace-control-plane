@@ -7,14 +7,14 @@ Base ODRL policy schema family. Policy-profile vocabularies (`cx-policy:*`, Gaia
 | Subdirectory | Contents |
 |---|---|
 | `vendor/w3c/` | Pinned W3C ODRL JSON-LD context and Turtle vocabulary |
-| `vendor/profiles/` | Pinned ecosystem profile artifacts (Catena-X, Gaia-X) |
+| `vendor/profiles/` | Pinned reusable ecosystem profile artifacts (for example Catena-X) |
 | `source/base/` | JSON Schema for ODRL offer, agreement, set, permission, prohibition, obligation, constraint, duty |
 | `source/ast/` | Internal compact AST and parse-report schemas for non-graph runtime use |
 | `derived/jsonld/` | JSON-LD normalized policy forms (generated) |
 | `derived/json-schema/` | Normalized JSON Schema artifacts from upstream (generated) |
 | `bundles/` | Compound bundle documents |
-| `examples/valid/` | Valid ODRL instances |
-| `examples/invalid/` | Instances that must fail |
+| `examples/valid/<artifact-id>/` | Valid ODRL instances scoped to a registered artifact |
+| `examples/invalid/<artifact-id>/` | Instances that must fail for a registered artifact |
 | `tests/` | Pytest tests for this family |
 
 ## Design decisions
@@ -28,7 +28,7 @@ Base ODRL policy schema family. Policy-profile vocabularies (`cx-policy:*`, Gaia
 
 - W3C ODRL Information Model 2.2 — `vendor/w3c/odrl-context.jsonld`
 - W3C ODRL Vocabulary 2.2 — `vendor/w3c/odrl-vocab.ttl`
-- Catena-X ODRL Profile 24.05 — `vendor/profiles/catenax-odrl-profile-24.05.jsonld`
+- Catena-X ODRL Profile 24.05 — `vendor/profiles/catenax-odrl-profile-24.05.ttl`
 
 ## Refreshing vendor artifacts
 

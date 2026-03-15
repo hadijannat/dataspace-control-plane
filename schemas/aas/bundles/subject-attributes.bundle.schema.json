@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/bundles/subject-attributes.bundle.schema.json",
+  "title": "AAS Subject Attributes",
+  "description": "ABAC subject attributes for AAS Part 4. Describes who is requesting access: role class, optional BPN identifier, credential type, and arbitrary extension claims.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 4",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "subjectClass"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "subjectClass": {
+      "type": "string",
+      "description": "Role or class of the accessing subject",
+      "examples": [
+        "public",
+        "authority",
+        "legitimate_interest",
+        "manufacturer",
+        "operator",
+        "user"
+      ]
+    },
+    "subjectId": {
+      "type": "string",
+      "description": "Optional identifier (e.g. BPN, DID, or internal role ID)"
+    },
+    "credentialType": {
+      "type": "string",
+      "description": "Credential type presented for authentication",
+      "examples": [
+        "VerifiableCredential",
+        "OAuth2Token",
+        "APIKey"
+      ]
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Additional subject attributes (role claims, organization, etc.)",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.362260+00:00"
+}

@@ -14,7 +14,9 @@ upstream_standards:
 validation_dialect: "https://json-schema.org/draft/2020-12/schema"
 
 artifact_classes:
+  - vendor
   - source
+  - derived
   - bundles
   - examples
 
@@ -29,6 +31,7 @@ ci_gates:
   - "pytest tests/unit -k metering_schemas"
 
 notes: |
+  vendor/ is intentionally empty unless a shared upstream transport or vocabulary asset is pinned.
   Metering is billable/compliance evidence — NOT operational telemetry.
   Business record must be independent of transport envelope.
   All usage records are append-only and immutable.

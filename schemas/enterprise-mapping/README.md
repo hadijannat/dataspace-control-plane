@@ -9,9 +9,11 @@ JSON Schema DSL for describing source data models, field mappings, transform ste
 | `source/mapping/` | Source model, target model ref, mapping spec, field mapping, transform step, lineage graph, approval, confidence |
 | `source/source-kinds/` | Source-kind references: OData CSDL, SQL model, event schema, object metadata |
 | `source/execution/` | Mapping run and result schemas |
+| `vendor/` | Intentionally empty unless a shared upstream source-model artifact must be pinned locally |
+| `derived/` | Generated normalized artifacts |
 | `bundles/` | Compound bundles |
-| `examples/valid/` | Valid mapping specs |
-| `examples/invalid/` | Instances that must fail |
+| `examples/valid/<artifact-id>/` | Valid mapping instances for a registered artifact |
+| `examples/invalid/<artifact-id>/` | Instances that must fail for a registered artifact |
 | `tests/` | Pytest tests |
 
 ## Design decisions

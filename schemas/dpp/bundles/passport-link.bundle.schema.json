@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/bundles/passport-link.bundle.schema.json",
+  "title": "Passport Link",
+  "description": "A typed link between two Digital Product Passports. The base schema models reusable relationship kinds; ecosystem and regulation packs can map these to their own lifecycle terminology.",
+  "x-source-standard": "IDTA DPP4.0",
+  "x-source-version": "4.0",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "linkedPassportId",
+    "linkType",
+    "linkedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "linkedPassportId": {
+      "type": "string",
+      "description": "The passportId of the linked passport (predecessor or successor)"
+    },
+    "linkType": {
+      "type": "string",
+      "enum": [
+        "predecessor",
+        "successor",
+        "component_of",
+        "derived_from",
+        "supersedes"
+      ],
+      "description": "Generic relationship kind between passports. Packs may define pack-specific terminology while preserving these base relationship semantics."
+    },
+    "linkedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this link was created"
+    },
+    "linkedBy": {
+      "type": "string",
+      "description": "Actor identifier that created this link"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Human-readable context for the link"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.522762+00:00"
+}

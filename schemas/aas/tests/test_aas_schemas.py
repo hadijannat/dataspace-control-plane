@@ -14,8 +14,10 @@ import pytest
 
 SCHEMAS_ROOT = Path(__file__).resolve().parent.parent.parent
 AAS_SOURCE = SCHEMAS_ROOT / "aas" / "source"
-AAS_EXAMPLES_VALID = SCHEMAS_ROOT / "aas" / "examples" / "valid"
-AAS_EXAMPLES_INVALID = SCHEMAS_ROOT / "aas" / "examples" / "invalid"
+
+
+def _example_dir(validity: str, artifact_id: str) -> Path:
+    return SCHEMAS_ROOT / "aas" / "examples" / validity / artifact_id
 
 try:
     import jsonschema
@@ -80,7 +82,7 @@ def test_schema_validates_against_meta(schema_path: Path) -> None:
 
 def test_valid_shell_example() -> None:
     schema = _load(AAS_SOURCE / "profiles" / "shell.schema.json")
-    example = _load(AAS_EXAMPLES_VALID / "shell-example.json")
+    example = _load(_example_dir("valid", "aas.shell") / "shell-example.json")
     registry = _build_registry()
     validator = jsonschema.Draft202012Validator(schema, registry=registry)
     errors = list(validator.iter_errors(example))
@@ -89,7 +91,7 @@ def test_valid_shell_example() -> None:
 
 def test_invalid_shell_missing_id() -> None:
     schema = _load(AAS_SOURCE / "profiles" / "shell.schema.json")
-    example = _load(AAS_EXAMPLES_INVALID / "missing-id.json")
+    example = _load(_example_dir("invalid", "aas.shell") / "missing-id.json")
     registry = _build_registry()
     validator = jsonschema.Draft202012Validator(schema, registry=registry)
     errors = list(validator.iter_errors(example))
@@ -110,7 +112,7 @@ def test_manifest_exists() -> None:
 
 def test_no_pack_specific_terms_in_source() -> None:
     """Ensure no Catena-X or ESPR-specific terms are hardcoded in aas/ source schemas."""
-    forbidden_terms = ["cx-policy:", "cx:Traceability", "espr:", "battery_passport"]
+    forbidden_terms = ["cx-policy:", "cx:Traceability", "espr:", "battery_passport", "Catena-X specific"]
     violations = []
     for schema_path in _schema_files():
         content = schema_path.read_text()

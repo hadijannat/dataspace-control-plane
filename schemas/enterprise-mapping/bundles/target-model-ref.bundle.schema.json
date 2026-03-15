@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/target-model-ref.bundle.schema.json",
+  "title": "Target Model Reference",
+  "description": "Reference to the target model that a mapping spec maps into \u2014 typically a core/ domain model or a canonical schema artifact.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "targetModelId",
+    "targetModelType"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "targetModelId": {
+      "type": "string",
+      "description": "Stable identifier of the target model, e.g. a core/ domain entity name"
+    },
+    "targetModelType": {
+      "type": "string",
+      "enum": [
+        "core_domain_model",
+        "canonical_schema",
+        "aas_submodel",
+        "odrl_policy",
+        "vc_credential",
+        "custom"
+      ],
+      "description": "Category of target model"
+    },
+    "schemaUri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional URI of the JSON Schema that validates the target model"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the target model this mapping was written against"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.696656+00:00"
+}

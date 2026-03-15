@@ -14,7 +14,7 @@
   "properties": {
     "sub": {
       "type": "string",
-      "description": "Subject — identifier of the token owner (DID, BPN, or opaque ID)"
+      "description": "Subject — identifier of the token owner (for example a DID, URI, or opaque ID)"
     },
     "iss": {
       "type": "string",
@@ -40,11 +40,6 @@
       "type": "array",
       "items": {"type": "string"},
       "description": "AAS role claims, e.g. aas:reader, aas:writer, aas:administrator"
-    },
-    "bpn": {
-      "type": "string",
-      "description": "Business Partner Number (Catena-X specific claim)",
-      "pattern": "^BPN[LSA][A-Z0-9]{12}$"
     },
     "aas_permissions": {
       "type": "array",

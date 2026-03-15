@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/bundles/settlement-batch.bundle.schema.json",
+  "title": "Settlement Batch",
+  "description": "A settlement batch groups one or more charge statements for bulk financial settlement. Represents the final step before payment reconciliation.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "batchId",
+    "statementIds",
+    "totalAmount",
+    "currency",
+    "settlementDate",
+    "status",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "batchId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "statementIds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "description": "Charge statement IDs included in this batch"
+    },
+    "totalAmount": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "settlementDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Target date for financial settlement"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "settled",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "paymentReference": {
+      "type": "string",
+      "description": "External payment system reference"
+    },
+    "settledAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.874034+00:00"
+}

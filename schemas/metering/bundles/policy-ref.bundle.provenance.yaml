@@ -1,0 +1,13 @@
+artifact_id: metering.policy-ref.bundle
+local_version: 1.0.0
+source_standard: null
+source_standard_version: null
+source_uris:
+- https://dataspace-control-plane.internal/schemas/metering/source/references/policy-ref.schema.json
+pack_dependencies: []
+effective_date_range:
+  from: '2026-03-15'
+  to: null
+generated_at: '2026-03-15T19:36:30.878289+00:00'
+generator: schemas/tools/bundle.py
+notes: Compound offline bundle generated from a registered source entrypoint.

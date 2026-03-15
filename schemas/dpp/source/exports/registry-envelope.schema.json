@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/exports/registry-envelope.schema.json",
   "title": "DPP Registry Submission Envelope",
-  "description": "Envelope for submitting a Digital Product Passport to an external product registry (e.g. EU DPP registry, Catena-X registry). Contains passport identity, shell reference, regulation pack IDs, and submission metadata.",
+  "description": "Envelope for submitting a Digital Product Passport to an external product registry. Contains passport identity, shell reference, pack IDs, and submission metadata.",
   "x-source-standard": "IDTA DPP4.0",
   "x-source-version": "4.0",
   "x-pack-dependencies": [],

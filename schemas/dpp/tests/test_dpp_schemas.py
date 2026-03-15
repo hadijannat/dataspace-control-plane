@@ -14,8 +14,10 @@ import pytest
 
 SCHEMAS_ROOT = Path(__file__).resolve().parent.parent.parent
 DPP_SOURCE = SCHEMAS_ROOT / "dpp" / "source"
-DPP_EXAMPLES_VALID = SCHEMAS_ROOT / "dpp" / "examples" / "valid"
-DPP_EXAMPLES_INVALID = SCHEMAS_ROOT / "dpp" / "examples" / "invalid"
+
+
+def _example_dir(validity: str, artifact_id: str) -> Path:
+    return SCHEMAS_ROOT / "dpp" / "examples" / validity / artifact_id
 
 try:
     import jsonschema
@@ -69,7 +71,7 @@ def test_schema_validates_against_meta(schema_path: Path) -> None:
 
 def test_valid_passport_example() -> None:
     schema = _load(DPP_SOURCE / "base" / "passport-envelope.schema.json")
-    example = _load(DPP_EXAMPLES_VALID / "passport-example.json")
+    example = _load(_example_dir("valid", "dpp.passport-envelope") / "passport-example.json")
     registry = _build_registry()
     validator = jsonschema.Draft202012Validator(schema, registry=registry)
     errors = list(validator.iter_errors(example))
@@ -78,7 +80,7 @@ def test_valid_passport_example() -> None:
 
 def test_invalid_passport_missing_subject() -> None:
     schema = _load(DPP_SOURCE / "base" / "passport-envelope.schema.json")
-    example = _load(DPP_EXAMPLES_INVALID / "missing-subject.json")
+    example = _load(_example_dir("invalid", "dpp.passport-envelope") / "missing-subject.json")
     registry = _build_registry()
     validator = jsonschema.Draft202012Validator(schema, registry=registry)
     errors = list(validator.iter_errors(example))
@@ -110,11 +112,12 @@ def test_lifecycle_states_include_terminal() -> None:
     assert "active" in states
 
 
-def test_link_types_include_repurposed_and_remanufactured() -> None:
+def test_link_types_are_generic_relationship_kinds() -> None:
     schema = _load(DPP_SOURCE / "base" / "passport-link.schema.json")
     link_types = schema["properties"]["linkType"]["enum"]
-    assert "repurposed" in link_types
-    assert "remanufactured" in link_types
+    assert "predecessor" in link_types
+    assert "successor" in link_types
+    assert "repurposed" not in link_types
 
 
 def test_manifest_exists() -> None:

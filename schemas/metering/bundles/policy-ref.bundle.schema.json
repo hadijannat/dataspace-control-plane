@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/bundles/policy-ref.bundle.schema.json",
+  "title": "Policy Reference",
+  "description": "Reference to the ODRL policy offer that was accepted to create an agreement. Provides lineage from usage record to original policy terms.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "policyId"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "policyId": {
+      "type": "string",
+      "format": "uri",
+      "description": "ODRL policy UID (offer uid)"
+    },
+    "policyType": {
+      "type": "string",
+      "enum": [
+        "offer",
+        "agreement",
+        "set"
+      ]
+    },
+    "providerId": {
+      "type": "string",
+      "description": "Provider BPN or DID who published this policy"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.878074+00:00"
+}

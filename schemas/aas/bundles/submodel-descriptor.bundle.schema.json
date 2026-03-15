@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/bundles/submodel-descriptor.bundle.schema.json",
+  "title": "AAS Submodel Descriptor",
+  "description": "AAS Submodel Descriptor per IDTA Release 25-01 Part 2. Registered in the AAS Registry; describes where a submodel can be reached and its semantic identity.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 2",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "id",
+    "semanticId"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Submodel identifier \u2014 matches Submodel.id"
+    },
+    "idShort": {
+      "type": "string"
+    },
+    "semanticId": {
+      "type": "object",
+      "required": [
+        "type",
+        "keys"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "value"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/aas__source__profiles__endpoint_ref_schema_json"
+      }
+    },
+    "description": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "language",
+          "text"
+        ],
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "administration": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "aas__source__profiles__endpoint_ref_schema_json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://dataspace-control-plane.internal/schemas/aas/source/profiles/endpoint-ref.schema.json",
+      "title": "AAS Endpoint Reference",
+      "description": "Protocol-specific endpoint descriptor for an AAS Shell or Submodel. Captures interface name, protocol, and address.",
+      "x-source-standard": "IDTA AAS Release 25-01 Part 2",
+      "x-source-version": "25-01",
+      "x-pack-dependencies": [],
+      "type": "object",
+      "required": [
+        "interface",
+        "protocolInformation"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "interface": {
+          "type": "string",
+          "description": "Interface type, e.g. AAS-3.0, AAS-REPOSITORY-3.0, SUBMODEL-3.0",
+          "examples": [
+            "AAS-3.0",
+            "AAS-REPOSITORY-3.0",
+            "SUBMODEL-3.0",
+            "AASX-SERVER-3.0"
+          ]
+        },
+        "protocolInformation": {
+          "type": "object",
+          "required": [
+            "href"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "href": {
+              "type": "string",
+              "format": "uri",
+              "description": "Endpoint URL"
+            },
+            "endpointProtocol": {
+              "type": "string",
+              "description": "Transport protocol, e.g. HTTP, HTTPS, OPC UA",
+              "examples": [
+                "HTTP",
+                "HTTPS",
+                "OPC UA"
+              ]
+            },
+            "endpointProtocolVersion": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Supported protocol versions"
+            },
+            "subprotocol": {
+              "type": "string",
+              "description": "Subprotocol, e.g. WebSocket",
+              "examples": [
+                "WebSocket",
+                "MQTT"
+              ]
+            },
+            "subprotocolBody": {
+              "type": "string",
+              "description": "Subprotocol-specific configuration"
+            },
+            "subprotocolBodyEncoding": {
+              "type": "string",
+              "description": "Encoding for subprotocolBody",
+              "examples": [
+                "plain/text",
+                "application/json"
+              ]
+            },
+            "securityAttributes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "key",
+                  "value"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.357067+00:00"
+}

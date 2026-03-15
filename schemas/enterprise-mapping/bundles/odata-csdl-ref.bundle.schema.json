@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/odata-csdl-ref.bundle.schema.json",
+  "title": "OData CSDL Reference",
+  "description": "Reference to an OData 4.01 CSDL (Common Schema Definition Language) document describing the source data model. Preserves the source-native OData metadata without flattening it into a generic schema.",
+  "x-source-standard": "OData 4.01 CSDL JSON",
+  "x-source-version": "4.01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "kind",
+    "serviceUrl"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "odata",
+      "description": "Discriminator for source-kind polymorphism"
+    },
+    "serviceUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "OData service root URL from which $metadata can be fetched"
+    },
+    "metadataUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Direct URL to the CSDL document (typically serviceUrl/$metadata)"
+    },
+    "localCsdlPath": {
+      "type": "string",
+      "description": "Relative path to pinned CSDL document (preferred over live fetch)"
+    },
+    "odataVersion": {
+      "type": "string",
+      "enum": [
+        "4.0",
+        "4.01"
+      ],
+      "description": "OData protocol version"
+    },
+    "namespace": {
+      "type": "string",
+      "description": "Primary CSDL namespace, e.g. Microsoft.Dynamics365.Sales"
+    },
+    "pinnedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the CSDL was pinned locally"
+    },
+    "csdlChecksum": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 of the pinned CSDL document"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.699024+00:00"
+}

@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-link.schema.json",
   "title": "Passport Link",
-  "description": "A typed link between two Digital Product Passports — predecessor (original) to successor (derived after repurposing, remanufacturing, or cascaded component). Battery Regulation (EU) 2023/1542 and ESPR both require that a successor passport reference the original.",
+  "description": "A typed link between two Digital Product Passports. The base schema models reusable relationship kinds; ecosystem and regulation packs can map these to their own lifecycle terminology.",
   "x-source-standard": "IDTA DPP4.0",
   "x-source-version": "4.0",
-  "x-pack-dependencies": ["battery_passport", "espr_dpp"],
+  "x-pack-dependencies": [],
 
   "type": "object",
   "required": ["linkedPassportId", "linkType", "linkedAt"],
@@ -19,13 +19,13 @@
     "linkType": {
       "type": "string",
       "enum": [
-        "repurposed",
-        "remanufactured",
-        "cascaded_component",
-        "recycled_input",
-        "corrected_version"
+        "predecessor",
+        "successor",
+        "component_of",
+        "derived_from",
+        "supersedes"
       ],
-      "description": "Semantic type of the link. 'repurposed' and 'remanufactured' are battery regulation terms; 'cascaded_component' is used for disassembly; 'corrected_version' for regulatory data corrections."
+      "description": "Generic relationship kind between passports. Packs may define pack-specific terminology while preserving these base relationship semantics."
     },
     "linkedAt": {
       "type": "string",
@@ -34,7 +34,7 @@
     },
     "linkedBy": {
       "type": "string",
-      "description": "Actor (BPN or DID) who created this link"
+      "description": "Actor identifier that created this link"
     },
     "notes": {
       "type": "string",

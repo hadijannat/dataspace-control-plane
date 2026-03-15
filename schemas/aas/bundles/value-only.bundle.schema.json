@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/bundles/value-only.bundle.schema.json",
+  "title": "AAS Value-Only Payload",
+  "description": "Map of idShort \u2192 value for each submodel element. Nested SubmodelElementCollections are represented as nested objects.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 2",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "additionalProperties": {
+    "oneOf": [
+      {
+        "type": "string"
+      },
+      {
+        "type": "number"
+      },
+      {
+        "type": "boolean"
+      },
+      {
+        "type": "null"
+      },
+      {
+        "type": "object",
+        "description": "Nested SubmodelElementCollection or complex value",
+        "additionalProperties": true
+      },
+      {
+        "type": "array",
+        "description": "SubmodelElementList value"
+      }
+    ]
+  },
+  "examples": [
+    {
+      "BatteryId": "BAT-2026-001",
+      "ManufacturerName": "Example GmbH",
+      "CarbonFootprintKgCO2eq": "42.5",
+      "ChemistryInfo": {
+        "BatteryChemistry": "NMC",
+        "CapacityRatedKwh": "75.0"
+      }
+    }
+  ],
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.358805+00:00"
+}

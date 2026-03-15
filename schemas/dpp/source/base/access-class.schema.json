@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/base/access-class.schema.json",
   "title": "Passport Access Class",
-  "description": "A named access class for a Digital Product Passport. Defines who belongs to this class and which field paths they can read. Regulation packs inject Annex XIII, ESPR, or other access tiers at passport construction time.",
+  "description": "A named access class for a Digital Product Passport. Defines who belongs to this class and which field paths they can read. Specializations can add policy overlays to these generic access classes.",
   "x-source-standard": "IDTA DPP4.0",
   "x-source-version": "4.0",
   "x-pack-dependencies": [],
@@ -14,8 +14,8 @@
   "properties": {
     "className": {
       "type": "string",
-      "description": "Access class name, e.g. public, authority, legitimate_interest, manufacturer",
-      "examples": ["public", "authority", "legitimate_interest", "manufacturer", "operator"]
+      "description": "Access class name, e.g. public, operator, auditor, partner",
+      "examples": ["public", "operator", "auditor", "partner", "authority"]
     },
     "description": {
       "type": "string",
@@ -26,18 +26,18 @@
       "items": {"type": "string"},
       "description": "Field paths readable by this class. Supports * (single element) and ** (recursive wildcard).",
       "examples": [
-        ["PublicData.BatteryId", "PublicData.ManufacturerName"],
+        ["summary.subjectId", "summary.productClass"],
         ["**"]
       ]
     },
     "condition": {
       "type": "string",
-      "description": "Optional condition that must be satisfied for access (e.g. legitimate_interest_verified)"
+      "description": "Optional condition that must be satisfied for access"
     },
     "regulationSource": {
       "type": "string",
-      "description": "Normative source that defines this access class",
-      "examples": ["Regulation (EU) 2023/1542 Annex XIII", "Regulation (EU) 2024/1781"]
+      "description": "Normative or contractual source that defines this access class",
+      "examples": ["platform-policy:v1", "contract-template:shared-read-access"]
     },
     "effectiveFrom": {
       "type": "string",

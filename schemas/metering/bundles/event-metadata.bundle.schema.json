@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/metering/bundles/event-metadata.bundle.schema.json",
+  "title": "Metering Event Metadata",
+  "description": "Operational metadata attached to a metering event for routing, deduplication, and tracing. Separate from the business payload.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "publishedAt",
+    "producerSystem"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Matches CloudEvents id / usage-record.recordId"
+    },
+    "eventType": {
+      "type": "string",
+      "description": "Matches CloudEvents type"
+    },
+    "publishedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producerSystem": {
+      "type": "string",
+      "description": "System that published the event"
+    },
+    "partition": {
+      "type": "string",
+      "description": "Kafka partition key (tenantId for ordering)"
+    },
+    "retryCount": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "dlqReason": {
+      "type": "string",
+      "description": "Set if this event is in the dead-letter queue"
+    },
+    "traceId": {
+      "type": "string",
+      "description": "OTel trace ID"
+    },
+    "spanId": {
+      "type": "string",
+      "description": "OTel span ID"
+    },
+    "messagingSystem": {
+      "type": "string",
+      "description": "OTel messaging.system attribute",
+      "examples": [
+        "kafka",
+        "rabbitmq",
+        "http"
+      ]
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.880515+00:00"
+}

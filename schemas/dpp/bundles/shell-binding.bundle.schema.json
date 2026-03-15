@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/bundles/shell-binding.bundle.schema.json",
+  "title": "AAS DPP4.0 Shell Binding",
+  "description": "Binding contract between a Digital Product Passport and its AAS Shell representation. Specifies how passportId maps to AAS shell id, how submodels are referenced, and which AAS shell properties are mandatory for a DPP4.0-compliant shell.",
+  "x-source-standard": "IDTA DPP4.0 / AAS Release 25-01",
+  "x-source-version": "4.0/25-01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "shellId",
+    "passportId",
+    "globalAssetId",
+    "submodelRefs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "shellId": {
+      "type": "string",
+      "description": "AAS Shell id \u2014 must be the base64url-encoded passportId per DPP4.0 identification scheme"
+    },
+    "passportId": {
+      "type": "string",
+      "description": "Original passportId before AAS encoding"
+    },
+    "globalAssetId": {
+      "type": "string",
+      "description": "Asset identifier of the physical product (subjectId from passport-subject)"
+    },
+    "submodelRefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "submodelId",
+          "semanticId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "submodelId": {
+            "type": "string",
+            "description": "Submodel id (URN or IRI)"
+          },
+          "semanticId": {
+            "type": "string",
+            "description": "Semantic ID URI of the submodel type"
+          },
+          "idShort": {
+            "type": "string"
+          },
+          "accessClass": {
+            "type": "string",
+            "description": "Access class controlling this submodel's visibility"
+          }
+        }
+      },
+      "description": "Submodels registered for this DPP shell"
+    },
+    "endpointHref": {
+      "type": "string",
+      "format": "uri",
+      "description": "HTTPS endpoint where this shell can be accessed via AAS Part 2 APIs"
+    },
+    "registryId": {
+      "type": "string",
+      "description": "AAS Registry instance where this shell is registered"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.526998+00:00"
+}

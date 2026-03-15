@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/aas/bundles/shell-descriptor.bundle.schema.json",
+  "title": "AAS Shell Descriptor",
+  "description": "AAS Shell Descriptor shape per IDTA Release 25-01 Part 2 APIs. Used by the AAS Registry to describe where a shell can be reached (endpoints) and which submodels it exposes.",
+  "x-source-standard": "IDTA AAS Release 25-01 Part 2",
+  "x-source-version": "25-01",
+  "x-pack-dependencies": [],
+  "$defs": {
+    "endpoint": {
+      "$ref": "#/$defs/aas__source__profiles__endpoint_ref_schema_json"
+    },
+    "submodelDescriptor": {
+      "$ref": "#/$defs/aas__source__profiles__submodel_descriptor_schema_json"
+    }
+  },
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Shell identifier \u2014 matches AssetAdministrationShell.id"
+    },
+    "idShort": {
+      "type": "string"
+    },
+    "globalAssetId": {
+      "type": "string",
+      "description": "Asset identifier \u2014 matches AssetInformation.globalAssetId"
+    },
+    "assetKind": {
+      "type": "string",
+      "enum": [
+        "Instance",
+        "NotApplicable",
+        "Type"
+      ]
+    },
+    "assetType": {
+      "type": "string"
+    },
+    "specificAssetIds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "description": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "language",
+          "text"
+        ],
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "displayName": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "language",
+          "text"
+        ],
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/endpoint"
+      },
+      "description": "Protocol-specific endpoint addresses for this shell"
+    },
+    "submodelDescriptors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/submodelDescriptor"
+      }
+    }
+  },
+  "x-bundle-generated-at": "2026-03-15T19:36:30.355000+00:00"
+}

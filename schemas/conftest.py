@@ -44,3 +44,7 @@ def _build_schema_registry():
 def schema_registry():
     """Session-scoped local JSON Schema registry for offline $ref resolution."""
     return _build_schema_registry()
+
+
+def example_dir(family: str, validity: str, artifact_id: str) -> Path:
+    return SCHEMAS_ROOT / family / "examples" / validity / artifact_id

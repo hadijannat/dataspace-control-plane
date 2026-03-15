@@ -1,161 +1,180 @@
-# schemas/locks/upstream.lock.yaml
-# Pinned upstream normative artifacts.
-# Updated by: python schemas/tools/pin_upstream.py
-# Never edit vendor/ files manually — re-run pin_upstream.py and recommit.
-#
-# Required fields per entry:
-#   artifact_id   — matches registry.yaml artifact_id
-#   family        — schema family directory
-#   local_path    — path relative to schemas/ root
-#   source_uri    — canonical URL from the standards body
-#   standard      — human-readable standard name
-#   version       — release/tag
-#   format        — jsonld | ttl | json-schema | yaml | openapi | xmi | xsd | pdf
-#   retrieved_at  — ISO-8601 datetime
-#   sha256        — hex digest of the pinned file
-#   license       — SPDX expression or plain description
-#   notes         — optional
-#
-# Entries with sha256: PENDING must be populated by running pin_upstream.py
-# before this lock file is considered valid for CI gate purposes.
-
-lock_version: "1.0.0"
-generated_at: "2026-03-14"
-
+lock_version: 1.0.0
+generated_at: '2026-03-15'
 upstream:
-
-  # ── W3C Verifiable Credentials ─────────────────────────────────────────
-  - artifact_id: w3c.vc-context-v2
-    family: vc
-    local_path: vc/vendor/w3c/vc-context-v2.jsonld
-    source_uri: "https://www.w3.org/ns/credentials/v2"
-    standard: "W3C Verifiable Credentials Data Model 2.0"
-    version: "2.0"
-    format: jsonld
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "W3C Software and Document License"
-    notes: "Canonical JSON-LD context. Pin before going to production."
-
-  - artifact_id: w3c.vc-vocab-v2
-    family: vc
-    local_path: vc/vendor/w3c/vc-vocab-v2.ttl
-    source_uri: "https://www.w3.org/2018/credentials"
-    standard: "W3C Verifiable Credentials Vocabulary"
-    version: "2.0"
-    format: ttl
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "W3C Software and Document License"
-    notes: "RDF vocabulary for VC terms."
-
-  - artifact_id: w3c.data-integrity-context
-    family: vc
-    local_path: vc/vendor/w3c/data-integrity-context.jsonld
-    source_uri: "https://w3id.org/security/data-integrity/v2"
-    standard: "W3C Data Integrity 1.0"
-    version: "1.0"
-    format: jsonld
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "W3C Software and Document License"
-    notes: "Data Integrity proof context."
-
-  - artifact_id: w3c.bitstring-status-list-context
-    family: vc
-    local_path: vc/vendor/w3c/bitstring-status-list-context.jsonld
-    source_uri: "https://www.w3.org/ns/credentials/status/bitstring-status-list/v1"
-    standard: "W3C Bitstring Status List v1.0"
-    version: "1.0"
-    format: jsonld
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "W3C Software and Document License"
-    notes: "Status list context file."
-
-  - artifact_id: w3c.controlled-identifiers-context
-    family: vc
-    local_path: vc/vendor/w3c/controlled-identifiers-context.jsonld
-    source_uri: "https://www.w3.org/ns/did/v1"
-    standard: "W3C Controlled Identifiers"
-    version: "1.0"
-    format: jsonld
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "W3C Software and Document License"
-    notes: "DID/CID context. Required for DID-based issuers in VCs."
-
-  # ── W3C ODRL ───────────────────────────────────────────────────────────
-  - artifact_id: w3c.odrl-context
-    family: odrl
-    local_path: odrl/vendor/w3c/odrl-context.jsonld
-    source_uri: "http://www.w3.org/ns/odrl/2/"
-    standard: "W3C ODRL Information Model 2.2"
-    version: "2.2"
-    format: jsonld
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "W3C Software and Document License"
-    notes: "ODRL 2.2 JSON-LD context."
-
-  - artifact_id: w3c.odrl-vocab
-    family: odrl
-    local_path: odrl/vendor/w3c/odrl-vocab.ttl
-    source_uri: "https://www.w3.org/TR/odrl-vocab/"
-    standard: "W3C ODRL Vocabulary 2.2"
-    version: "2.2"
-    format: ttl
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "W3C Software and Document License"
-    notes: "ODRL vocabulary as Turtle."
-
-  # ── Catena-X ODRL Profile ─────────────────────────────────────────────
-  - artifact_id: cx.odrl-profile
-    family: odrl
-    local_path: odrl/vendor/profiles/catenax-odrl-profile-24.05.jsonld
-    source_uri: "https://w3id.org/catenax/policy/v1"
-    standard: "Catena-X ODRL Policy Profile 24.05"
-    version: "24.05"
-    format: jsonld
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "Apache-2.0"
-    notes: "Catena-X standardized contractual modules and cx-policy:* purpose vocabulary."
-
-  # ── AAS / IDTA ─────────────────────────────────────────────────────────
-  - artifact_id: idta.aas-part1-metamodel-25-01
-    family: aas
-    local_path: aas/vendor/idta-release-25-01/IDTA-01001-3-0_SpecificationAssetAdministrationShell_Part1_Metamodel.pdf
-    source_uri: "https://industrialdigitaltwin.io/aas-specifications/IDTA-01001-3-0"
-    standard: "IDTA AAS Part 1 Metamodel"
-    version: "25-01"
-    format: pdf
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "IDTA Publication License"
-    notes: "Normative metamodel spec. PDF only — machine-usable artifacts from admin-shell-io."
-
-  - artifact_id: idta.aas-json-schema-25-01
-    family: aas
-    local_path: aas/vendor/admin-shell-io/release-25-01/aas-specs-antora.schema.json
-    source_uri: "https://github.com/admin-shell-io/aas-specs-antora/releases/tag/v25-01"
-    standard: "IDTA AAS JSON Schema Release 25-01"
-    version: "25-01"
-    format: json-schema
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "Apache-2.0"
-    notes: "Upstream JSON Schema from admin-shell-io serialization repo."
-
-  - artifact_id: idta.aas-xml-schema-25-01
-    family: aas
-    local_path: aas/vendor/admin-shell-io/release-25-01/AAS.xsd
-    source_uri: "https://github.com/admin-shell-io/aas-specs-antora/releases/tag/v25-01"
-    standard: "IDTA AAS XML Schema Release 25-01"
-    version: "25-01"
-    format: xsd
-    retrieved_at: PENDING
-    sha256: PENDING
-    license: "Apache-2.0"
-    notes: "Upstream XML Schema from admin-shell-io."
+- artifact_id: w3c.vc-context-v2
+  family: vc
+  local_path: vc/vendor/w3c/vc-context-v2.jsonld
+  source_uri: https://www.w3.org/2025/credentials/vcdm/context/v2.jsonld
+  standard: W3C Verifiable Credentials Data Model 2.0
+  version: '2.0'
+  format: jsonld
+  retrieved_at: '2026-03-15T19:36:26.550685+00:00'
+  sha256: 59955ced6697d61e03f2b2556febe5308ab16842846f5b586d7f1f7adec92734
+  license: W3C Software and Document License
+  notes: Canonical VC v2 JSON-LD context.
+- artifact_id: w3c.vc-vocab-v2
+  family: vc
+  local_path: vc/vendor/w3c/vc-vocab-v2.ttl
+  source_uri: https://www.w3.org/2025/credentials/vcdm/vocab/v2/vocabulary.ttl
+  standard: W3C Verifiable Credentials Vocabulary
+  version: '2.0'
+  format: ttl
+  retrieved_at: '2026-03-15T19:36:26.644563+00:00'
+  sha256: 35a7c0572c001b791d2c4939139737fa0e2c54c8179974a71054151dfae64225
+  license: W3C Software and Document License
+  notes: Canonical VC vocabulary in Turtle.
+- artifact_id: w3c.vc-json-schema-v2
+  family: vc
+  local_path: vc/vendor/w3c/vc-json-schema-v2.json
+  source_uri: https://www.w3.org/ns/credentials/json-schema/v2.json
+  standard: W3C VC JSON Schema
+  version: '2.0'
+  format: json-schema
+  retrieved_at: '2026-03-15T19:36:26.739060+00:00'
+  sha256: ba10c5f9e1e7d76e685d8254c38e9b6f0fd8259c5ec8c3e8c166c995354fc679
+  license: W3C Software and Document License
+  notes: Official JSON Schema resource collection entry.
+- artifact_id: w3c.credential-schema-resource
+  family: vc
+  local_path: vc/vendor/w3c/json-schema-credential-schema.json
+  source_uri: https://www.w3.org/2022/credentials/v2/json-schema-credential-schema.json
+  standard: W3C VC JSON Schema Credential Schema
+  version: '2.0'
+  format: json-schema
+  retrieved_at: '2026-03-15T19:36:26.835546+00:00'
+  sha256: ba10c5f9e1e7d76e685d8254c38e9b6f0fd8259c5ec8c3e8c166c995354fc679
+  license: W3C Software and Document License
+  notes: Official credentialSchema resource shape.
+- artifact_id: w3c.data-integrity-context
+  family: vc
+  local_path: vc/vendor/w3c/data-integrity-context.jsonld
+  source_uri: https://www.w3.org/2025/credentials/vcdi/context/v2.jsonld
+  standard: W3C Data Integrity 1.0
+  version: '1.0'
+  format: jsonld
+  retrieved_at: '2026-03-15T19:36:26.926389+00:00'
+  sha256: 67f21e6e33a6c14e5ccfd2fc7865f7474fb71a04af7e94136cb399dfac8ae8f4
+  license: W3C Software and Document License
+  notes: Data Integrity proof context.
+- artifact_id: w3c.data-integrity-vocab
+  family: vc
+  local_path: vc/vendor/w3c/data-integrity-vocab.ttl
+  source_uri: https://www.w3.org/2025/credentials/vcdi/vocab/v2/vocabulary.ttl
+  standard: W3C Data Integrity Vocabulary
+  version: '1.0'
+  format: ttl
+  retrieved_at: '2026-03-15T19:36:27.036649+00:00'
+  sha256: e446e484b2fd43df9cb2a2c69b735ffa245dfc12f1d9b9305a98ac5e376a9f70
+  license: W3C Software and Document License
+  notes: Data Integrity vocabulary in Turtle.
+- artifact_id: w3c.bitstring-status-list-context
+  family: vc
+  local_path: vc/vendor/w3c/bitstring-status-list-context.jsonld
+  source_uri: https://www.w3.org/2025/credentials/sl/context/v1.jsonld
+  standard: W3C Bitstring Status List v1.0
+  version: '1.0'
+  format: jsonld
+  retrieved_at: '2026-03-15T19:36:27.143767+00:00'
+  sha256: fda5add353231e6a6884a46b12e6c75464281900cb348284d9c360f62381d9f7
+  license: W3C Software and Document License
+  notes: Bitstring status list context.
+- artifact_id: w3c.bitstring-status-list-vocab
+  family: vc
+  local_path: vc/vendor/w3c/bitstring-status-list-vocab.ttl
+  source_uri: https://www.w3.org/2025/credentials/sl/vocab/v1/vocabulary.ttl
+  standard: W3C Bitstring Status List Vocabulary
+  version: '1.0'
+  format: ttl
+  retrieved_at: '2026-03-15T19:36:27.256360+00:00'
+  sha256: 26d7e6e6a1f458c51bae8db765cd3b1f97e02ce14ded953bfad7e473425acb65
+  license: W3C Software and Document License
+  notes: Bitstring status list vocabulary in Turtle.
+- artifact_id: w3c.controlled-identifiers-context
+  family: vc
+  local_path: vc/vendor/w3c/controlled-identifiers-context.jsonld
+  source_uri: https://www.w3.org/2025/credentials/cid/context/v1.jsonld
+  standard: W3C Controlled Identifiers
+  version: '1.0'
+  format: jsonld
+  retrieved_at: '2026-03-15T19:36:27.354147+00:00'
+  sha256: ea216ecc1cb02cd39b693dba2250141e270ba0bf95890be107dd9a9e8e43de85
+  license: W3C Software and Document License
+  notes: Controlled Identifiers context.
+- artifact_id: w3c.odrl-context
+  family: odrl
+  local_path: odrl/vendor/w3c/odrl-context.jsonld
+  source_uri: https://www.w3.org/ns/odrl.jsonld
+  standard: W3C ODRL Information Model 2.2
+  version: '2.2'
+  format: jsonld
+  retrieved_at: '2026-03-15T19:36:27.545028+00:00'
+  sha256: bb55ab32bc6041c6ef723cbce89510128a4dfb9bec6024777240791b112c8b6c
+  license: W3C Software and Document License
+  notes: ODRL JSON-LD context.
+- artifact_id: w3c.odrl-vocab
+  family: odrl
+  local_path: odrl/vendor/w3c/odrl-vocab.ttl
+  source_uri: https://www.w3.org/ns/odrl/2/ODRL22.ttl
+  standard: W3C ODRL Vocabulary 2.2
+  version: '2.2'
+  format: ttl
+  retrieved_at: '2026-03-15T19:36:27.777440+00:00'
+  sha256: 7895765e80d86d1d0349d945a28b8a2479f03169572345080a5b3e561ef31457
+  license: W3C Software and Document License
+  notes: ODRL vocabulary in Turtle.
+- artifact_id: cx.odrl-profile
+  family: odrl
+  local_path: odrl/vendor/profiles/catenax-odrl-profile-24.05.ttl
+  source_uri: https://w3id.org/catenax/policy/v1
+  standard: Catena-X ODRL Policy Profile 24.05
+  version: '24.05'
+  format: ttl
+  retrieved_at: '2026-03-15T19:36:28.440014+00:00'
+  sha256: 39bd63743c9ff73df00ee8dc682a78efdb21e66415adcc5a57de34d936f2d5fa
+  license: CC-BY-4.0
+  notes: Reusable Catena-X profile vocabulary pinned as a shared vendor artifact.
+  resolved_uri: https://raw.githubusercontent.com/catenax-eV/cx-odrl-profile/main/profile.ttl
+- artifact_id: idta.aas-part1-metamodel
+  family: aas
+  local_path: aas/vendor/idta-release-25-01/IDTA-01001-3-0-1_SpecificationAssetAdministrationShell_Part1_Metamodel.pdf
+  source_uri: https://industrialdigitaltwin.org/en/wp-content/uploads/sites/2/2024/06/IDTA-01001-3-0-1_SpecificationAssetAdministrationShell_Part1_Metamodel.pdf
+  standard: IDTA AAS Part 1 Metamodel
+  version: 25-01-companion
+  format: pdf
+  retrieved_at: '2026-03-15T19:36:28.903252+00:00'
+  sha256: 12a671139c687b5cf7adfd899ffa348c073e5a63b018082f9762c470e2233791
+  license: IDTA Publication License
+  notes: Normative Part 1 PDF pinned alongside the machine-usable serialization artifacts.
+- artifact_id: idta.aas-json-schema-25-01
+  family: aas
+  local_path: aas/vendor/admin-shell-io/release-25-01/aas.json
+  source_uri: https://raw.githubusercontent.com/admin-shell-io/aas-specs/v3.1.0/schemas/json/aas.json
+  standard: admin-shell-io AAS JSON Schema
+  version: 3.1.0
+  format: json-schema
+  retrieved_at: '2026-03-15T19:36:29.138109+00:00'
+  sha256: 0e9cd5af9762fec5bdd31a7fe34beff35d663bd811e0d77b2fd6255e14d6ddb2
+  license: CC-BY-4.0
+  notes: Machine-usable JSON Schema companion aligned with the 25-01 release train.
+- artifact_id: idta.aas-xml-schema-25-01
+  family: aas
+  local_path: aas/vendor/admin-shell-io/release-25-01/AAS.xsd
+  source_uri: https://raw.githubusercontent.com/admin-shell-io/aas-specs/v3.1.0/schemas/xml/AAS.xsd
+  standard: admin-shell-io AAS XML Schema
+  version: 3.1.0
+  format: xsd
+  retrieved_at: '2026-03-15T19:36:29.406525+00:00'
+  sha256: 16b31664fe4f8cb3311750155e8cef67acebaf9b66f9bc87f74a7027c471816d
+  license: CC-BY-4.0
+  notes: Machine-usable XML Schema companion aligned with the 25-01 release train.
+- artifact_id: idta.aas-rdf-shacl-25-01
+  family: aas
+  local_path: aas/vendor/admin-shell-io/release-25-01/shacl-schema.ttl
+  source_uri: https://raw.githubusercontent.com/admin-shell-io/aas-specs/v3.1.0/schemas/rdf/shacl-schema.ttl
+  standard: admin-shell-io AAS RDF SHACL Schema
+  version: 3.1.0
+  format: ttl
+  retrieved_at: '2026-03-15T19:36:29.689532+00:00'
+  sha256: ff6680251bd328a06050ffefa8a7792c312b7ff7ccd6119524d0754d575cd2ce
+  license: CC-BY-4.0
+  notes: Machine-usable SHACL companion aligned with the 25-01 release train.

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/sql-model-ref.bundle.schema.json",
+  "title": "SQL Model Reference",
+  "description": "Reference to a SQL database model (introspected schema metadata). Used when the source is a relational database accessed via the sql_extract adapter.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "kind",
+    "database",
+    "sourceSchema"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "sql"
+    },
+    "database": {
+      "type": "string",
+      "description": "Database name or alias (no credentials)"
+    },
+    "sourceSchema": {
+      "type": "string",
+      "description": "Database schema name, e.g. public, dbo, sales"
+    },
+    "dialect": {
+      "type": "string",
+      "enum": [
+        "postgresql",
+        "mysql",
+        "mssql",
+        "oracle",
+        "snowflake",
+        "bigquery"
+      ],
+      "description": "SQL dialect"
+    },
+    "localSchemaPath": {
+      "type": "string",
+      "description": "Relative path to pinned schema introspection JSON"
+    },
+    "introspectedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tableCount": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.699574+00:00"
+}

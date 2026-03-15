@@ -1,316 +1,1977 @@
-# schemas/registry.yaml
-# Catalog of every schema artifact in this repository.
-# Each entry is the authoritative record for one schema artifact.
-# Validated by _shared/meta/schema-catalog.schema.json.
-#
-# Fields:
-#   schema_family   — top-level subdirectory (aas, odrl, vc, dpp, metering, enterprise-mapping)
-#   artifact_id     — stable local identifier
-#   local_version   — semver for the repo-authored artifact
-#   upstream_standard — canonical standard name (e.g. "W3C VC Data Model 2.0")
-#   upstream_version  — release/tag of the upstream standard
-#   canonical_uri   — $id used inside the schema file
-#   formats         — list of formats: json-schema, jsonld, ttl, yaml, openapi, xmi, xsd
-#   entrypoints     — list of relative paths to primary artifact files
-#   dependencies    — other artifact_ids this schema references
-#   status          — draft | stable | deprecated
-#   effective_from  — ISO-8601 date
-#   effective_to    — ISO-8601 date or null
-
-schema_version: "1.0.0"
-generated_at: "2026-03-14"
-
+schema_version: 2.0.0
+generated_at: '2026-03-15'
 families:
-
-  # ── Shared meta-schemas ────────────────────────────────────────────────
-  - schema_family: _shared
-    artifact_id: meta.schema-catalog
-    local_version: "1.0.0"
-    upstream_standard: null
-    upstream_version: null
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/_shared/meta/schema-catalog.schema.json"
-    formats: [json-schema]
-    entrypoints: [_shared/meta/schema-catalog.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: _shared
-    artifact_id: meta.manifest
-    local_version: "1.0.0"
-    upstream_standard: null
-    upstream_version: null
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/_shared/meta/manifest.schema.json"
-    formats: [json-schema]
-    entrypoints: [_shared/meta/manifest.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: _shared
-    artifact_id: meta.provenance
-    local_version: "1.0.0"
-    upstream_standard: null
-    upstream_version: null
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/_shared/meta/provenance.schema.json"
-    formats: [json-schema]
-    entrypoints: [_shared/meta/provenance.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  # ── VC ────────────────────────────────────────────────────────────────
-  - schema_family: vc
-    artifact_id: vc.credential-envelope
-    local_version: "1.0.0"
-    upstream_standard: "W3C Verifiable Credentials Data Model 2.0"
-    upstream_version: "2.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/vc/source/envelope/credential-envelope.schema.json"
-    formats: [json-schema]
-    entrypoints: [vc/source/envelope/credential-envelope.schema.json]
-    dependencies: [vc.proof-metadata, vc.status-ref]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: vc
-    artifact_id: vc.presentation-envelope
-    local_version: "1.0.0"
-    upstream_standard: "W3C Verifiable Credentials Data Model 2.0"
-    upstream_version: "2.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/vc/source/envelope/presentation-envelope.schema.json"
-    formats: [json-schema]
-    entrypoints: [vc/source/envelope/presentation-envelope.schema.json]
-    dependencies: [vc.credential-envelope]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: vc
-    artifact_id: vc.credential-schema-ref
-    local_version: "1.0.0"
-    upstream_standard: "W3C Verifiable Credentials Data Model 2.0"
-    upstream_version: "2.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/vc/source/envelope/credential-schema-ref.schema.json"
-    formats: [json-schema]
-    entrypoints: [vc/source/envelope/credential-schema-ref.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: vc
-    artifact_id: vc.proof-metadata
-    local_version: "1.0.0"
-    upstream_standard: "W3C Data Integrity 1.0"
-    upstream_version: "1.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/vc/source/integrity/proof-metadata.schema.json"
-    formats: [json-schema]
-    entrypoints: [vc/source/integrity/proof-metadata.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: vc
-    artifact_id: vc.status-ref
-    local_version: "1.0.0"
-    upstream_standard: "W3C Verifiable Credentials Data Model 2.0"
-    upstream_version: "2.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/vc/source/integrity/status-ref.schema.json"
-    formats: [json-schema]
-    entrypoints: [vc/source/integrity/status-ref.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: vc
-    artifact_id: vc.bitstring-status-ref
-    local_version: "1.0.0"
-    upstream_standard: "W3C Bitstring Status List v1.0"
-    upstream_version: "1.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/vc/source/status/bitstring-status-ref.schema.json"
-    formats: [json-schema]
-    entrypoints: [vc/source/status/bitstring-status-ref.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: vc
-    artifact_id: vc.profile-base
-    local_version: "1.0.0"
-    upstream_standard: null
-    upstream_version: null
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/vc/source/profiles/profile-base.schema.json"
-    formats: [json-schema]
-    entrypoints: [vc/source/profiles/profile-base.schema.json]
-    dependencies: [vc.credential-envelope]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  # ── ODRL ──────────────────────────────────────────────────────────────
-  - schema_family: odrl
-    artifact_id: odrl.policy-offer
-    local_version: "1.0.0"
-    upstream_standard: "W3C ODRL Information Model 2.2"
-    upstream_version: "2.2"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/odrl/source/base/policy-offer.schema.json"
-    formats: [json-schema, jsonld]
-    entrypoints: [odrl/source/base/policy-offer.schema.json]
-    dependencies: [odrl.permission, odrl.prohibition, odrl.obligation]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: odrl
-    artifact_id: odrl.policy-agreement
-    local_version: "1.0.0"
-    upstream_standard: "W3C ODRL Information Model 2.2"
-    upstream_version: "2.2"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/odrl/source/base/policy-agreement.schema.json"
-    formats: [json-schema, jsonld]
-    entrypoints: [odrl/source/base/policy-agreement.schema.json]
-    dependencies: [odrl.permission, odrl.prohibition, odrl.obligation]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: odrl
-    artifact_id: odrl.canonical-policy-ast
-    local_version: "1.0.0"
-    upstream_standard: null
-    upstream_version: null
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/odrl/source/ast/canonical-policy-ast.schema.json"
-    formats: [json-schema]
-    entrypoints: [odrl/source/ast/canonical-policy-ast.schema.json]
-    dependencies: [odrl.policy-offer, odrl.policy-agreement]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  # ── AAS ───────────────────────────────────────────────────────────────
-  - schema_family: aas
-    artifact_id: aas.shell
-    local_version: "1.0.0"
-    upstream_standard: "IDTA AAS Release 25-01 Part 1"
-    upstream_version: "25-01"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/aas/source/profiles/shell.schema.json"
-    formats: [json-schema]
-    entrypoints: [aas/source/profiles/shell.schema.json]
-    dependencies: [aas.submodel, aas.endpoint-ref]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: aas
-    artifact_id: aas.submodel
-    local_version: "1.0.0"
-    upstream_standard: "IDTA AAS Release 25-01 Part 1"
-    upstream_version: "25-01"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/aas/source/profiles/submodel.schema.json"
-    formats: [json-schema]
-    entrypoints: [aas/source/profiles/submodel.schema.json]
-    dependencies: []
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: aas
-    artifact_id: aas.shell-descriptor
-    local_version: "1.0.0"
-    upstream_standard: "IDTA AAS Release 25-01 Part 2"
-    upstream_version: "25-01"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/aas/source/profiles/shell-descriptor.schema.json"
-    formats: [json-schema]
-    entrypoints: [aas/source/profiles/shell-descriptor.schema.json]
-    dependencies: [aas.endpoint-ref]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: aas
-    artifact_id: aas.access-rule
-    local_version: "1.0.0"
-    upstream_standard: "IDTA AAS Release 25-01 Part 4"
-    upstream_version: "25-01"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/aas/source/security/access-rule.schema.json"
-    formats: [json-schema]
-    entrypoints: [aas/source/security/access-rule.schema.json]
-    dependencies: [aas.subject-attributes, aas.object-attributes]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  # ── DPP ───────────────────────────────────────────────────────────────
-  - schema_family: dpp
-    artifact_id: dpp.passport-envelope
-    local_version: "1.0.0"
-    upstream_standard: "IDTA DPP4.0"
-    upstream_version: "4.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-envelope.schema.json"
-    formats: [json-schema]
-    entrypoints: [dpp/source/base/passport-envelope.schema.json]
-    dependencies: [dpp.passport-subject, dpp.passport-lifecycle, dpp.access-class]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: dpp
-    artifact_id: dpp.aas-dpp4o-shell-binding
-    local_version: "1.0.0"
-    upstream_standard: "IDTA DPP4.0 / AAS Release 25-01"
-    upstream_version: "4.0/25-01"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/dpp/source/implementation_profiles/aas_dpp4o/shell-binding.schema.json"
-    formats: [json-schema]
-    entrypoints: [dpp/source/implementation_profiles/aas_dpp4o/shell-binding.schema.json]
-    dependencies: [aas.shell, dpp.passport-envelope]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  # ── Metering ──────────────────────────────────────────────────────────
-  - schema_family: metering
-    artifact_id: metering.usage-record
-    local_version: "1.0.0"
-    upstream_standard: null
-    upstream_version: null
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/metering/source/business/usage-record.schema.json"
-    formats: [json-schema]
-    entrypoints: [metering/source/business/usage-record.schema.json]
-    dependencies: [metering.agreement-ref, metering.counterparty-ref, metering.usage-dimension]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  - schema_family: metering
-    artifact_id: metering.cloudevents-envelope
-    local_version: "1.0.0"
-    upstream_standard: "CloudEvents 1.0"
-    upstream_version: "1.0"
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/metering/source/transport/cloudevents-envelope.schema.json"
-    formats: [json-schema]
-    entrypoints: [metering/source/transport/cloudevents-envelope.schema.json]
-    dependencies: [metering.usage-record]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
-
-  # ── Enterprise Mapping ────────────────────────────────────────────────
-  - schema_family: enterprise-mapping
-    artifact_id: em.mapping-spec
-    local_version: "1.0.0"
-    upstream_standard: null
-    upstream_version: null
-    canonical_uri: "https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/mapping-spec.schema.json"
-    formats: [json-schema]
-    entrypoints: [enterprise-mapping/source/mapping/mapping-spec.schema.json]
-    dependencies: [em.source-model, em.field-mapping, em.lineage-graph]
-    status: stable
-    effective_from: "2026-03-14"
-    effective_to: null
+- schema_family: _shared
+  artifact_id: meta.manifest
+  local_version: 1.1.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/_shared/meta/manifest.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - _shared/meta/manifest.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: _shared
+  artifact_id: meta.provenance
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/_shared/meta/provenance.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - _shared/meta/provenance.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: _shared
+  artifact_id: meta.schema-catalog
+  local_version: 2.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/_shared/meta/schema-catalog.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - _shared/meta/schema-catalog.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.credential-envelope
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/source/envelope/credential-envelope.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/source/envelope/credential-envelope.schema.json
+  dependencies:
+  - vc.credential-schema-ref
+  - vc.proof-metadata
+  - vc.status-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.credential-schema-ref
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/source/envelope/credential-schema-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/source/envelope/credential-schema-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.presentation-envelope
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/source/envelope/presentation-envelope.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/source/envelope/presentation-envelope.schema.json
+  dependencies:
+  - vc.credential-envelope
+  - vc.proof-metadata
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.proof-metadata
+  local_version: 1.0.0
+  upstream_standard: W3C Data Integrity 1.0
+  upstream_version: '1.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/source/integrity/proof-metadata.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/source/integrity/proof-metadata.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.status-ref
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/source/integrity/status-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/source/integrity/status-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.profile-base
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/source/profiles/profile-base.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/source/profiles/profile-base.schema.json
+  dependencies:
+  - vc.credential-envelope
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.bitstring-status-ref
+  local_version: 1.0.0
+  upstream_standard: W3C Bitstring Status List v1.0
+  upstream_version: '1.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/source/status/bitstring-status-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/source/status/bitstring-status-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.canonical-policy-ast
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/ast/canonical-policy-ast.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/ast/canonical-policy-ast.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.parse-report
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/ast/parse-report.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/ast/parse-report.schema.json
+  dependencies:
+  - odrl.canonical-policy-ast
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.constraint
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/constraint.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/constraint.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.duty
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/duty.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/duty.schema.json
+  dependencies:
+  - odrl.constraint
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.obligation
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/obligation.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/obligation.schema.json
+  dependencies:
+  - odrl.duty
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.permission
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/permission.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/permission.schema.json
+  dependencies:
+  - odrl.constraint
+  - odrl.duty
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.policy-agreement
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/policy-agreement.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/policy-agreement.schema.json
+  dependencies:
+  - odrl.obligation
+  - odrl.permission
+  - odrl.prohibition
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.policy-offer
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/policy-offer.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/policy-offer.schema.json
+  dependencies:
+  - odrl.obligation
+  - odrl.permission
+  - odrl.prohibition
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.policy-set
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/policy-set.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/policy-set.schema.json
+  dependencies:
+  - odrl.obligation
+  - odrl.permission
+  - odrl.prohibition
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.prohibition
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/source/base/prohibition.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/source/base/prohibition.schema.json
+  dependencies:
+  - odrl.constraint
+  - odrl.duty
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.aasx-manifest
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 5
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/profiles/aasx-manifest.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/profiles/aasx-manifest.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.endpoint-ref
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/profiles/endpoint-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/profiles/endpoint-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.shell-descriptor
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/profiles/shell-descriptor.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/profiles/shell-descriptor.schema.json
+  dependencies:
+  - aas.endpoint-ref
+  - aas.submodel-descriptor
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.shell
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 1
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/profiles/shell.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/profiles/shell.schema.json
+  dependencies:
+  - aas.submodel
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.submodel-descriptor
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/profiles/submodel-descriptor.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/profiles/submodel-descriptor.schema.json
+  dependencies:
+  - aas.endpoint-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.submodel
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 1
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/profiles/submodel.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/profiles/submodel.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.value-only
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/profiles/value-only.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/profiles/value-only.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.access-rule
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/security/access-rule.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/security/access-rule.schema.json
+  dependencies:
+  - aas.object-attributes
+  - aas.subject-attributes
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.access-token-claims
+  local_version: 2.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/security/access-token-claims.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/security/access-token-claims.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.object-attributes
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/security/object-attributes.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/security/object-attributes.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.subject-attributes
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/source/security/subject-attributes.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/source/security/subject-attributes.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.access-class
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/base/access-class.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/base/access-class.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-envelope
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-envelope.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/base/passport-envelope.schema.json
+  dependencies:
+  - dpp.access-class
+  - dpp.passport-lifecycle
+  - dpp.passport-link
+  - dpp.passport-subject
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-lifecycle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-lifecycle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/base/passport-lifecycle.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-link
+  local_version: 2.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-link.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/base/passport-link.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-subject
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-subject.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/base/passport-subject.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.evidence-envelope
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/exports/evidence-envelope.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/exports/evidence-envelope.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.registry-envelope
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/exports/registry-envelope.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/exports/registry-envelope.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.completeness
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/implementation_profiles/aas_dpp4o/completeness.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/implementation_profiles/aas_dpp4o/completeness.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.id-link
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/implementation_profiles/aas_dpp4o/id-link.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/implementation_profiles/aas_dpp4o/id-link.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.shell-binding
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0 / AAS Release 25-01
+  upstream_version: 4.0/25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/implementation_profiles/aas_dpp4o/shell-binding.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/implementation_profiles/aas_dpp4o/shell-binding.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.submodel-binding
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0 / AAS Release 25-01
+  upstream_version: 4.0/25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/source/implementation_profiles/aas_dpp4o/submodel-binding.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/source/implementation_profiles/aas_dpp4o/submodel-binding.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.charge-statement
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/business/charge-statement.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/business/charge-statement.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.quota-window
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/business/quota-window.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/business/quota-window.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.rated-usage
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/business/rated-usage.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/business/rated-usage.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.rating-rule
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/business/rating-rule.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/business/rating-rule.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.settlement-batch
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/business/settlement-batch.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/business/settlement-batch.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.usage-dimension
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/business/usage-dimension.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/business/usage-dimension.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.usage-record
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/business/usage-record.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/business/usage-record.schema.json
+  dependencies:
+  - metering.usage-dimension
+  - metering.agreement-ref
+  - metering.counterparty-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.agreement-ref
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/references/agreement-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/references/agreement-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.counterparty-ref
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/references/counterparty-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/references/counterparty-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.policy-ref
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/references/policy-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/references/policy-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.cloudevents-envelope
+  local_version: 1.0.0
+  upstream_standard: CloudEvents 1.0
+  upstream_version: '1.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/transport/cloudevents-envelope.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/transport/cloudevents-envelope.schema.json
+  dependencies:
+  - metering.usage-record
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.event-metadata
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/source/transport/event-metadata.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/source/transport/event-metadata.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.mapping-result
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/execution/mapping-result.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/execution/mapping-result.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.mapping-run
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/execution/mapping-run.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/execution/mapping-run.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.approval
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/approval.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/approval.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.confidence
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/confidence.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/confidence.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.field-mapping
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/field-mapping.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/field-mapping.schema.json
+  dependencies:
+  - enterprise-mapping.confidence
+  - enterprise-mapping.lineage-graph
+  - enterprise-mapping.transform-step
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.lineage-graph
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/lineage-graph.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/lineage-graph.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.mapping-spec
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/mapping-spec.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/mapping-spec.schema.json
+  dependencies:
+  - enterprise-mapping.approval
+  - enterprise-mapping.confidence
+  - enterprise-mapping.field-mapping
+  - enterprise-mapping.target-model-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.source-model
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/source-model.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/source-model.schema.json
+  dependencies:
+  - enterprise-mapping.event-schema-ref
+  - enterprise-mapping.object-metadata-ref
+  - enterprise-mapping.odata-csdl-ref
+  - enterprise-mapping.sql-model-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.target-model-ref
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/target-model-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/target-model-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.transform-step
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/mapping/transform-step.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/mapping/transform-step.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.event-schema-ref
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/event-schema-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/source-kinds/event-schema-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.object-metadata-ref
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/object-metadata-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/source-kinds/object-metadata-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.odata-csdl-ref
+  local_version: 1.0.0
+  upstream_standard: OData 4.01 CSDL JSON
+  upstream_version: '4.01'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/odata-csdl-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/source-kinds/odata-csdl-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.sql-model-ref
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/source/source-kinds/sql-model-ref.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/source/source-kinds/sql-model-ref.schema.json
+  dependencies: []
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.bitstring-status-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C Bitstring Status List v1.0
+  upstream_version: '1.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/bundles/bitstring-status-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/bundles/bitstring-status-ref.bundle.schema.json
+  dependencies:
+  - vc.bitstring-status-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.credential-envelope.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/bundles/credential-envelope.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/bundles/credential-envelope.bundle.schema.json
+  dependencies:
+  - vc.credential-envelope
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.credential-schema-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/bundles/credential-schema-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/bundles/credential-schema-ref.bundle.schema.json
+  dependencies:
+  - vc.credential-schema-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.presentation-envelope.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/bundles/presentation-envelope.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/bundles/presentation-envelope.bundle.schema.json
+  dependencies:
+  - vc.presentation-envelope
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.profile-base.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/bundles/profile-base.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/bundles/profile-base.bundle.schema.json
+  dependencies:
+  - vc.profile-base
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.proof-metadata.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C Data Integrity 1.0
+  upstream_version: '1.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/bundles/proof-metadata.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/bundles/proof-metadata.bundle.schema.json
+  dependencies:
+  - vc.proof-metadata
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: vc
+  artifact_id: vc.status-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C Verifiable Credentials Data Model 2.0
+  upstream_version: '2.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/vc/bundles/status-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - vc/bundles/status-ref.bundle.schema.json
+  dependencies:
+  - vc.status-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.canonical-policy-ast.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/canonical-policy-ast.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/canonical-policy-ast.bundle.schema.json
+  dependencies:
+  - odrl.canonical-policy-ast
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.constraint.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/constraint.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/constraint.bundle.schema.json
+  dependencies:
+  - odrl.constraint
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.duty.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/duty.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/duty.bundle.schema.json
+  dependencies:
+  - odrl.duty
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.obligation.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/obligation.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/obligation.bundle.schema.json
+  dependencies:
+  - odrl.obligation
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.parse-report.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/parse-report.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/parse-report.bundle.schema.json
+  dependencies:
+  - odrl.parse-report
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.permission.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/permission.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/permission.bundle.schema.json
+  dependencies:
+  - odrl.permission
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.policy-agreement.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/policy-agreement.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/policy-agreement.bundle.schema.json
+  dependencies:
+  - odrl.policy-agreement
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.policy-offer.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/policy-offer.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/policy-offer.bundle.schema.json
+  dependencies:
+  - odrl.policy-offer
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.policy-set.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/policy-set.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/policy-set.bundle.schema.json
+  dependencies:
+  - odrl.policy-set
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: odrl
+  artifact_id: odrl.prohibition.bundle
+  local_version: 1.0.0
+  upstream_standard: W3C ODRL Information Model 2.2
+  upstream_version: '2.2'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/odrl/bundles/prohibition.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - odrl/bundles/prohibition.bundle.schema.json
+  dependencies:
+  - odrl.prohibition
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.aasx-manifest.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 5
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/aasx-manifest.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/aasx-manifest.bundle.schema.json
+  dependencies:
+  - aas.aasx-manifest
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.access-rule.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/access-rule.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/access-rule.bundle.schema.json
+  dependencies:
+  - aas.access-rule
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.access-token-claims.bundle
+  local_version: 2.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/access-token-claims.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/access-token-claims.bundle.schema.json
+  dependencies:
+  - aas.access-token-claims
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.endpoint-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/endpoint-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/endpoint-ref.bundle.schema.json
+  dependencies:
+  - aas.endpoint-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.object-attributes.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/object-attributes.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/object-attributes.bundle.schema.json
+  dependencies:
+  - aas.object-attributes
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.shell-descriptor.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/shell-descriptor.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/shell-descriptor.bundle.schema.json
+  dependencies:
+  - aas.shell-descriptor
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.shell.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 1
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/shell.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/shell.bundle.schema.json
+  dependencies:
+  - aas.shell
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.subject-attributes.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 4
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/subject-attributes.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/subject-attributes.bundle.schema.json
+  dependencies:
+  - aas.subject-attributes
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.submodel-descriptor.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/submodel-descriptor.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/submodel-descriptor.bundle.schema.json
+  dependencies:
+  - aas.submodel-descriptor
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.submodel.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 1
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/submodel.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/submodel.bundle.schema.json
+  dependencies:
+  - aas.submodel
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: aas
+  artifact_id: aas.value-only.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA AAS Release 25-01 Part 2
+  upstream_version: 25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/aas/bundles/value-only.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - aas/bundles/value-only.bundle.schema.json
+  dependencies:
+  - aas.value-only
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.access-class.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/access-class.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/access-class.bundle.schema.json
+  dependencies:
+  - dpp.access-class
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.completeness.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/completeness.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/completeness.bundle.schema.json
+  dependencies:
+  - dpp.completeness
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.evidence-envelope.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/evidence-envelope.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/evidence-envelope.bundle.schema.json
+  dependencies:
+  - dpp.evidence-envelope
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.id-link.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/id-link.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/id-link.bundle.schema.json
+  dependencies:
+  - dpp.id-link
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-envelope.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/passport-envelope.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/passport-envelope.bundle.schema.json
+  dependencies:
+  - dpp.passport-envelope
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-lifecycle.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/passport-lifecycle.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/passport-lifecycle.bundle.schema.json
+  dependencies:
+  - dpp.passport-lifecycle
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-link.bundle
+  local_version: 2.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/passport-link.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/passport-link.bundle.schema.json
+  dependencies:
+  - dpp.passport-link
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.passport-subject.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/passport-subject.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/passport-subject.bundle.schema.json
+  dependencies:
+  - dpp.passport-subject
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.registry-envelope.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0
+  upstream_version: '4.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/registry-envelope.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/registry-envelope.bundle.schema.json
+  dependencies:
+  - dpp.registry-envelope
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.shell-binding.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0 / AAS Release 25-01
+  upstream_version: 4.0/25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/shell-binding.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/shell-binding.bundle.schema.json
+  dependencies:
+  - dpp.shell-binding
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: dpp
+  artifact_id: dpp.submodel-binding.bundle
+  local_version: 1.0.0
+  upstream_standard: IDTA DPP4.0 / AAS Release 25-01
+  upstream_version: 4.0/25-01
+  canonical_uri: https://dataspace-control-plane.internal/schemas/dpp/bundles/submodel-binding.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - dpp/bundles/submodel-binding.bundle.schema.json
+  dependencies:
+  - dpp.submodel-binding
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.agreement-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/agreement-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/agreement-ref.bundle.schema.json
+  dependencies:
+  - metering.agreement-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.charge-statement.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/charge-statement.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/charge-statement.bundle.schema.json
+  dependencies:
+  - metering.charge-statement
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.cloudevents-envelope.bundle
+  local_version: 1.0.0
+  upstream_standard: CloudEvents 1.0
+  upstream_version: '1.0'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/cloudevents-envelope.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/cloudevents-envelope.bundle.schema.json
+  dependencies:
+  - metering.cloudevents-envelope
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.counterparty-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/counterparty-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/counterparty-ref.bundle.schema.json
+  dependencies:
+  - metering.counterparty-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.event-metadata.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/event-metadata.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/event-metadata.bundle.schema.json
+  dependencies:
+  - metering.event-metadata
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.policy-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/policy-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/policy-ref.bundle.schema.json
+  dependencies:
+  - metering.policy-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.quota-window.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/quota-window.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/quota-window.bundle.schema.json
+  dependencies:
+  - metering.quota-window
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.rated-usage.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/rated-usage.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/rated-usage.bundle.schema.json
+  dependencies:
+  - metering.rated-usage
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.rating-rule.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/rating-rule.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/rating-rule.bundle.schema.json
+  dependencies:
+  - metering.rating-rule
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.settlement-batch.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/settlement-batch.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/settlement-batch.bundle.schema.json
+  dependencies:
+  - metering.settlement-batch
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.usage-dimension.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/usage-dimension.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/usage-dimension.bundle.schema.json
+  dependencies:
+  - metering.usage-dimension
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: metering
+  artifact_id: metering.usage-record.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/metering/bundles/usage-record.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - metering/bundles/usage-record.bundle.schema.json
+  dependencies:
+  - metering.usage-record
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.approval.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/approval.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/approval.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.approval
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.confidence.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/confidence.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/confidence.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.confidence
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.event-schema-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/event-schema-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/event-schema-ref.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.event-schema-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.field-mapping.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/field-mapping.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/field-mapping.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.field-mapping
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.lineage-graph.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/lineage-graph.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/lineage-graph.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.lineage-graph
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.mapping-result.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/mapping-result.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/mapping-result.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.mapping-result
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.mapping-run.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/mapping-run.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/mapping-run.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.mapping-run
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.mapping-spec.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/mapping-spec.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/mapping-spec.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.mapping-spec
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.object-metadata-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/object-metadata-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/object-metadata-ref.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.object-metadata-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.odata-csdl-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: OData 4.01 CSDL JSON
+  upstream_version: '4.01'
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/odata-csdl-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/odata-csdl-ref.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.odata-csdl-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.source-model.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/source-model.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/source-model.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.source-model
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.sql-model-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/sql-model-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/sql-model-ref.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.sql-model-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.target-model-ref.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/target-model-ref.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/target-model-ref.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.target-model-ref
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null
+- schema_family: enterprise-mapping
+  artifact_id: enterprise-mapping.transform-step.bundle
+  local_version: 1.0.0
+  upstream_standard: null
+  upstream_version: null
+  canonical_uri: https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/transform-step.bundle.schema.json
+  formats:
+  - json-schema
+  entrypoints:
+  - enterprise-mapping/bundles/transform-step.bundle.schema.json
+  dependencies:
+  - enterprise-mapping.transform-step
+  status: stable
+  effective_from: '2026-03-15'
+  effective_to: null

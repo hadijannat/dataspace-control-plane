@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/dpp/bundles/submodel-binding.bundle.schema.json",
+  "title": "AAS DPP4.0 Submodel Binding",
+  "description": "Binding contract for an individual DPP submodel within the AAS DPP4.0 implementation profile. Validates the submodel metadata needed to mount a regulation-pack submodel onto a DPP shell.",
+  "x-source-standard": "IDTA DPP4.0 / AAS Release 25-01",
+  "x-source-version": "4.0/25-01",
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "submodelId",
+    "semanticId",
+    "packId",
+    "idShort"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "submodelId": {
+      "type": "string",
+      "description": "Globally unique submodel identifier"
+    },
+    "semanticId": {
+      "type": "string",
+      "format": "uri",
+      "description": "Semantic ID URI from the IDTA submodel catalog"
+    },
+    "packId": {
+      "type": "string",
+      "description": "Pack ID that provides this submodel template"
+    },
+    "idShort": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,127}$",
+      "description": "Short name used for AAS path navigation"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "Instance",
+        "Template"
+      ],
+      "default": "Instance"
+    },
+    "accessClass": {
+      "type": "string",
+      "description": "Minimum access class required to see this submodel in the shell descriptor"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Pack version that generated this submodel"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.527634+00:00"
+}

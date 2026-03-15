@@ -15,8 +15,8 @@ Machine-readable schema family for W3C Verifiable Credentials and Presentations.
 | `derived/vocab/` | Vocab snapshots (generated) |
 | `derived/json-schema/` | W3C JSON Schema resources normalized to local dialect |
 | `bundles/` | Compound bundle documents for runtime use |
-| `examples/valid/` | Instances that must pass validation |
-| `examples/invalid/` | Instances that must fail validation |
+| `examples/valid/<artifact-id>/` | Instances that must pass validation for a specific registered artifact |
+| `examples/invalid/<artifact-id>/` | Instances that must fail validation for a specific registered artifact |
 | `tests/` | Pytest tests for this family |
 
 ## Design decisions
@@ -33,6 +33,7 @@ Machine-readable schema family for W3C Verifiable Credentials and Presentations.
 - W3C Data Integrity 1.0 — `vendor/w3c/data-integrity-context.jsonld`
 - W3C Bitstring Status List v1.0 — `vendor/w3c/bitstring-status-list-context.jsonld`
 - W3C Controlled Identifiers — `vendor/w3c/controlled-identifiers-context.jsonld`
+- W3C VC JSON Schema resources — `vendor/w3c/vc-json-schema-v2.json`, `vendor/w3c/json-schema-credential-schema.json`
 
 ## Refreshing vendor artifacts
 

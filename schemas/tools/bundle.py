@@ -1,162 +1,226 @@
 #!/usr/bin/env python3
 """
 schemas/tools/bundle.py
-Create compound JSON Schema bundle documents using $defs.
-
-Per JSON Schema 2020-12 compound schema document semantics: each embedded schema
-resource may declare its own $schema value; validation happens per schema resource,
-not by naively applying one meta-schema to the whole bundle.
+Create offline compound JSON Schema bundles from registered source entrypoints.
 
 Usage:
     python schemas/tools/bundle.py --entrypoint SCHEMA_PATH --out OUTPUT_PATH
-    python schemas/tools/bundle.py --family FAMILY  # bundle all entrypoints for a family
-
-Output: a single JSON file with all referenced local schemas embedded in $defs.
-External URIs (http/https) are left as $ref strings — callers must resolve them
-against vendor/ artifacts or a local resolver.
-
-Exit codes:
-    0  Bundle written successfully.
-    1  Error during bundling.
+    python schemas/tools/bundle.py --family FAMILY
 """
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlparse
+from typing import Any
 
-try:
-    import yaml
-except ImportError:
-    print("ERROR: pyyaml is required.  Run: pip install pyyaml", file=sys.stderr)
-    sys.exit(2)
-
-SCHEMAS_ROOT = Path(__file__).resolve().parent.parent
-INTERNAL_BASE = "https://dataspace-control-plane.internal/schemas/"
-
-
-def _is_local_ref(ref: str) -> bool:
-    """True if $ref resolves to a local schema (our internal base URI)."""
-    return ref.startswith(INTERNAL_BASE) or ref.startswith("#/") or not urlparse(ref).scheme
-
-
-def _id_to_path(schema_id: str) -> Path | None:
-    """Convert an internal $id to a file path relative to SCHEMAS_ROOT."""
-    if schema_id.startswith(INTERNAL_BASE):
-        rel = schema_id[len(INTERNAL_BASE):]
-        return SCHEMAS_ROOT / rel
-    return None
+from _support import (
+    SCHEMAS_ROOT,
+    artifact_id_from_relpath,
+    build_local_schema_registry,
+    bundle_relpath_for_source,
+    collect_refs,
+    def_key_for_path,
+    dump_yaml,
+    load_json,
+    load_registry_catalog,
+    provenance_relpath_for_artifact,
+    relative_to_schemas,
+    resolve_local_ref,
+)
 
 
-def _collect_refs(schema: dict | list | str | int | float | bool | None,
-                  refs: set[str]) -> None:
-    if isinstance(schema, dict):
-        if "$ref" in schema and isinstance(schema["$ref"], str):
-            refs.add(schema["$ref"])
-        for v in schema.values():
-            _collect_refs(v, refs)
-    elif isinstance(schema, list):
-        for item in schema:
-            _collect_refs(item, refs)
+def _rewrite_document(
+    document: Any,
+    *,
+    current_path: Path,
+    root_defs: dict[str, Any],
+    embedded: set[Path],
+) -> Any:
+    if isinstance(document, dict):
+        rewritten: dict[str, Any] = {}
+        for key, value in list(document.items()):
+            if key == "$ref" and isinstance(value, str):
+                if value.startswith("#"):
+                    rewritten[key] = value
+                    continue
+                target_path, fragment = resolve_local_ref(value, current_path)
+                if target_path is None:
+                    rewritten[key] = value
+                    continue
+                if target_path == current_path.resolve() and fragment:
+                    rewritten[key] = fragment
+                    continue
+                # SECURITY: reject $refs that escape SCHEMAS_ROOT (path traversal guard).
+                try:
+                    target_path.relative_to(SCHEMAS_ROOT.resolve())
+                except ValueError:
+                    raise ValueError(
+                        f"$ref '{value}' from {current_path} resolves outside "
+                        f"SCHEMAS_ROOT: {target_path}"
+                    )
+                if not target_path.exists():
+                    raise FileNotFoundError(f"Unresolved local ref '{value}' from {current_path}")
+                def_key = def_key_for_path(target_path)
+                if target_path not in embedded:
+                    embedded.add(target_path)
+                    # load_json returns a fresh tree — deepcopy is unnecessary.
+                    target_schema = load_json(target_path)
+                    root_defs[def_key] = _rewrite_document(
+                        target_schema,
+                        current_path=target_path,
+                        root_defs=root_defs,
+                        embedded=embedded,
+                    )
+                if fragment.startswith("#/"):
+                    rewritten[key] = f"#/$defs/{def_key}{fragment[1:]}"
+                elif fragment in ("", "#"):
+                    rewritten[key] = f"#/$defs/{def_key}"
+                else:
+                    rewritten[key] = f"#/$defs/{def_key}"
+                continue
+            rewritten[key] = _rewrite_document(
+                value,
+                current_path=current_path,
+                root_defs=root_defs,
+                embedded=embedded,
+            )
+        return rewritten
+
+    if isinstance(document, list):
+        return [
+            _rewrite_document(item, current_path=current_path, root_defs=root_defs, embedded=embedded)
+            for item in document
+        ]
+
+    return document
 
 
-def _load_schema(path: Path) -> dict:
-    with open(path) as f:
-        return json.load(f)
+def build_bundle(entrypoint: Path, bundle_id: str | None = None) -> dict[str, Any]:
+    entrypoint = entrypoint.resolve()
+    # load_json returns a freshly parsed dict — no deepcopy needed.
+    root = load_json(entrypoint)
+    existing_defs = root.get("$defs", {})
+    root["$defs"] = dict(existing_defs)
+    embedded = {entrypoint}
+
+    rewritten = _rewrite_document(
+        root,
+        current_path=entrypoint,
+        root_defs=root["$defs"],
+        embedded=embedded,
+    )
+    if bundle_id:
+        rewritten["$id"] = bundle_id
+    rewritten.setdefault("x-bundle-generated-at", datetime.now(tz=timezone.utc).isoformat())
+    return rewritten
 
 
-def bundle(entrypoint: Path, *, visited: dict[str, dict] | None = None) -> dict:
-    """Recursively collect all local $refs into $defs of the root schema."""
-    if visited is None:
-        visited = {}
+def _build_provenance(
+    *,
+    source_schema: dict[str, Any],
+    source_entry: dict[str, Any],
+    bundle_artifact_id: str,
+) -> dict[str, Any]:
+    return {
+        "artifact_id": bundle_artifact_id,
+        "local_version": source_entry["local_version"],
+        "source_standard": source_schema.get("x-source-standard"),
+        "source_standard_version": source_schema.get("x-source-version"),
+        "source_uris": [source_entry["canonical_uri"]],
+        "pack_dependencies": source_schema.get("x-pack-dependencies", []),
+        "effective_date_range": {
+            "from": source_entry["effective_from"],
+            "to": source_entry.get("effective_to"),
+        },
+        "generated_at": datetime.now(tz=timezone.utc).isoformat(),
+        "generator": "schemas/tools/bundle.py",
+        "notes": "Compound offline bundle generated from a registered source entrypoint.",
+    }
 
-    root = _load_schema(entrypoint)
-    root_id = root.get("$id", str(entrypoint))
 
-    if root_id in visited:
-        return visited[root_id]
+def _write_bundle(source_entry: dict[str, Any]) -> Path:
+    source_rel = Path(source_entry["entrypoints"][0])
+    source_path = (SCHEMAS_ROOT / source_rel).resolve()
+    if "/source/" not in source_entry["entrypoints"][0]:
+        raise ValueError(f"Refusing to bundle non-source entrypoint: {source_rel}")
 
-    visited[root_id] = root
+    bundle_rel = bundle_relpath_for_source(source_rel)
+    bundle_path = SCHEMAS_ROOT / bundle_rel
+    bundle_id = f"https://dataspace-control-plane.internal/schemas/{bundle_rel.as_posix()}"
+    # Read source schema once — reuse for both build_bundle and provenance.
+    source_schema = load_json(source_path)
+    bundle_doc = build_bundle(source_path, bundle_id=bundle_id)
+    bundle_path.parent.mkdir(parents=True, exist_ok=True)
+    bundle_path.write_text(json.dumps(bundle_doc, indent=2) + "\n")
 
-    refs: set[str] = set()
-    _collect_refs(root, refs)
-
-    defs = root.setdefault("$defs", {})
-
-    for ref in refs:
-        if not _is_local_ref(ref):
-            continue  # External ref — leave as-is
-
-        # Resolve to a file path
-        ref_path = _id_to_path(ref)
-        if ref_path is None:
-            # Relative ref — resolve against entrypoint's directory
-            ref_path = entrypoint.parent / ref
-
-        ref_path = ref_path.resolve()
-        if not ref_path.exists():
-            print(f"  WARNING: $ref target not found: {ref_path}", file=sys.stderr)
-            continue
-
-        if str(ref_path) in {str(k) for k in visited}:
-            continue
-
-        embedded = bundle(ref_path, visited=visited)
-        # Use a safe key derived from the $id
-        def_key = ref.replace(INTERNAL_BASE, "").replace("/", "__").replace(".", "_")
-        defs[def_key] = embedded
-
-    return root
+    provenance_rel = provenance_relpath_for_artifact(bundle_rel)
+    provenance_path = SCHEMAS_ROOT / provenance_rel
+    provenance = _build_provenance(
+        source_schema=source_schema,
+        source_entry=source_entry,
+        bundle_artifact_id=artifact_id_from_relpath(bundle_rel),
+    )
+    dump_yaml(provenance_path, provenance)
+    return bundle_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--entrypoint", type=Path, help="Path to the root schema to bundle.")
-    group.add_argument("--family", help="Bundle all registry entrypoints for a family.")
-    parser.add_argument("--out", type=Path, help="Output path (required with --entrypoint).")
+    group.add_argument("--entrypoint", type=Path, help="Path to a source schema entrypoint.")
+    group.add_argument("--family", help="Generate bundles for all source entrypoints in one family.")
+    parser.add_argument("--out", type=Path, help="Output path for ad hoc bundling.")
     args = parser.parse_args(argv)
 
     if args.entrypoint:
         if not args.out:
-            print("--out is required when --entrypoint is used.", file=sys.stderr)
+            print("--out is required with --entrypoint", file=sys.stderr)
             return 2
-        ep = args.entrypoint.resolve()
-        if not ep.exists():
-            print(f"Entrypoint not found: {ep}", file=sys.stderr)
+        entrypoint = args.entrypoint.resolve()
+        # SECURITY: both --entrypoint and --out must stay inside SCHEMAS_ROOT.
+        try:
+            entrypoint.relative_to(SCHEMAS_ROOT.resolve())
+        except ValueError:
+            print(
+                f"ERROR: --entrypoint must be inside SCHEMAS_ROOT ({SCHEMAS_ROOT}): {entrypoint}",
+                file=sys.stderr,
+            )
             return 1
-        bundle_doc = bundle(ep)
-        args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(json.dumps(bundle_doc, indent=2))
+        out_resolved = args.out.resolve()
+        try:
+            out_resolved.relative_to(SCHEMAS_ROOT.resolve())
+        except ValueError:
+            print(
+                f"ERROR: --out must be inside SCHEMAS_ROOT ({SCHEMAS_ROOT}): {args.out}",
+                file=sys.stderr,
+            )
+            return 1
+        if not entrypoint.exists():
+            print(f"Entrypoint not found: {entrypoint}", file=sys.stderr)
+            return 1
+        bundle_doc = build_bundle(entrypoint)
+        out_resolved.parent.mkdir(parents=True, exist_ok=True)
+        out_resolved.write_text(json.dumps(bundle_doc, indent=2) + "\n")
         print(f"Bundle written: {args.out}")
         return 0
 
-    if args.family:
-        # Load registry and find entrypoints for this family
-        registry_path = SCHEMAS_ROOT / "registry.yaml"
-        with open(registry_path) as f:
-            reg = yaml.safe_load(f)
+    catalog = load_registry_catalog()
+    count = 0
+    for entry in catalog.get("families", []):
+        if entry["schema_family"] != args.family:
+            continue
+        primary = entry["entrypoints"][0]
+        if "/source/" not in primary:
+            continue
+        out = _write_bundle(entry)
+        print(f"Bundle written: {relative_to_schemas(out)}")
+        count += 1
 
-        count = 0
-        for entry in reg.get("families", []):
-            if entry.get("schema_family") != args.family:
-                continue
-            for ep_rel in entry.get("entrypoints", []):
-                ep = SCHEMAS_ROOT / ep_rel
-                if not ep.exists() or not ep_rel.endswith(".schema.json"):
-                    continue
-                out = SCHEMAS_ROOT / args.family / "bundles" / Path(ep_rel).name
-                bundle_doc = bundle(ep)
-                out.parent.mkdir(parents=True, exist_ok=True)
-                out.write_text(json.dumps(bundle_doc, indent=2))
-                print(f"  Bundle written: {out.relative_to(SCHEMAS_ROOT)}")
-                count += 1
-
-        print(f"\n{count} bundle(s) written for family '{args.family}'.")
-        return 0
-
+    print(f"{count} bundle(s) written for family '{args.family}'.")
     return 0
 
 

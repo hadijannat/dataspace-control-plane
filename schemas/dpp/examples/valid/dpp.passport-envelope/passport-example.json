@@ -1,15 +1,15 @@
 {
-  "passportId": "urn:dpp:battery:BAT-2026-001",
+  "passportId": "urn:dpp:component:COMP-2026-001",
   "passportVersion": "1.0.0",
   "subject": {
-    "subjectId": "BAT-2026-001",
-    "productClass": "battery",
-    "productModel": "EV-75kWh-NMC-Gen4",
+    "subjectId": "COMP-2026-001",
+    "productClass": "serialized_component",
+    "productModel": "Drive-Inverter-Gen4",
     "manufacturerId": "BPNL000000000001",
-    "manufacturerName": "Example Battery GmbH",
+    "manufacturerName": "Example Components GmbH",
     "countryOfManufacture": "DE",
     "manufacturingDate": "2026-01-15",
-    "qrCodeUri": "https://dpp.example.org/bat/BAT-2026-001"
+    "qrCodeUri": "https://dpp.example.org/component/COMP-2026-001"
   },
   "lifecycle": {
     "currentState": "active",
@@ -20,13 +20,13 @@
   "accessClasses": [
     {
       "className": "public",
-      "description": "Anyone scanning the QR code",
-      "readablePaths": ["PublicData.BatteryId", "PublicData.ManufacturerName"],
-      "regulationSource": "Regulation (EU) 2023/1542 Annex XIII",
+      "description": "Any party following the shared public access policy",
+      "readablePaths": ["summary.subjectId", "summary.productClass"],
+      "regulationSource": "platform-policy:v1",
       "effectiveFrom": "2027-02-18"
     }
   ],
-  "regulationPackIds": ["battery_passport"],
+  "regulationPackIds": ["shared_access_profile"],
   "implementationProfile": "aas_dpp4o",
   "issuedAt": "2026-01-15T12:00:00Z",
   "lastUpdatedAt": "2026-01-15T12:00:00Z"

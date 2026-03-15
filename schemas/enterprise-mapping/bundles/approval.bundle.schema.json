@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dataspace-control-plane.internal/schemas/enterprise-mapping/bundles/approval.bundle.schema.json",
+  "title": "Mapping Approval State",
+  "description": "Approval state for a mapping specification or individual field mapping. Prevents unapproved mappings from running in production.",
+  "x-source-standard": null,
+  "x-source-version": null,
+  "x-pack-dependencies": [],
+  "type": "object",
+  "required": [
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "review",
+        "approved",
+        "rejected",
+        "deprecated"
+      ],
+      "description": "Approval workflow state"
+    },
+    "approvedBy": {
+      "type": "string",
+      "description": "Identifier of the approver (person or system)"
+    },
+    "approvedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewedBy": {
+      "type": "string"
+    },
+    "reviewedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "comments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "author",
+          "text",
+          "timestamp"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "requiredSignoffs": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Minimum number of approvals required before this mapping can run in production"
+    },
+    "signoffs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Identifiers of parties who have signed off"
+    }
+  },
+  "$defs": {},
+  "x-bundle-generated-at": "2026-03-15T19:36:30.689240+00:00"
+}

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://dataspace-control-plane.internal/schemas/dpp/source/base/passport-subject.schema.json",
   "title": "Passport Subject",
-  "description": "The physical or digital product that a Digital Product Passport describes. Captures the unique identifier, product class, and optional category/batch metadata. Regulation packs add product-category-specific fields via extension.",
+  "description": "The physical or digital product that a Digital Product Passport describes. Captures the unique identifier, product class, and optional category or batch metadata. Specializations add domain-specific subject fields via extension.",
   "x-source-standard": "IDTA DPP4.0",
   "x-source-version": "4.0",
   "x-pack-dependencies": [],
@@ -18,8 +18,8 @@
     },
     "productClass": {
       "type": "string",
-      "description": "Product classification code or category, e.g. battery, textile, electronics",
-      "examples": ["battery", "textile", "electronics", "construction_material"]
+      "description": "Product classification code or category for the passport subject",
+      "examples": ["serialized_component", "industrial_service", "assembly", "digital_asset"]
     },
     "productModel": {
       "type": "string",

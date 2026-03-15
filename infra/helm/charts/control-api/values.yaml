@@ -74,6 +74,25 @@ config:
   temporalNamespace: "dataspace"
   temporalTaskQueue: "control-api"
 
+env:
+  # Streaming
+  streamTicketTtlSeconds: 300
+  streamPollIntervalSeconds: 2.0
+  # streamTicketSecret: managed via external secret (e.g., CONTROL_API_STREAM_TICKET_SECRET)
+
+  # Docs / UI
+  docsPublic: false
+  tenantBanner: ""
+
+  # Keycloak browser (web-console)
+  keycloakBrowserUrl: ""
+  keycloakBrowserRealm: "dataspace"
+  keycloakBrowserClientId: "web-console"
+
+  # Public-facing base URL
+  publicBaseUrl: ""
+  # webhookSharedSecret: managed via external secret (e.g., CONTROL_API_WEBHOOK_SHARED_SECRET)
+
 livenessProbe:
   httpGet:
     path: /health

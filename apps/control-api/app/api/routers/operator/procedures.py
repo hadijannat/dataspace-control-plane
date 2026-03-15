@@ -77,7 +77,15 @@ async def start_procedure(
     if body.idempotency_key:
         cached = await idempotency_store.check(body.idempotency_key)
         if cached is not None:
-            return ProcedureHandleDTO(**cached)
+            return ProcedureHandleDTO(
+                workflow_id=cached["workflow_id"],
+                procedure_type=cached["procedure_type"],
+                tenant_id=cached["tenant_id"],
+                status=cached["status"],
+                poll_url=f"/api/v1/operator/procedures/{cached['workflow_id']}",
+                stream_url=f"/api/v1/streams/workflows/{cached['workflow_id']}",
+                correlation_id=cached.get("correlation_id"),
+            )
 
     # Build command.
     cmd = StartProcedureCommand(
@@ -133,7 +141,16 @@ async def start_procedure(
 
     # Cache result for idempotency on future duplicate requests.
     if body.idempotency_key:
-        await idempotency_store.store(body.idempotency_key, result.model_dump())
+        await idempotency_store.store(
+            body.idempotency_key,
+            {
+                "workflow_id": result.workflow_id,
+                "procedure_type": result.procedure_type,
+                "tenant_id": result.tenant_id,
+                "status": result.status,
+                "correlation_id": result.correlation_id,
+            },
+        )
 
     return result
 

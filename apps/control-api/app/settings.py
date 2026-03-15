@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     port: int = 8000
     debug: bool = False
     log_level: str = "INFO"
+    public_base_url: str = "http://localhost:8000"
 
     # OIDC / Keycloak
     oidc_issuer: AnyHttpUrl = Field(
@@ -18,6 +19,9 @@ class Settings(BaseSettings):
     )
     oidc_audience: str = "control-api"
     oidc_jwks_cache_ttl: int = 300  # seconds
+    keycloak_browser_url: str = "http://localhost:8080"
+    keycloak_browser_realm: str = "dataspace"
+    keycloak_browser_client_id: str = "web-console"
 
     # Temporal
     temporal_host: str = "localhost:7233"
@@ -29,6 +33,20 @@ class Settings(BaseSettings):
 
     # CORS
     cors_origins: list[str] = ["http://localhost:5173"]
+
+    # UI bootstrap
+    tenant_banner: str | None = None
+
+    # API docs
+    docs_public: bool = False
+
+    # Streams
+    stream_poll_interval_seconds: float = 2.0
+    stream_ticket_secret: str = "dev-stream-ticket-secret"
+    stream_ticket_ttl_seconds: int = 300
+
+    # Webhooks
+    webhook_shared_secret: str | None = None
 
     # Telemetry
     otel_endpoint: str | None = None

@@ -3,13 +3,23 @@ Apply command: execute the plan (create/update resources).
 Requires an explicit diff to be computed first.
 Irreversible operations require --force.
 """
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 import structlog
-from src.models.diff import StateDiff, ChangeSeverity
+from src.drivers.control_api import ControlApiDriver
+from src.models.diff import StateDiff
 from src.settings import settings
 from src.state.checkpoints import CheckpointManager
 from src.state.locks import file_lock
 
 logger = structlog.get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class DispatchResult:
+    checkpoint_data: dict | None = None
 
 
 async def run_apply(diff: StateDiff, force: bool = False, dry_run: bool = False) -> None:
@@ -39,30 +49,75 @@ async def run_apply(diff: StateDiff, force: bool = False, dry_run: bool = False)
         )
         with file_lock(key.replace("/", "_")):
             if not dry_run:
-                await _dispatch_change(change)
+                result = await _dispatch_change(change)
                 if change.operation == "delete":
                     checkpoints.delete(key)
-                else:
-                    checkpoints.save(key, change.details)
+                elif result.checkpoint_data is not None:
+                    checkpoints.save(key, result.checkpoint_data)
 
 
-async def _dispatch_change(change) -> None:
+async def _dispatch_change(change) -> DispatchResult:
     """Dispatch a single change to the appropriate driver."""
     import structlog
     log = structlog.get_logger(__name__)
     rt = change.resource_type.lower()
     if rt in ("keycloak_realm", "keycloak_client", "keycloak_role"):
         await _apply_keycloak(change)
-    elif rt in ("helm_release",):
+        return DispatchResult(checkpoint_data=change.details)
+    if rt in ("helm_release",):
         await _apply_helm(change)
-    elif rt in ("terraform_resource",):
+        return DispatchResult(checkpoint_data=change.details)
+    if rt in ("terraform_resource",):
         await _apply_terraform(change)
-    elif rt in ("k8s_namespace", "k8s_secret"):
+        return DispatchResult(checkpoint_data=change.details)
+    if rt in ("k8s_namespace", "k8s_secret"):
         await _apply_kubernetes(change)
-    elif rt in ("edc_registration", "tenant_bootstrap"):
-        log.info("apply.deferred_to_control_plane", resource_type=change.resource_type, resource_id=change.resource_id)
-    else:
-        log.warning("apply.unknown_resource_type", resource_type=change.resource_type, resource_id=change.resource_id)
+        return DispatchResult(checkpoint_data=change.details)
+    if rt in ("edc_registration", "tenant_bootstrap"):
+        return await _dispatch_control_plane_change(change)
+    raise RuntimeError(
+        f"Unknown resource type '{change.resource_type}' for change '{change.resource_id}'"
+    )
+
+
+async def _dispatch_control_plane_change(change) -> DispatchResult:
+    procedure_type = change.details.get("procedure_type") or _default_procedure_type(change.resource_type)
+    tenant_id = change.details.get("tenant_id")
+    if not tenant_id:
+        raise RuntimeError(
+            f"{change.resource_type} '{change.resource_id}' is missing tenant_id and cannot be routed via control-api"
+        )
+
+    driver = ControlApiDriver(settings.control_api_url, settings.control_api_token)
+    try:
+        response = await driver.start_procedure(
+            {
+                "procedure_type": procedure_type,
+                "tenant_id": tenant_id,
+                "legal_entity_id": change.details.get("legal_entity_id"),
+                "payload": change.details,
+                "idempotency_key": change.details.get("idempotency_key") or f"{change.resource_type}:{change.resource_id}",
+            }
+        )
+    finally:
+        await driver.close()
+
+    return DispatchResult(
+        checkpoint_data={
+            "resource_type": change.resource_type,
+            "resource_id": change.resource_id,
+            "resource": change.details,
+            **response,
+        }
+    )
+
+
+def _default_procedure_type(resource_type: str) -> str:
+    defaults = {
+        "tenant_bootstrap": "company-onboarding",
+        "edc_registration": "connector-bootstrap",
+    }
+    return defaults[resource_type]
 
 
 async def _apply_keycloak(change) -> None:
@@ -120,4 +175,13 @@ async def _apply_kubernetes(change) -> None:
     import structlog
     log = structlog.get_logger(__name__)
     log.info("apply.kubernetes", op=change.operation, resource=change.resource_id)
-    # KubernetesDriver.ensure_namespace() or ensure_secret()
+    driver = KubernetesDriver()
+    if change.resource_type == "k8s_namespace" and change.operation in {"create", "update"}:
+        driver.ensure_namespace(change.details["namespace"])
+    elif change.resource_type == "k8s_secret" and change.operation in {"create", "update"}:
+        driver.ensure_secret(
+            namespace=change.details["namespace"],
+            name=change.details["name"],
+            data=change.details["data"],
+            secret_type=change.details.get("secret_type", "Opaque"),
+        )

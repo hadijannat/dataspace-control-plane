@@ -1,5 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { AppShell } from './app-shell';
+import { RouteErrorBoundary } from './route-error-boundary';
+import { getRuntimeConfig, type RuntimeConfig } from './runtime-config';
 import { RequireAuth } from '../auth/require-auth';
 
 // Route-level lazy imports — each feature loads only when the route is visited
@@ -13,9 +15,20 @@ const Contracts = () => import('../routes/contracts').then((m) => ({ Component: 
 const Compliance = () => import('../routes/compliance').then((m) => ({ Component: m.default }));
 const Metering = () => import('../routes/metering').then((m) => ({ Component: m.default }));
 
+export interface RootLoaderData {
+  runtimeConfig: RuntimeConfig;
+}
+
+async function rootLoader(): Promise<RootLoaderData> {
+  return { runtimeConfig: getRuntimeConfig() };
+}
+
 export const router = createBrowserRouter([
   {
+    id: 'root',
     path: '/',
+    loader: rootLoader,
+    errorElement: <RouteErrorBoundary />,
     element: (
       <RequireAuth>
         <AppShell />

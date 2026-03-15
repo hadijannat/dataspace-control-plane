@@ -19,3 +19,10 @@ async def test_readiness_is_import_safe_without_external_services():
         response = await client.get("/health/ready")
     assert response.status_code in {200, 503}
     assert response.json()["status"] in {"ok", "degraded"}
+
+
+@pytest.mark.asyncio
+async def test_docs_are_gated_without_auth():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/docs")
+    assert response.status_code in {401, 403}

@@ -1,149 +1,145 @@
 # dataspace-control-plane
 
-A monorepo for a multi-ecosystem dataspace control plane. Implements the
-[Eclipse Dataspace Protocol (DSP)](https://docs.internationaldataspaces.org/ids-knowledgebase/dataspace-protocol),
-[Dataspace Connect Protocol (DCP)](https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-connect-protocol),
-and ecosystem overlays (Catena-X, Gaia-X, Manufacturing-X, ESPR-DPP, Battery Passport) on a
-Temporal-based durable workflow engine.
+A multi-ecosystem control plane for sovereign data exchange between organizations. Manages credential issuance, policy negotiation, Digital Product Passport lifecycle, connector registration, and durable workflow orchestration — under strict tenant isolation and cryptographic audit.
 
----
+Implements the [Eclipse Dataspace Protocol (DSP)](https://docs.internationaldataspaces.org/ids-knowledgebase/dataspace-protocol), the [Dataspace Connect Protocol (DCP)](https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-connect-protocol), and ecosystem overlays for Catena-X, Gaia-X, Manufacturing-X, ESPR Digital Product Passports, and Battery Passports on a [Temporal](https://temporal.io)-based durable workflow engine.
+
+## Key Capabilities
+
+- **Multi-ecosystem dataspace participation** — Catena-X DSP/DCP protocol compliance, Gaia-X trust framework self-descriptions, Manufacturing-X connector interoperability, and [ODRL](https://www.w3.org/TR/odrl-model/) 2.2 policy evaluation.
+- **EU product regulation compliance** — Battery Passport (Regulation 2023/1542, Annex XIII field tiers), ESPR Digital Product Passport (Regulation 2024/1781) creation and registry submission, with machine-readable OSCAL evidence emission.
+- **Durable workflow orchestration** — Temporal-based business workflows survive infrastructure failures without compensating transaction scaffolding. Workflow code is the runbook.
+- **Tenant isolation and audit** — Keycloak realm-per-tenant model with short-lived JWTs, Vault Transit for signing operations, and PostgreSQL row-level security as the final tenant enforcement layer.
+
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/hadijannat/dataspace-control-plane.git
+cd dataspace-control-plane
+
+# Install all Python and Node dependencies
+make install
+
+# Run unit tests (no live services required)
+make test
+```
+
+**Prerequisites for quick start:** Python 3.12+, [uv](https://github.com/astral-sh/uv) 0.4+, Node.js 20+, [pnpm](https://pnpm.io) 9+, and Make.
+
+> `make install` uses `uv pip install --system`. To install into a virtual environment instead, create and activate one first: `uv venv .venv && source .venv/bin/activate`.
 
 ## Architecture
 
-Nine strictly-owned layers. Each layer has exactly one owner; no layer borrows logic from a
-layer it feeds.
+Nine architectural layers, each with a single designated owner. No layer borrows logic from a layer it feeds.
 
 | Directory | Layer | Role |
 |-----------|-------|------|
 | `core/` | Semantic kernel | Canonical domain models, invariants, procedure contracts, audit primitives |
 | `procedures/` | Durable orchestration | Temporal workflows and activities; state machines; evidence emission |
-| `adapters/` | Integration | Protocol normalizers: EDC, DSP, DCP, Gaia-X, BaSyX, Kafka, Vault, Postgres |
+| `adapters/` | Integration | Protocol normalizers ([EDC](https://github.com/eclipse-edc/Connector), DSP, DCP, Gaia-X, [BaSyx](https://github.com/eclipse-basyx)); infrastructure integrations (Kafka, Vault, Postgres, Keycloak) |
 | `packs/` | Ecosystem overlays | Catena-X, Gaia-X, Manufacturing-X, ESPR-DPP, Battery Passport rule sets |
-| `schemas/` | Artifact registry | Pinned upstream standards (AAS, ODRL, W3C VC) + authored JSON Schema 2020-12 families |
-| `apps/` | Runtime surfaces | `control-api`, `temporal-workers`, `web-console`, `edc-extension`, `provisioning-agent` |
-| `tests/` | Verification spine | Unit, integration, e2e, DSP/DCP TCKs, tenancy, crypto-boundaries, chaos |
-| `infra/` | Delivery substrate | Helm charts, Terraform modules, Docker images, observability stack |
-| `docs/` | Governance | arc42 architecture, ADRs, API contracts, runbooks, threat model, compliance mappings |
+| `schemas/` | Artifact registry | Pinned upstream standards ([AAS](https://industrialdigitaltwin.org/), [ODRL](https://www.w3.org/TR/odrl-model/), [W3C Verifiable Credentials](https://www.w3.org/TR/vc-data-model-2.0/)) + authored JSON Schema 2020-12 families (DPP, enterprise-mapping, metering) |
+| `apps/` | Runtime surfaces | `control-api` (FastAPI), `temporal-workers`, `web-console`, `edc-extension`, `provisioning-agent` |
+| `tests/` | Verification spine | Unit, integration, e2e, DSP/DCP [TCK](https://en.wikipedia.org/wiki/Technology_Compatibility_Kit) compatibility, tenancy, crypto-boundaries, chaos |
+| `infra/` | Delivery substrate | Helm charts, Terraform modules, Docker images, OTel Collector observability stack |
+| `docs/` | Governance | [arc42](https://arc42.org) architecture, ADRs, API contracts, runbooks, threat model, compliance mappings |
 
-**Dependency flow:** `schemas/` and `docs/` feed `core/`; `core/` feeds `procedures/`,
-`adapters/`, and `packs/`; those feed `apps/`; everything feeds `tests/` and `docs/`.
+### Dependency flow
 
----
+```mermaid
+graph LR
+    schemas --> core
+    core --> procedures
+    core --> adapters
+    core --> packs
+    procedures --> apps
+    adapters --> apps
+    packs --> apps
+    apps --> tests
+    core --> tests
+    schemas --> tests
+```
 
 ## Prerequisites
 
-| Tool | Minimum version | Used for |
-|------|-----------------|----------|
-| Python | 3.12 | All Python packages |
+**Required** for most development:
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Python | 3.12+ | All Python packages |
 | [uv](https://github.com/astral-sh/uv) | 0.4+ | Python dependency management |
-| Node.js | 20 | `apps/web-console` (Vite 6 / React 19) |
-| [pnpm](https://pnpm.io) | 9 | web-console package manager |
+| Make | any | Build targets (`Makefile`) |
+| Node.js | 20+ | `apps/web-console` and docs toolchain |
+| [pnpm](https://pnpm.io) | 9+ | Node package manager |
+
+<details>
+<summary><strong>Layer-specific tools</strong> (only needed for their respective components)</summary>
+
+| Tool | Version | Purpose |
+|------|---------|---------|
 | Java | 21 | `apps/edc-extension` (Gradle Kotlin DSL) |
 | [Helm](https://helm.sh) | 3.14+ | `infra/helm` chart validation |
 | [Terraform](https://terraform.io) | 1.7+ | `infra/terraform` environment validation |
-| Docker | 24+ | Local compose environments |
-| [go-task](https://taskfile.dev) | 3+ | Optional — mirrors `make` targets as `task` commands |
+| Docker | 24+ | Local compose environments and release gate suites |
+| [go-task](https://taskfile.dev) | 3+ | Optional — mirrors Make targets via `Taskfile.yml` |
 
----
+</details>
 
-## Quick Start
+## Development
 
-```bash
-# 1. Clone
-git clone https://github.com/your-org/dataspace-control-plane.git
-cd dataspace-control-plane
+### Per-layer tests
 
-# 2. Install all dependencies
-make install
-
-# 3. Run unit tests (no live services required)
-make test
-```
-
----
-
-## Testing
-
-### Per-directory targets
-
-Each target exercises one ownership layer. None of these require live services.
+Each target exercises one architectural layer. These run offline — no live services required.
 
 ```bash
-make test-core        # core/ semantic layer — unit + tenancy
-make test-schemas     # schemas/ artifact layer — unit + offline schema validation
-make test-procedures  # procedures/ orchestration — unit + replay tests
-make test-adapters    # adapters/ integration — pure-Python adapter contracts
-make test-packs       # packs/ overlays — unit + integration
-make test-apps        # apps/ runtime surfaces — integration + e2e
-make test-infra       # infra/ substrate — helm lint + terraform validate
-make test-docs        # docs/ explanation layer — markdownlint + link check
+make test             # all unit tests across every layer
+make test-core        # core/ — unit tests
+make test-schemas     # schemas/ — unit + offline schema validation
+make test-procedures  # procedures/ — unit + replay tests
+make test-adapters    # adapters/ — pure-Python adapter contracts
+make test-packs       # packs/ — unit + integration
+make test-apps        # apps/ — control-api + temporal-workers tests
+make test-infra       # infra/ — helm lint + terraform validate
+make test-docs        # docs/ — markdownlint + Redocly lint + MkDocs strict build
 ```
 
-### Release gate suites
+### Linting
 
-These suites guard wave closure. They require a running local environment with
-Temporal, Postgres, Vault, and Kafka (see `infra/compose/`).
+```bash
+make lint             # all linters: ruff + markdownlint + helm lint
+make lint-python      # ruff check across all Python packages
+make lint-docs        # markdownlint for docs/
+make lint-infra       # helm lint for infra/helm/
+```
+
+<details>
+<summary><strong>Release gate and chaos suites</strong> (requires live services)</summary>
+
+These suites require a running local environment with Temporal, Postgres, Vault, and Kafka (see `infra/docker/compose/`).
 
 ```bash
 make test-gates       # DSP TCK + DCP TCK + tenancy + crypto-boundaries
 
-# Individual gate suites (with --live-services)
+# Individual gate suites
 pytest tests/compatibility/dsp-tck --live-services
 pytest tests/compatibility/dcp-tck --live-services
 pytest tests/tenancy --live-services
 pytest tests/crypto-boundaries --live-services
 ```
 
-### Chaos tests
+Chaos tests require a dedicated fault-injection environment:
 
 ```bash
-make test-chaos       # fault-injection environment required
+make test-chaos
 ```
 
-### Full unit suite
+</details>
 
-```bash
-make test             # equivalent to: pytest -m "not (integration or chaos or tenancy or crypto)"
-```
+<details>
+<summary><strong>go-task equivalents</strong></summary>
 
----
-
-## Linting
-
-```bash
-make lint             # all linters: ruff + ESLint + markdownlint + helm lint
-make lint-python      # ruff check across all Python packages
-make lint-node        # ESLint for web-console
-make lint-docs        # markdownlint for docs/
-make lint-infra       # helm lint for infra/helm/
-```
-
----
-
-## Documentation Site
-
-Architecture docs (arc42, ADRs, API contracts, runbooks, threat model) are built with
-[MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
-
-```bash
-make docs-serve       # live preview at http://127.0.0.1:8000
-make docs-build       # build to site/ (strict mode)
-make test-docs        # markdownlint-cli2 + docs pytest + Redocly + MkDocs strict build
-```
-
-The docs toolchain is split by runtime:
-
-- `docs/requirements.txt` provisions MkDocs, Material, Mermaid-capable Markdown extensions, and the strict site build plugins.
-- `docs/package.json` provisions repo-local docs linters and OpenAPI tooling (`markdownlint-cli2`, `@redocly/cli`).
-
-Only source Markdown/YAML is versioned. `site/` stays out of version control, and rendered
-OpenAPI HTML is generated in CI only.
-
----
-
-## go-task Equivalents
-
-If you prefer [go-task](https://taskfile.dev) over Make:
+All Make targets are mirrored in `Taskfile.yml` for [go-task](https://taskfile.dev) users:
 
 ```bash
 task install          # install all dependencies
@@ -154,54 +150,43 @@ task docs:serve       # serve docs site
 task clean            # remove build artifacts
 ```
 
-All targets are mirrored in `Taskfile.yml`.
+</details>
 
----
+## Documentation
 
-## Agent / AI Tooling
+The documentation site covers architecture ([arc42](https://arc42.org)), architecture decision records, OpenAPI 3.1 API reference, operational runbooks, STRIDE threat model, compliance mappings, and a [glossary](docs/glossary.md) of all domain terms and protocol acronyms.
 
-This repo is designed for Claude Code agent-teams. See `CLAUDE.md` for the full model.
+Built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/):
 
-| Resource | Purpose |
-|----------|---------|
-| `AGENTS.md` | Short routing guide and working model |
-| `PLANS.md` | Planning rules and required plan shape |
-| `CLAUDE.md` | Claude Code project settings and agent-team model |
-| `docs/agents/index.md` | Guidebook index (one per directory) |
-| `docs/agents/ownership-map.md` | Boundary rules, forbidden zones, handoff contracts |
-| `docs/agents/orchestration-guide.md` | How to split cross-directory work across owners |
-| `.claude/agents/` | Subagent definitions (one per directory role) |
-| `.claude/skills/` | Wave management skills (`/start-wave`, `/review-wave`, etc.) |
-| `.agents/skills/` | Repo-local reusable agent workflows |
-| `.claude/handoffs/` | Inter-wave handoff artifacts (one per directory) |
+```bash
+make docs-serve       # live preview at http://127.0.0.1:8000
+make docs-build       # build to site/ (strict mode)
+```
 
-### Wave model
-
-The repo runs on a 4-wave build model. Each wave activates 3–5 specialist teammate agents:
-
-| Wave | Name | Active teammates |
-|------|------|-----------------|
-| 0 | foundation-planning | core-lead, schemas-lead, infra-lead, docs-lead |
-| 1 | platform-foundation | core-lead, schemas-lead, adapters-lead, infra-lead |
-| 2 | execution-layer | procedures-lead, apps-lead, tests-lead, adapters-lead |
-| 3 | overlays-hardening | packs-lead, tests-lead, docs-lead |
-
----
-
-## Key Reference Files
-
-- [`AGENTS.md`](AGENTS.md) — routing and working model
-- [`PLANS.md`](PLANS.md) — planning rules
-- [`CODEOWNERS`](CODEOWNERS) — GitHub ownership assignments
-- [`docs/agents/ownership-map.md`](docs/agents/ownership-map.md) — boundary rules
-- [`docs/agents/orchestration-guide.md`](docs/agents/orchestration-guide.md) — cross-directory orchestration
-
----
+The docs toolchain uses both Python (`docs/requirements.txt` — MkDocs, Material, extensions) and Node.js (`docs/package.json` — markdownlint-cli2, Redocly CLI for OpenAPI linting). Both are installed by `make install`.
 
 ## Contributing
 
-1. Read `AGENTS.md` and `docs/agents/ownership-map.md` before making changes.
-2. Each PR must stay within one ownership boundary. Cross-boundary changes require a plan (`PLANS.md` format).
-3. Run `make test` (and the relevant `make test-<dir>` target) before submitting.
-4. Release gate suites (`make test-gates`) must pass before any wave closes.
-5. Write a handoff artifact (`.claude/handoffs/<dir>.md`) for significant changes.
+1. Read [`docs/agents/ownership-map.md`](docs/agents/ownership-map.md) to understand the layer ownership model.
+2. Keep each PR within one top-level directory. Cross-boundary changes require a written plan following the format in [`PLANS.md`](PLANS.md).
+3. Run `make lint` and `make test` (plus the relevant `make test-<dir>` target) before submitting.
+4. Release gate suites (`make test-gates`) must pass before merge to main.
+
+For architecture guidebooks, orchestration rules, and the full ownership map, see the [`docs/agents/`](docs/agents/index.md) directory.
+
+### AI-assisted development
+
+This repository supports [Claude Code](https://claude.ai/code) agent-teams with a 4-wave build model. Agent configuration, subagent definitions, and wave management skills are provisioned locally via `CLAUDE.md` and `.claude/` (both gitignored — not part of the cloned repository). Tracked architecture guides live in [`docs/agents/`](docs/agents/index.md).
+
+## Project Navigation
+
+| Resource | Purpose |
+|----------|---------|
+| [`PLANS.md`](PLANS.md) | Planning rules and required plan shape |
+| [`CODEOWNERS`](CODEOWNERS) | GitHub ownership assignments |
+| [`Makefile`](Makefile) | All build, test, lint, and docs targets |
+| [`Taskfile.yml`](Taskfile.yml) | go-task mirror of Makefile targets |
+| [`docs/agents/index.md`](docs/agents/index.md) | Architecture guidebook index |
+| [`docs/agents/ownership-map.md`](docs/agents/ownership-map.md) | Layer boundary rules and forbidden zones |
+| [`docs/agents/orchestration-guide.md`](docs/agents/orchestration-guide.md) | Cross-layer coordination rules |
+| [`docs/glossary.md`](docs/glossary.md) | Definitions of all domain terms and protocol acronyms |

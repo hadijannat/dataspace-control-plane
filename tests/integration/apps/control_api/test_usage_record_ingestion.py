@@ -20,7 +20,7 @@ def test_liveness_endpoint_uses_real_control_api(test_client) -> None:
     assert body["version"] == "0.1.0"
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_readiness_endpoint_reports_dependency_state(async_client) -> None:
     """The readiness probe must be import-safe and return the declared health shape."""
     response = await async_client.get("/health/ready")

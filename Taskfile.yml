@@ -85,6 +85,7 @@ tasks:
   test:schemas:
     desc: Verify schemas/ artifact layer (unit + offline schema validation)
     cmds:
+      - pytest schemas/ -q
       - pytest tests/unit -k schemas
 
   test:procedures:
@@ -114,7 +115,7 @@ tasks:
     desc: Verify infra/ delivery substrate (helm lint + terraform validate)
     cmds:
       - bash infra/helm/scripts/lint.sh
-      - for: { glob: "infra/terraform/environments/*/" }
+      - for: { glob: "infra/terraform/roots/*/*/" }
         cmd: terraform -chdir={{.ITEM}} validate
 
   test:docs:
@@ -152,7 +153,7 @@ tasks:
         ruff check
         core adapters procedures packs
         apps/control-api apps/temporal-workers apps/provisioning-agent
-        tests
+        tests schemas/tools schemas/_shared/tests
 
   lint:node:
     desc: Lint web-console TypeScript/React with ESLint (via pnpm)

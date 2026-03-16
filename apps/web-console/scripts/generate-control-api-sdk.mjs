@@ -9,7 +9,7 @@ const repoRoot = path.resolve(webConsoleRoot, '..', '..');
 const outputPath = path.resolve(webConsoleRoot, 'src/generated/control-api-sdk/index.ts');
 
 const openapiJson = execFileSync(
-  'python',
+  'python3',
   [
     '-c',
     [

@@ -117,7 +117,7 @@ status: approved
 - Do not leave generated API docs unlabeled and mixed with hand-written guidance.
 - Do not update narrative docs without checking the actual owning layer.
 - Do not let runbooks drift from operational reality because a code owner skipped docs follow-up.
-- Do not create a docs site config outside `docs/` when one is eventually added.
+- Do not create a second docs site configuration outside the repository-root `mkdocs.yml`.
 
 ## Build / Implementation Order
 

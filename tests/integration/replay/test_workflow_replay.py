@@ -3,14 +3,10 @@ tests/integration/replay/test_workflow_replay.py
 Integration tests for Temporal workflow replay from golden history files.
 
 Tests:
-  1. tests/data/temporal_histories/ directory exists
-  2. All .json files in the histories directory are valid JSON
-  3. Temporal time-skipping environment starts successfully
-  4. Time-skipping clock can be advanced
-
-Tests 3-4 require temporalio. All tests are marked integration and require
---live-services for the Temporal fixtures (tests 3-4).
-Marker: integration
+  1. tests/data/temporal_histories/ directory exists         (unit — no live services)
+  2. All .json files in the histories directory are valid JSON (unit — no live services)
+  3. Temporal time-skipping environment starts successfully  (integration — requires --live-services)
+  4. Time-skipping clock can be advanced                     (integration — requires --live-services)
 """
 from __future__ import annotations
 
@@ -19,14 +15,12 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.integration
-
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 HISTORIES_DIR = REPO_ROOT / "tests" / "data" / "temporal_histories"
 
 
 # ---------------------------------------------------------------------------
-# Test 1: temporal_histories directory exists
+# Test 1: temporal_histories directory exists  (no live services needed)
 # ---------------------------------------------------------------------------
 
 
@@ -39,7 +33,7 @@ def test_replay_histories_dir_exists() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 2: Golden history files load as valid JSON
+# Test 2: Golden history files load as valid JSON  (no live services needed)
 # ---------------------------------------------------------------------------
 
 
@@ -64,13 +58,14 @@ def test_replay_golden_files_load_cleanly() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 3: Temporal environment starts
+# Test 3: Temporal environment starts  (requires --live-services)
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.integration
 def test_temporal_env_starts(temporal_env) -> None:
     """The time-skipping Temporal WorkflowEnvironment must start and provide a client."""
-    temporalio = pytest.importorskip("temporalio")
+    pytest.importorskip("temporalio")
     assert temporal_env is not None, "temporal_env fixture returned None"
     assert temporal_env.client is not None, (
         "temporal_env.client is None — environment did not start correctly"
@@ -78,26 +73,12 @@ def test_temporal_env_starts(temporal_env) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 4: Time-skipping advances clock without error
+# Test 4: Time-skipping advances clock without error  (requires --live-services)
 # ---------------------------------------------------------------------------
 
 
-def test_time_skipping_advances_clock(temporal_env) -> None:
+@pytest.mark.integration
+async def test_time_skipping_advances_clock(temporal_env) -> None:
     """temporal_env.sleep(3600) must advance the virtual clock by 1 hour without error."""
-    temporalio = pytest.importorskip("temporalio")
-    import asyncio
-
-    async def _advance():
-        await temporal_env.sleep(3600)
-
-    # temporal_env.sleep returns a coroutine; run it
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        loop.run_until_complete(_advance())
-    except RuntimeError:
-        # In async test context, event loop may already be running
-        # This is acceptable — the fixture itself may be async
-        pass
+    pytest.importorskip("temporalio")
+    await temporal_env.sleep(3600)

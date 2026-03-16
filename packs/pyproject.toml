@@ -9,12 +9,7 @@ description = "Ecosystem and regulatory overlay packs for the dataspace control-
 requires-python = ">=3.12"
 dependencies = [
     "dataspace-control-plane-core",
-    "pydantic>=2.7",
-    "pydantic-settings>=2.3",
     "pyyaml>=6.0",
-    "semver>=3.0",
-    "jsonschema>=4.22",
-    "python-dateutil>=2.9",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +27,10 @@ artifacts = [
     "src/dataspace_control_plane_packs/**/vendor/**",
     "src/dataspace_control_plane_packs/**/rules/**",
     "src/dataspace_control_plane_packs/**/manifest.toml",
+]
+exclude = [
+    "src/dataspace_control_plane_packs/conftest.py",
+    "src/dataspace_control_plane_packs/**/tests/**",
 ]
 
 [tool.pytest.ini_options]

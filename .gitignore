@@ -105,6 +105,18 @@ htmlcov/
 .tox/
 .nox/
 
+# Hypothesis property-testing database
+# .hypothesis/examples/ is intentionally committed (shared discovered failures)
+# constants/ and unicode_data/ are per-machine runtime state that must not leak.
+.hypothesis/constants/
+.hypothesis/unicode_data/
+
+# Benchmark output (per-machine, not for review)
+.benchmarks/
+
+# Provisioning agent checkpoint state (runtime, not for review)
+.provisioning-checkpoints/
+
 # Type checkers
 .mypy_cache/
 .dmypy.json
@@ -270,6 +282,11 @@ site/
 
 # MkDocs offline assets cache
 docs/.cache/
+
+# Generated artifact from pnpm --dir docs invoked with incorrect relative path
+# (pre-generation step using --dir docs produced docs/docs/ instead of docs/api/)
+# Fixed in CI but directory may exist locally from old runs.
+docs/docs/
 
 
 # =============================================================================

@@ -15,16 +15,15 @@ import pytest
 @pytest.fixture(scope="session")
 def catenax_pack_profile():
     """
-    Session-scoped Catena-X pack profile.
+    Session-scoped Catena-X pack manifest + providers.
 
-    Tries to import and instantiate CatenaxPack from packs. Falls back to a
-    static dict describing the pack capabilities if packs are not yet scaffolded.
+    Returns the real PackManifest from the catenax pack if installed,
+    otherwise falls back to a static stub dict.
     """
     try:
-        from dataspace_control_plane_packs.catenax.api import CatenaxPack
+        from dataspace_control_plane_packs.catenax.api import MANIFEST
 
-        pack = CatenaxPack()
-        yield pack
+        yield MANIFEST
         return
     except ImportError:
         pass
@@ -44,15 +43,15 @@ def catenax_pack_profile():
 @pytest.fixture(scope="session")
 def battery_passport_pack_profile():
     """
-    Session-scoped battery passport pack profile.
+    Session-scoped battery-passport pack manifest + providers.
 
-    Tries to import BatteryPassportPack; falls back to a static dict.
+    Returns the real PackManifest from the battery_passport pack if installed,
+    otherwise falls back to a static stub dict.
     """
     try:
-        from dataspace_control_plane_packs.battery_passport.api import BatteryPassportPack
+        from dataspace_control_plane_packs.battery_passport.api import MANIFEST
 
-        pack = BatteryPassportPack()
-        yield pack
+        yield MANIFEST
         return
     except ImportError:
         pass

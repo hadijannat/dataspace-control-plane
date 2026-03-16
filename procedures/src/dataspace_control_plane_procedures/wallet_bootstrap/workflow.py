@@ -1,31 +1,30 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import field
 
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError
 
-from dataspace_control_plane_procedures._shared.activity_options import (
+from .._shared.activity_options import (
     PROVISIONING_OPTIONS,
     EXTERNAL_CALL_OPTIONS,
     RPC_OPTIONS,
 )
-from dataspace_control_plane_procedures._shared.search_attributes import (
+from .._shared.search_attributes import (
     TENANT_ID,
     LEGAL_ENTITY_ID,
     PROCEDURE_TYPE,
     STATUS,
     build_search_attribute_updates,
 )
-from dataspace_control_plane_procedures.wallet_bootstrap.input import (
+from .input import (
     WalletStartInput,
     WalletResult,
     WalletStatusQuery,
     WalletCarryState,
 )
-from dataspace_control_plane_procedures.wallet_bootstrap.state import WalletWorkflowState
-from dataspace_control_plane_procedures.wallet_bootstrap.messages import (
+from .state import WalletWorkflowState
+from .messages import (
     CredentialIssuanceCallback,
     ReissueRequested,
     PauseWallet,
@@ -33,7 +32,7 @@ from dataspace_control_plane_procedures.wallet_bootstrap.messages import (
     ResumeWallet,
     ResumeResult,
 )
-from dataspace_control_plane_procedures.wallet_bootstrap.activities import (
+from .activities import (
     create_wallet,
     register_did,
     setup_verification_methods,
@@ -47,10 +46,10 @@ from dataspace_control_plane_procedures.wallet_bootstrap.activities import (
     PresVerifyInput,
     WalletBindInput,
 )
-from dataspace_control_plane_procedures.wallet_bootstrap.compensation import (
+from .compensation import (
     run_wallet_compensation,
 )
-from dataspace_control_plane_procedures.wallet_bootstrap.manifest import MANIFEST
+from .manifest import MANIFEST
 
 _TERMINAL_STATES = frozenset({"bound_to_connector", "failed"})
 _PAUSED_STATE = "paused"

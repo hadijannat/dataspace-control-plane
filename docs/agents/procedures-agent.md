@@ -18,17 +18,17 @@ status: approved
 
 ## Owned Paths
 
-- `procedures/company-onboarding`
-- `procedures/connector-bootstrap`
-- `procedures/wallet-bootstrap`
-- `procedures/publish-asset`
-- `procedures/register-digital-twin`
-- `procedures/negotiate-contract`
-- `procedures/dpp-provision`
-- `procedures/evidence-export`
-- `procedures/delegate-tenant`
-- `procedures/rotate-credentials`
-- `procedures/revoke-credentials`
+- `procedures/src/dataspace_control_plane_procedures/company_onboarding`
+- `procedures/src/dataspace_control_plane_procedures/connector_bootstrap`
+- `procedures/src/dataspace_control_plane_procedures/wallet_bootstrap`
+- `procedures/src/dataspace_control_plane_procedures/publish_asset`
+- `procedures/src/dataspace_control_plane_procedures/register_digital_twin`
+- `procedures/src/dataspace_control_plane_procedures/negotiate_contract`
+- `procedures/src/dataspace_control_plane_procedures/dpp_provision`
+- `procedures/src/dataspace_control_plane_procedures/evidence_export`
+- `procedures/src/dataspace_control_plane_procedures/delegate_tenant`
+- `procedures/src/dataspace_control_plane_procedures/rotate_credentials`
+- `procedures/src/dataspace_control_plane_procedures/revoke_credentials`
 
 ## Explicitly Non-Owned Paths
 

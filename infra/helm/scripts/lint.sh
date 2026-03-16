@@ -13,6 +13,13 @@ VALUES_DIR="$REPO_ROOT/infra/helm/values"
 ENVS=(dev staging prod-eu)
 CHARTS=(control-api temporal-workers web-console provisioning-agent platform)
 
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Required command not found: $1" >&2
+    exit 127
+  fi
+}
+
 PASS=0
 FAIL=0
 
@@ -29,6 +36,14 @@ check() {
     ((FAIL++)) || true
   fi
 }
+
+require_command helm
+require_command python3
+
+if ! python3 -c "import yaml" >/dev/null 2>&1; then
+  echo "Required Python module not found: pyyaml (import yaml)" >&2
+  exit 127
+fi
 
 echo "============================================================"
 echo " Helm Chart Lint Gate"
@@ -55,25 +70,55 @@ for chart in "${CHARTS[@]}"; do
       check "helm template $chart [$env]" \
         helm template "$chart" "$CHARTS_DIR/$chart" -f "$values_file"
     else
-      echo "  [SKIP] $chart/$env — no overlay at $values_file"
+      echo "  [FAIL] Missing required overlay: $values_file"
+      ((FAIL++)) || true
     fi
   done
 done
 
-# Step 3: Validate that prod-eu tags are sha256 digests
+# Step 3: Validate that prod-eu image configuration uses digest fields only
 echo ""
 echo "--- Step 3: prod-eu digest check ---"
 for chart in "${CHARTS[@]}"; do
   values_file="$VALUES_DIR/prod-eu/$chart.yaml"
   if [[ -f "$values_file" ]]; then
-    # Check for mutable tags in prod-eu overlays
-    # Allow sha256 digests and REPLACE_WITH_REAL_DIGEST placeholders (CI enforces replacement)
-    if grep -E '^\s+tag:' "$values_file" | grep -qvE '(sha256:[a-f0-9]{64}|REPLACE_WITH_REAL_DIGEST)'; then
-      echo "  [FAIL] $chart prod-eu overlay contains mutable image tag — must be sha256 digest"
-      ((FAIL++)) || true
-    else
-      echo "  [PASS] $chart prod-eu tag format OK"
+    if python3 - "$chart" "$values_file" <<'PY'
+import sys
+import yaml
+
+chart = sys.argv[1]
+values_path = sys.argv[2]
+
+with open(values_path, "r", encoding="utf-8") as handle:
+    data = yaml.safe_load(handle) or {}
+
+digest_pattern = "sha256:"
+
+def check_image(name, image):
+    if not isinstance(image, dict):
+        raise SystemExit(f"{name}: image block missing")
+    if "tag" in image:
+        raise SystemExit(f"{name}: image.tag is not allowed in prod overlays")
+    digest = image.get("digest")
+    if not isinstance(digest, str) or not digest.startswith(digest_pattern):
+        raise SystemExit(f"{name}: image.digest must be set to a sha256 digest")
+    if digest == "sha256:REPLACE_WITH_REAL_DIGEST":
+        raise SystemExit(f"{name}: image.digest is still a placeholder — must be a real sha256 digest")
+
+if chart == "platform":
+    for component in ("control-api", "temporal-workers", "web-console", "provisioning-agent"):
+        component_values = data.get(component, {})
+        if component_values.get("enabled", False):
+            check_image(component, component_values.get("image"))
+else:
+    check_image(chart, data.get("image"))
+PY
+    then
+      echo "  [PASS] $chart prod-eu digest configuration OK"
       ((PASS++)) || true
+    else
+      echo "  [FAIL] $chart prod-eu overlay must use image.digest only"
+      ((FAIL++)) || true
     fi
   fi
 done

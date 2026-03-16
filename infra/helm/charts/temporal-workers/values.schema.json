@@ -2,109 +2,177 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "temporal-workers Helm values schema",
   "type": "object",
-  "required": ["image", "secrets", "config", "resources"],
+  "required": ["image", "service", "secrets", "config", "resources"],
   "additionalProperties": true,
   "properties": {
     "replicaCount": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 20,
-      "description": "Number of temporal-workers pod replicas"
+      "maximum": 20
     },
     "image": {
       "type": "object",
-      "required": ["repository", "tag"],
-      "additionalProperties": true,
+      "required": ["repository"],
+      "additionalProperties": false,
       "properties": {
         "repository": {
           "type": "string",
-          "minLength": 1,
-          "description": "Container image repository"
+          "minLength": 1
         },
         "tag": {
           "type": "string",
-          "minLength": 1,
-          "pattern": "^(sha256:[a-f0-9]{64}|[0-9]+\\.[0-9]+\\.[0-9]+.*)$",
-          "description": "Image tag — semver or sha256 digest"
+          "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^(sha256:[a-f0-9]{64}|sha256:REPLACE_WITH_REAL_DIGEST)$"
         },
         "pullPolicy": {
           "type": "string",
           "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["tag"],
+          "not": {
+            "required": ["digest"]
+          }
+        },
+        {
+          "required": ["digest"],
+          "not": {
+            "required": ["tag"]
+          }
+        }
+      ]
+    },
+    "service": {
+      "type": "object",
+      "required": ["port"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
         }
       }
     },
     "secrets": {
       "type": "object",
       "required": ["vaultSecretName", "postgresSecretName"],
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "vaultSecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret containing Vault credentials (signing keys, transit)"
+          "minLength": 1
         },
         "postgresSecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret containing Postgres credentials"
+          "minLength": 1
         }
       }
     },
     "config": {
       "type": "object",
-      "additionalProperties": true,
+      "required": [
+        "logLevel",
+        "otlpEndpoint",
+        "temporalHost",
+        "temporalNamespace",
+        "temporalTaskQueue",
+        "temporalMaxConcurrentActivities",
+        "temporalMaxConcurrentWorkflows"
+      ],
+      "additionalProperties": false,
       "properties": {
         "logLevel": {
           "type": "string",
           "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]
         },
         "otlpEndpoint": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "temporalHost": {
           "type": "string",
-          "minLength": 1,
-          "description": "Temporal server address (host:port)"
+          "minLength": 1
         },
         "temporalNamespace": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "temporalTaskQueue": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "temporalMaxConcurrentActivities": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 100,
-          "description": "Max concurrent activity executions per worker pod"
+          "maximum": 100
         },
         "temporalMaxConcurrentWorkflows": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 100,
-          "description": "Max concurrent workflow executions per worker pod"
+          "maximum": 100
         }
       }
     },
     "resources": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "requests": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
-            "cpu": { "type": "string" },
-            "memory": { "type": "string" }
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
           }
         },
         "limits": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
-            "cpu": { "type": "string" },
-            "memory": { "type": "string" }
+            "cpu": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            }
           }
+        }
+      }
+    },
+    "autoscaling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "targetCPUUtilizationPercentage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
         }
       }
     }

@@ -17,8 +17,6 @@
 #   18002 → keycloak:8080
 #   18003 → kafka:9092
 
-version: "3.9"
-
 services:
   postgres:
     environment:

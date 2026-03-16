@@ -1,22 +1,33 @@
 # Module: observability
 
-Deploys the Prometheus observability stack using `kube-prometheus-stack` Helm chart, with optional Loki (logs) and Tempo (traces).
+Deploys the shared monitoring stack for a cluster namespace using Helm charts:
 
-## Inputs
+- `kube-prometheus-stack`
+- optional `loki`
+- optional `tempo`
 
-| Name | Type | Default | Required | Description |
-|------|------|---------|----------|-------------|
-| `namespace` | string | — | yes | Observability namespace |
-| `prometheus_storage_size` | string | `"50Gi"` | no | Prometheus PVC size |
-| `grafana_enabled` | bool | `true` | no | Deploy Grafana |
-| `loki_enabled` | bool | `false` | no | Deploy Loki for logs |
-| `tempo_enabled` | bool | `false` | no | Deploy Tempo for traces |
-| `labels` | map(string) | `{}` | no | Resource labels |
+## Notes
+
+- Grafana administrator credentials should come from an existing Kubernetes Secret through `grafana_admin_secret_name`.
+- This module owns cluster-adjacent observability components, not application telemetry pipelines. Collector topology remains under `infra/observability/`.
+- Loki and Tempo are optional per environment.
+
+## Key Inputs
+
+| Name | Description |
+|------|-------------|
+| `namespace` | Observability namespace |
+| `prometheus_storage_size` | Prometheus PVC size |
+| `grafana_enabled` | Enable Grafana |
+| `grafana_admin_secret_name` | Existing Secret name for Grafana admin credentials |
+| `loki_enabled` | Enable Loki |
+| `tempo_enabled` | Enable Tempo |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| `prometheus_endpoint` | Prometheus in-cluster URL |
+| `prometheus_endpoint` | Prometheus in-cluster endpoint |
 | `grafana_service_name` | Grafana service name |
-| `alertmanager_endpoint` | Alertmanager in-cluster URL |
+| `grafana_admin_secret_name` | Secret reference used for Grafana admin credentials |
+| `alertmanager_endpoint` | Alertmanager in-cluster endpoint |

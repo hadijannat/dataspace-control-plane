@@ -1,31 +1,33 @@
 # Module: vault
 
-Deploys HashiCorp Vault in Kubernetes. Dev mode for local environments; for production, use the official Vault Helm chart with auto-unseal.
+Provider-neutral secret-store contract with two modes:
 
-## Security Warning
+- `dev-scaffold`: deploy Vault in development mode inside Kubernetes
+- `external`: reference a shared Vault address and service name
 
-This module runs Vault in dev mode (`vault server -dev`) for development environments. **Dev mode is not suitable for production** — it stores everything in memory, auto-unseals, and exposes a root token.
+## Notes
 
-For production:
-1. Use the official `hashicorp/vault` Helm chart with `ha.enabled=true` and Raft storage
-2. Configure auto-unseal with cloud KMS (AWS KMS, GCP Cloud KMS, Azure Key Vault)
-3. Use the `hashicorp/vault` Terraform provider to manage engines, policies, and auth methods
+- `dev-scaffold` runs Vault in dev mode and is for local work only.
+- Shared environments should use `mode = "external"` until a production-grade Vault implementation is selected.
+- Transit and PKI enablement remain scaffold conveniences; shared environments should manage those concerns in the real Vault control plane.
 
-## Inputs
+## Key Inputs
 
-| Name | Type | Default | Required | Description |
-|------|------|---------|----------|-------------|
-| `namespace` | string | — | yes | K8s namespace |
-| `storage_size` | string | `"10Gi"` | no | PVC size |
-| `ha_enabled` | bool | `false` | no | Enable HA (3 replicas) |
-| `transit_enabled` | bool | `true` | no | Enable Transit secrets engine |
-| `pki_enabled` | bool | `true` | no | Enable PKI secrets engine |
-| `labels` | map(string) | `{}` | no | Resource labels |
+| Name | Description |
+|------|-------------|
+| `mode` | `dev-scaffold` or `external` |
+| `namespace` | Kubernetes namespace |
+| `ha_enabled` | Development scaffold replica count control |
+| `transit_enabled` | Enable transit in scaffold mode |
+| `pki_enabled` | Enable PKI in scaffold mode |
+| `external_vault_addr` | Shared Vault API address |
+| `external_service_name` | Shared Vault service reference |
+| `external_root_token_secret_name` | Optional existing secret name for development-oriented token handling |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| `vault_addr` | In-cluster Vault API address |
-| `service_name` | Vault service name |
-| `root_token_secret_name` | Name of the root token K8s Secret (dev only) |
+| `vault_addr` | In-cluster or external Vault address |
+| `service_name` | In-cluster or external service reference |
+| `root_token_secret_name` | Scaffold token secret or external reference |

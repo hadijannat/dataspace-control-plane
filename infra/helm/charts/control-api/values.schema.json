@@ -8,35 +8,49 @@
     "replicaCount": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 20,
-      "description": "Number of control-api pod replicas"
+      "maximum": 20
     },
     "image": {
       "type": "object",
-      "required": ["repository", "tag"],
-      "additionalProperties": true,
+      "required": ["repository"],
+      "additionalProperties": false,
       "properties": {
         "repository": {
           "type": "string",
-          "minLength": 1,
-          "description": "Container image repository (e.g. ghcr.io/your-org/dataspace-control-plane/control-api)"
+          "minLength": 1
         },
         "tag": {
           "type": "string",
-          "minLength": 1,
-          "pattern": "^(sha256:[a-f0-9]{64}|[0-9]+\\.[0-9]+\\.[0-9]+.*)$",
-          "description": "Image tag — must be semver (0.1.0) or sha256 digest (sha256:<64 hex chars>) for production"
+          "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^(sha256:[a-f0-9]{64}|sha256:REPLACE_WITH_REAL_DIGEST)$"
         },
         "pullPolicy": {
           "type": "string",
           "enum": ["Always", "IfNotPresent", "Never"]
         }
-      }
+      },
+      "oneOf": [
+        {
+          "required": ["tag"],
+          "not": {
+            "required": ["digest"]
+          }
+        },
+        {
+          "required": ["digest"],
+          "not": {
+            "required": ["tag"]
+          }
+        }
+      ]
     },
     "service": {
       "type": "object",
-      "required": ["port"],
-      "additionalProperties": true,
+      "required": ["port", "targetPort"],
+      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -45,8 +59,7 @@
         "port": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 65535,
-          "description": "Service port exposed to other pods"
+          "maximum": 65535
         },
         "targetPort": {
           "type": "integer",
@@ -58,67 +71,98 @@
     "secrets": {
       "type": "object",
       "required": ["postgresSecretName", "vaultSecretName", "keycloakSecretName"],
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "postgresSecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret containing Postgres credentials (never the actual credentials)"
+          "minLength": 1
         },
         "vaultSecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret referencing Vault credentials"
+          "minLength": 1
         },
         "keycloakSecretName": {
           "type": "string",
-          "minLength": 1,
-          "description": "Name of the K8s Secret referencing Keycloak OIDC client credentials"
+          "minLength": 1
         }
       }
     },
     "config": {
       "type": "object",
-      "additionalProperties": true,
+      "required": ["logLevel", "otlpEndpoint", "temporalNamespace", "temporalTaskQueue"],
+      "additionalProperties": false,
       "properties": {
         "logLevel": {
           "type": "string",
-          "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
-          "description": "Application log level"
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]
         },
         "otlpEndpoint": {
           "type": "string",
-          "description": "OpenTelemetry Collector OTLP gRPC endpoint"
+          "minLength": 1
         },
         "temporalNamespace": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "temporalTaskQueue": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "streamTicketTtlSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "streamPollIntervalSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "docsPublic": {
+          "type": "boolean"
+        },
+        "tenantBanner": {
+          "type": "string"
+        },
+        "keycloakBrowserUrl": {
+          "type": "string"
+        },
+        "keycloakBrowserRealm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "keycloakBrowserClientId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publicBaseUrl": {
           "type": "string"
         }
       }
     },
     "resources": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "requests": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
             "cpu": {
-              "type": "string",
-              "description": "CPU request (e.g. 100m)"
+              "type": "string"
             },
             "memory": {
-              "type": "string",
-              "description": "Memory request (e.g. 128Mi)"
+              "type": "string"
             }
           }
         },
         "limits": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
             "cpu": {
               "type": "string"
@@ -132,7 +176,7 @@
     },
     "autoscaling": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -155,22 +199,74 @@
     },
     "ingress": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "enabled": {
           "type": "boolean"
         },
         "className": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "annotations": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "hosts": {
-          "type": "array"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["host", "paths"],
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string",
+                "minLength": 1
+              },
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["path", "pathType"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pathType": {
+                      "type": "string",
+                      "enum": ["Exact", "Prefix", "ImplementationSpecific"]
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         "tls": {
-          "type": "array"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["secretName", "hosts"],
+            "additionalProperties": false,
+            "properties": {
+              "secretName": {
+                "type": "string",
+                "minLength": 1
+              },
+              "hosts": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
         }
       }
     }

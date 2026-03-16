@@ -1,0 +1,80 @@
+# env/prod-eu.yaml — Production EU endpoint overrides
+#
+# Strict TLS. Auth tokens sourced from Vault Agent Injector — NEVER hardcoded.
+# Vault Agent runs as a sidecar and writes tokens to /run/secrets/<path>.
+# The OTel Collector container reads them as environment variables.
+#
+# Required env vars (injected by Vault Agent Injector — see K8s pod annotations):
+#   TEMPO_ENDPOINT                — Production Grafana Tempo endpoint (EU region)
+#   TEMPO_TOKEN                   — Vault-injected bearer token for Tempo
+#   PROMETHEUS_REMOTE_WRITE_URL   — Production Prometheus remote write URL
+#   PROMETHEUS_TOKEN              — Vault-injected bearer token for Prometheus
+#   LOKI_ENDPOINT                 — Production Grafana Loki endpoint (EU region)
+#   LOKI_TOKEN                    — Vault-injected bearer token for Loki
+#   GATEWAY_OTLP_ENDPOINT         — (node-agent only) Gateway collector endpoint
+#
+# Vault Agent Injector pod annotations example:
+#   vault.hashicorp.com/agent-inject: "true"
+#   vault.hashicorp.com/role: "otel-collector"
+#   vault.hashicorp.com/agent-inject-secret-tempo-token: "secret/data/observability/tempo"
+#   vault.hashicorp.com/agent-inject-template-tempo-token: |
+#     {{- with secret "secret/data/observability/tempo" -}}
+#     export TEMPO_TOKEN="{{ .Data.data.token }}"
+#     {{- end }}
+#
+# Never commit actual token values to this file or any file in this repository.
+
+# The base processors.yaml sets redaction.summary: debug which emits matched
+# attribute values into telemetry — a data-leak risk outside dev.
+# Override to silent in all non-dev environments.
+processors:
+  redaction:
+    summary: silent
+
+exporters:
+  otlp/tempo:
+    endpoint: ${TEMPO_ENDPOINT}
+    tls:
+      insecure: false
+      # Enforce minimum TLS 1.2
+      min_version: "1.2"
+    headers:
+      authorization: Bearer ${TEMPO_TOKEN}
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 60s
+      max_elapsed_time: 600s
+    sending_queue:
+      enabled: true
+      num_consumers: 20
+      queue_size: 5000
+
+  prometheusremotewrite:
+    endpoint: ${PROMETHEUS_REMOTE_WRITE_URL}
+    tls:
+      insecure: false
+      min_version: "1.2"
+    headers:
+      authorization: Bearer ${PROMETHEUS_TOKEN}
+    resource_to_telemetry_conversion:
+      enabled: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 60s
+
+  loki:
+    endpoint: ${LOKI_ENDPOINT}
+    tls:
+      insecure: false
+      min_version: "1.2"
+    headers:
+      authorization: Bearer ${LOKI_TOKEN}
+    default_labels_enabled:
+      exporter: false
+      job: true
+      instance: true
+      level: true
+    retry_on_failure:
+      enabled: true

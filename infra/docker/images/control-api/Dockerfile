@@ -7,8 +7,10 @@
 #   deps    — install Python dependencies with uv
 #   runtime — minimal runtime image with non-root user
 
+ARG PYTHON_BASE_IMAGE=python:3.12-slim
+
 # Stage 1: dependency installation
-FROM python:3.12-slim AS deps
+FROM ${PYTHON_BASE_IMAGE} AS deps
 
 WORKDIR /build
 
@@ -21,7 +23,7 @@ RUN pip install --no-cache-dir uv==0.4.18 && \
     uv pip install --system --no-cache -r pyproject.toml
 
 # Stage 2: runtime image
-FROM python:3.12-slim AS runtime
+FROM ${PYTHON_BASE_IMAGE} AS runtime
 
 # Create non-root user and group
 RUN groupadd -r appuser && \

@@ -1,6 +1,6 @@
 output "zone_id" {
-  value       = "REPLACE_WITH_PROVIDER_ZONE_ID"
-  description = "DNS zone ID (update after provider substitution)."
+  value       = var.external_zone_id
+  description = "DNS zone ID."
 }
 
 output "zone_name" {

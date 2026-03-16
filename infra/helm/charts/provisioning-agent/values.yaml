@@ -2,7 +2,6 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/your-org/dataspace-control-plane/provisioning-agent
-  # Use digest in production: sha256:<digest>
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 

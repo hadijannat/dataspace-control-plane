@@ -1,0 +1,14 @@
+# Staging environment overlay for provisioning-agent
+# Applied over charts/provisioning-agent/values.yaml
+
+replicaCount: 1
+
+image:
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+config:
+  logLevel: INFO
+
+autoscaling:
+  enabled: false

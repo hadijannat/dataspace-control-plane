@@ -2,41 +2,47 @@
 
 ## Purpose
 
-This directory owns durable shared infrastructure: Kubernetes namespaces, Postgres instances, Keycloak, Vault, ingress controllers, object storage, DNS, and observability backends. Terraform provisions long-lived resources that workloads (Helm-managed) depend on.
+`infra/terraform/` owns durable and shared infrastructure contracts: namespaces, registries, databases, identity, secret stores, ingress, object storage, DNS, and observability backends.
 
-**Terraform does not deploy application workloads.** Application releases are managed by Helm. The boundary is: Terraform → infrastructure substrate; Helm → workload releases.
+Terraform does not release application workloads. Helm owns workload packaging and Docker owns image builds.
 
-## Layer Ownership
+## Structure
 
 | Path | Responsibility |
-|------|---------------|
-| `modules/` | Reusable, composable infrastructure building blocks (no provider blocks) |
-| `roots/` | Deployable Terraform stacks — one root per environment + lifecycle layer |
-| `backends/` | Backend config examples (never commit real credentials) |
-| `policy/` | OPA/Sentinel policy files for plan-time enforcement |
+|------|----------------|
+| `modules/` | Reusable building blocks with no provider blocks |
+| `roots/` | Deployable root modules grouped by environment and lifecycle |
+| `backends/` | Backend config examples for non-bootstrap roots |
+| `policy/` | Policy checks for plan-time enforcement |
 
-## Module List
+## Module Modes
 
-| Module | Purpose |
-|--------|---------|
-| `kubernetes-namespace` | Creates a K8s namespace with labels and annotations |
-| `registry` | Container registry project (provider-specific — see module README) |
-| `postgres` | PostgreSQL instance (provider-specific placeholder — see module README) |
-| `keycloak` | Keycloak identity server (K8s deployment for dev, external for prod) |
-| `vault` | HashiCorp Vault (K8s deployment, transit + PKI engine enablement) |
-| `object-storage` | Object storage bucket (provider-specific placeholder) |
-| `dns` | DNS zone and records (provider-specific placeholder) |
-| `ingress` | NGINX ingress controller via Helm release |
-| `observability` | kube-prometheus-stack and optional Loki/Tempo via Helm releases |
+Provider-neutral shared-service modules use an explicit ownership mode:
+
+- `dev-scaffold`: create an in-cluster development scaffold when that makes sense
+- `external`: model a durable shared dependency by reference only
+
+Current behavior:
+
+| Module | `dev-scaffold` | `external` |
+|--------|----------------|------------|
+| `registry` | Records a local registry contract in-cluster | References a shared registry URL |
+| `postgres` | Deploys single-node Postgres in Kubernetes | References an external Postgres host and secret |
+| `keycloak` | Deploys in-cluster Keycloak | References shared Keycloak endpoints |
+| `vault` | Deploys development Vault in-cluster | References shared Vault endpoints |
+| `object-storage` | not used | References shared bucket or object-store URL |
+| `dns` | not used | References shared DNS zone state |
+
+Modules such as `kubernetes-namespace`, `ingress`, and `observability` remain concrete implementations because they are cluster-adjacent infrastructure managed by this repo.
 
 ## Root Layout
 
-```
-roots/
+```text
+infra/terraform/roots/
 ├── dev/
-│   ├── bootstrap/    # Namespace + registry — run first in each env
-│   ├── platform/     # Postgres, Keycloak, Vault, ingress — run second
-│   └── observability/ # Monitoring stack — run third
+│   ├── bootstrap/
+│   ├── platform/
+│   └── observability/
 ├── staging/
 │   ├── bootstrap/
 │   ├── platform/
@@ -47,60 +53,46 @@ roots/
     └── observability/
 ```
 
-### Lifecycle Layers
+Lifecycle order:
 
-1. **bootstrap** — namespace and registry prerequisites; run once, rarely changed
-2. **platform** — shared services (Postgres, Keycloak, Vault, ingress); changed on platform upgrades
-3. **observability** — monitoring stack; changed on alert/dashboard/SLO changes
+1. `bootstrap`: namespace and registry prerequisites
+2. `platform`: shared runtime dependencies such as ingress, Postgres, Keycloak, and Vault
+3. `observability`: Prometheus, Grafana, Loki, Tempo
 
-Each layer is a separate Terraform root with independent state. This limits blast radius: changing the observability stack cannot accidentally destroy platform resources.
+## Backend Rules
 
-## How to Run Each Root
+Bootstrap roots use a local backend intentionally. They create the `terraform-state` namespace used by the Kubernetes backends in the later roots, so they must not depend on that namespace already existing.
+
+Platform and observability roots continue to use the per-environment backend examples under `infra/terraform/backends/`.
+
+Examples:
 
 ```bash
-# Example: dev/platform
-cd infra/terraform/roots/dev/platform
+# bootstrap root
+cd infra/terraform/roots/staging/bootstrap
+terraform init
 
-# Initialize (populates .terraform/ and .terraform.lock.hcl)
-terraform init -backend-config=../../../backends/dev.backend.hcl
-
-# Preview changes
-terraform plan -var-file=terraform.tfvars
-
-# Apply changes
-terraform apply -var-file=terraform.tfvars
-
-# Validate without connecting to provider
-terraform validate
+# platform root
+cd infra/terraform/roots/staging/platform
+terraform init -backend-config=../../../backends/staging.backend.hcl
 ```
 
-## Secret Rules
+## Secrets And State
 
-- **No inline secrets** in `.tf` files or committed `*.tfvars` files
-- Provider authentication via environment variables:
-  - AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`
-  - GCP: `GOOGLE_APPLICATION_CREDENTIALS`
-  - Azure: `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`
-  - Kubernetes: `KUBECONFIG` env var or in-cluster service account
-- Vault root token: never committed — retrieve from sealed Vault after bootstrap
-- Commit `*.tfvars.example` with safe example values; gitignore actual `*.tfvars`
+- Never commit real `terraform.tfvars`, backend credentials, plans, or state files.
+- Do not place secrets inline in `.tf` files.
+- External shared services should be represented by endpoint and secret references, not secret bodies.
+- Review `.terraform.lock.hcl` changes explicitly in PRs.
 
-## Lock File Policy
-
-- Commit `.terraform.lock.hcl` in every root after running `terraform init`
-- Provider version changes must be reviewed in PR diff — never auto-accept lock file changes
-- Run `terraform init -upgrade` only when intentionally updating provider versions
-- Use `-lockfile=readonly` in CI to enforce the committed lock file
-
-## CI Gates
+## Verification
 
 For each changed root:
-1. `terraform fmt -check` — enforces canonical formatting
-2. `terraform validate` — syntax and type checking (no provider connection required)
-3. `terraform plan -out=plan.tfplan` — full plan with provider (requires credentials)
-4. Policy check: `conftest test plan.tfplan -p infra/terraform/policy/` (OPA policies)
-5. Plan artifact archived for human review before apply
 
-## Provider Selection Note
+1. `terraform fmt -check -recursive infra/terraform`
+2. `terraform validate`
+3. `terraform plan` for the changed root with the correct backend and credentials
+4. policy checks from `infra/terraform/policy/` where used by CI
 
-Most modules in this repo contain provider-agnostic placeholders or Kubernetes-based implementations. Before first deployment, select the appropriate provider resources based on your cloud/on-prem environment and substitute placeholders as documented in each module's README.
+## Provider Follow-Up
+
+This repo now states its boundary honestly: staging and production roots reference shared durable services until a concrete provider-specific implementation is chosen. Replacing those references with real cloud resources is a follow-up decision, not an implicit behavior hidden in placeholder resources.

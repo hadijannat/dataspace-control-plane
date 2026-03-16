@@ -20,6 +20,11 @@ CHARTS_DIR="$REPO_ROOT/infra/helm/charts"
 VALUES_DIR="$REPO_ROOT/infra/helm/values"
 RENDERED_DIR="$REPO_ROOT/infra/helm/rendered"
 
+if ! command -v helm >/dev/null 2>&1; then
+  echo "Error: helm is required but was not found in PATH" >&2
+  exit 127
+fi
+
 CHART=""
 ENV=""
 

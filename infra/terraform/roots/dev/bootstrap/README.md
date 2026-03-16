@@ -1,23 +1,12 @@
 # dev/bootstrap
 
-Bootstrap root for the dev environment. Run this first — before platform/ or observability/.
+Creates the `dataspace` and `terraform-state` namespaces, then records the local dev registry contract.
 
-Creates:
-- `dataspace` namespace
-- `terraform-state` namespace (for Kubernetes backend state storage)
-- Dev container registry config
-
-## Usage
+This root uses a local backend on purpose because it creates the namespace that later Kubernetes-backed roots rely on.
 
 ```bash
 cd infra/terraform/roots/dev/bootstrap
-
-# Initialize (run once, or after changing required_providers)
-terraform init -backend-config=../../../backends/dev.backend.hcl
-
-# Plan
+terraform init
 terraform plan -var-file=terraform.tfvars
-
-# Apply
 terraform apply -var-file=terraform.tfvars
 ```

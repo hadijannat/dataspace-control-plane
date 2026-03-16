@@ -1,118 +1,139 @@
 # Docker — Image Builds and Local Composition
 
-## Build System
+## Purpose
 
-**Builder**: Docker BuildKit + Buildx (default in Docker Engine 23+).
+`infra/docker/` owns image builds and local or CI container composition. It does not define Kubernetes release behavior and it does not provision shared infrastructure.
 
-**Build entrypoint**: `docker buildx bake` — never invoke `docker build` directly in CI. The bake file provides reproducible, multi-target, multi-platform builds with unified cache management.
-
-```bash
-# Build all default targets (linux/amd64, local)
-docker buildx bake --file infra/docker/bake/docker-bake.hcl
-
-# Validate bake config (no build)
-docker buildx bake --file infra/docker/bake/docker-bake.hcl --print
-
-# Build and push release targets (multi-platform)
-TAG=sha256:abc123 docker buildx bake --file infra/docker/bake/docker-bake.hcl release
-```
+Builds are standardized on BuildKit, Buildx, and Bake. Compose is used only for local development and CI-style stack assembly.
 
 ## Directory Layout
 
-```
+```text
 infra/docker/
 ├── images/
-│   ├── control-api/        # Multi-stage Python FastAPI Dockerfile
-│   ├── temporal-workers/   # Multi-stage Python Temporal worker Dockerfile
-│   ├── web-console/        # Multi-stage Next.js Dockerfile
-│   ├── provisioning-agent/ # Multi-stage Python provisioning agent Dockerfile
+│   ├── control-api/
+│   ├── temporal-workers/
+│   ├── web-console/
+│   ├── provisioning-agent/
 │   └── base/
-│       ├── python-runtime.Dockerfile  # Shared Python base
-│       └── node-build.Dockerfile      # Shared Node.js build base
 ├── bake/
-│   ├── docker-bake.hcl          # Root bake file (groups, variables, includes)
+│   ├── docker-bake.hcl
 │   └── targets/
-│       ├── apps.hcl             # Dev local targets
-│       ├── ci.hcl               # CI targets (GHA cache, local output)
-│       └── release.hcl          # Release targets (multi-platform, push)
+│       ├── apps.hcl
+│       ├── ci.hcl
+│       └── release.hcl
 ├── compose/
-│   ├── compose.yaml             # Base services (Postgres, Temporal, Keycloak, Vault)
-│   ├── compose.dev.yaml         # Dev overlay (app services with hot-reload)
-│   ├── compose.test.yaml        # CI integration test overlay
-│   └── compose.observability.yaml # OTel + Prometheus + Grafana + Loki
+│   ├── compose.yaml
+│   ├── compose.dev.yaml
+│   ├── compose.test.yaml
+│   └── compose.observability.yaml
 └── scripts/
-    ├── build.sh                 # Build wrapper
-    └── push.sh                  # Push and record digest
+    ├── build.sh
+    └── push.sh
 ```
 
-## Base Images
+## Bake Usage
 
-| Image | Base | Pinned |
-|-------|------|--------|
-| control-api | python:3.12-slim | Semver in dev, digest in release |
-| temporal-workers | python:3.12-slim | Semver in dev, digest in release |
-| web-console | node:20-alpine | Semver in dev, digest in release |
-| provisioning-agent | python:3.12-slim | Semver in dev, digest in release |
+Bake target definitions are loaded explicitly with multiple `-f` flags. Do not rely on `include` in the root HCL file.
 
-Pin base image digests using `PYTHON_BASE_DIGEST` and `NODE_BASE_DIGEST` Bake variables in release targets.
+Validate the merged Bake model:
 
-## Secrets
+```bash
+docker buildx bake \
+  -f infra/docker/bake/docker-bake.hcl \
+  -f infra/docker/bake/targets/apps.hcl \
+  -f infra/docker/bake/targets/ci.hcl \
+  -f infra/docker/bake/targets/release.hcl \
+  --print
+```
 
-**Never pass secrets via ARG or ENV.** Use BuildKit secret mounts:
+Local builds:
+
+```bash
+./infra/docker/scripts/build.sh
+./infra/docker/scripts/build.sh ci
+./infra/docker/scripts/build.sh control-api
+```
+
+Release builds:
+
+```bash
+TAG=0.1.0 \
+REGISTRY=ghcr.io/your-org/dataspace-control-plane \
+PYTHON_BASE_IMAGE=python:3.12-slim@sha256:... \
+NODE_BASE_IMAGE=node:20-alpine@sha256:... \
+./infra/docker/scripts/push.sh release
+```
+
+## Base Image Contract
+
+Application Dockerfiles accept explicit base image references from Bake:
+
+| Workload | Build arg | Default |
+|----------|-----------|---------|
+| `control-api` | `PYTHON_BASE_IMAGE` | `python:3.12-slim` |
+| `temporal-workers` | `PYTHON_BASE_IMAGE` | `python:3.12-slim` |
+| `provisioning-agent` | `PYTHON_BASE_IMAGE` | `python:3.12-slim` |
+| `web-console` | `NODE_BASE_IMAGE` | `node:20-alpine` |
+
+Dev and CI can use tagged bases. Release targets should pass digest-pinned base image references.
+
+## Target Groups
+
+| Group | Platforms | Intent |
+|-------|-----------|--------|
+| `default` | `linux/amd64` | Local developer builds |
+| `ci` | `linux/amd64` | CI builds with cache and local Docker output |
+| `release` | `linux/amd64`, `linux/arm64` | Multi-platform registry push |
+
+## Release Contract
+
+1. CI builds an image once through Bake.
+2. Release builds push immutable images and record their digests.
+3. Helm production overlays are updated with `image.digest`.
+4. No environment promotes a mutable application tag as the production release artifact.
+
+## Build Secrets
+
+Never pass secrets through Docker `ARG` or `ENV`. Use BuildKit secret or SSH mounts.
 
 ```dockerfile
-# In Dockerfile:
 RUN --mount=type=secret,id=npm_token npm install
 ```
 
 ```bash
-# At build time:
-docker buildx bake --secret id=npm_token,src=~/.npm-token
+docker buildx bake \
+  -f infra/docker/bake/docker-bake.hcl \
+  -f infra/docker/bake/targets/apps.hcl \
+  --secret id=npm_token,src=~/.npm-token
 ```
 
-## Platforms
+## Compose
 
-| Target group | Platforms |
-|-------------|-----------|
-| `default` / `ci` | linux/amd64 |
-| `release` | linux/amd64, linux/arm64 |
+Compose files define local and CI runtime stacks only.
 
-## Release Contract
-
-1. CI calls `docker buildx bake ci` — builds and caches, no push
-2. On merge to main: CI calls `docker buildx bake release` — pushes with digest
-3. Digest is captured and injected into Helm values for the target environment
-4. Helm upgrade references the digest (`sha256:...`), never a mutable tag
-5. Never promote by reusing mutable tags between environments
-
-## Compose Profiles
-
-| Profile | Use case |
-|---------|----------|
-| (none) | Core infrastructure: Postgres, Keycloak, Vault, Temporal |
-| `--profile kafka` | Adds Kafka + Zookeeper |
+Validate merged Compose models:
 
 ```bash
-# Start core + app services
-docker compose -f compose/compose.yaml -f compose/compose.dev.yaml up
-
-# Start with observability
-docker compose -f compose/compose.yaml -f compose/compose.dev.yaml -f compose/compose.observability.yaml up
-
-# Start CI test stack
-docker compose -f compose/compose.yaml -f compose/compose.test.yaml up -d
+docker compose -f infra/docker/compose/compose.yaml -f infra/docker/compose/compose.dev.yaml config
+docker compose -f infra/docker/compose/compose.yaml -f infra/docker/compose/compose.test.yaml config
+docker compose -f infra/docker/compose/compose.yaml -f infra/docker/compose/compose.dev.yaml -f infra/docker/compose/compose.observability.yaml config
 ```
 
-## Secrets in Compose
+Typical runs:
 
-Compose secrets are mounted as files under `/run/secrets/<name>`. Applications must read from the file, not from environment variables.
+```bash
+docker compose -f infra/docker/compose/compose.yaml -f infra/docker/compose/compose.dev.yaml up
+docker compose -f infra/docker/compose/compose.yaml -f infra/docker/compose/compose.dev.yaml -f infra/docker/compose/compose.observability.yaml up
+docker compose -f infra/docker/compose/compose.yaml -f infra/docker/compose/compose.test.yaml up -d
+```
 
-Create secret files before starting the stack:
+## Compose Secrets
+
+Runtime secrets are mounted as files under `/run/secrets/<name>`. Keep secret files under `infra/docker/compose/secrets/`, which remains gitignored.
 
 ```bash
 mkdir -p infra/docker/compose/secrets
 echo -n "$(openssl rand -base64 32)" > infra/docker/compose/secrets/postgres_password.txt
 echo -n "$(openssl rand -base64 32)" > infra/docker/compose/secrets/keycloak_admin_password.txt
 ```
-
-The `secrets/` directory is gitignored. Never commit secret files.

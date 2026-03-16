@@ -60,3 +60,21 @@ Create the name of the service account to use.
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Render the immutable or tagged image reference for this release.
+*/}}
+{{- define "web-console.image" -}}
+{{- if .Values.image.digest }}
+{{- printf "%s@%s" .Values.image.repository .Values.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.image.tag) -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Resolve image pull policy, allowing the umbrella chart to supply a global default.
+*/}}
+{{- define "web-console.imagePullPolicy" -}}
+{{- coalesce .Values.image.pullPolicy .Values.global.imagePullPolicy "IfNotPresent" -}}
+{{- end }}

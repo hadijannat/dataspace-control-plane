@@ -72,7 +72,6 @@ jobs:
           uv pip install --system -r docs/requirements.txt
           uv pip install --system -e core -e adapters -e procedures -e apps/control-api
 
-
       - name: Install docs Node dependencies
         run: pnpm --dir docs install --frozen-lockfile
 

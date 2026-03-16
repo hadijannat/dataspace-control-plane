@@ -9,7 +9,7 @@ target "control-api" {
   tags       = ["${REGISTRY}/control-api:${TAG}"]
   platforms  = ["linux/amd64"]
   args = {
-    PYTHON_VERSION = PYTHON_VERSION
+    PYTHON_BASE_IMAGE = PYTHON_BASE_IMAGE
   }
 }
 
@@ -19,7 +19,7 @@ target "temporal-workers" {
   tags       = ["${REGISTRY}/temporal-workers:${TAG}"]
   platforms  = ["linux/amd64"]
   args = {
-    PYTHON_VERSION = PYTHON_VERSION
+    PYTHON_BASE_IMAGE = PYTHON_BASE_IMAGE
   }
 }
 
@@ -29,7 +29,7 @@ target "web-console" {
   tags       = ["${REGISTRY}/web-console:${TAG}"]
   platforms  = ["linux/amd64"]
   args = {
-    NODE_VERSION = NODE_VERSION
+    NODE_BASE_IMAGE = NODE_BASE_IMAGE
   }
 }
 
@@ -39,6 +39,6 @@ target "provisioning-agent" {
   tags       = ["${REGISTRY}/provisioning-agent:${TAG}"]
   platforms  = ["linux/amd64"]
   args = {
-    PYTHON_VERSION = PYTHON_VERSION
+    PYTHON_BASE_IMAGE = PYTHON_BASE_IMAGE
   }
 }

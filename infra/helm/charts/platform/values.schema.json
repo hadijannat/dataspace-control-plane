@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "platform umbrella Helm values schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        },
+        "otelEndpoint": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "control-api": {
+      "$ref": "#/definitions/component"
+    },
+    "temporal-workers": {
+      "$ref": "#/definitions/component"
+    },
+    "web-console": {
+      "$ref": "#/definitions/component"
+    },
+    "provisioning-agent": {
+      "$ref": "#/definitions/component"
+    }
+  },
+  "definitions": {
+    "component": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tag": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^(sha256:[a-f0-9]{64}|sha256:REPLACE_WITH_REAL_DIGEST)$"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "enum": ["Always", "IfNotPresent", "Never"]
+            }
+          },
+          "oneOf": [
+            {
+              "required": ["tag"],
+              "not": {
+                "required": ["digest"]
+              }
+            },
+            {
+              "required": ["digest"],
+              "not": {
+                "required": ["tag"]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

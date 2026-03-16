@@ -1,9 +1,12 @@
 # staging/observability
 
-Observability root for staging. Deploys kube-prometheus-stack (50Gi) with Grafana and Loki.
+Deploys the shared staging monitoring stack with Prometheus, Grafana, and Loki.
+
+Provide `grafana_admin_secret_name` through `terraform.tfvars` or rely on the default example value if it matches the environment.
 
 ```bash
 cd infra/terraform/roots/staging/observability
 terraform init -backend-config=../../../backends/staging.backend.hcl
-terraform apply
+terraform plan -var-file=terraform.tfvars
+terraform apply -var-file=terraform.tfvars
 ```

@@ -83,6 +83,9 @@ env/
 ENV/
 env.bak/
 venv.bak/
+# OTel Collector env overlays are intentional project config — not virtualenvs
+!infra/observability/otel-collector/env/
+!infra/observability/otel-collector/env/**
 
 # uv managed virtual environments and cache
 .uv/
@@ -430,6 +433,12 @@ temp/
 *.backup
 *.orig
 *.rej
+
+# Docker build artifacts
+.digests/
+
+# Docker Compose local secrets (mounted at runtime — never commit)
+infra/docker/compose/secrets/
 
 # Lock files — the following ARE committed (pin exact versions for CI):
 # NOTE: uv.lock, pnpm-lock.yaml, .terraform.lock.hcl  →  commit these

@@ -1,2 +1,3 @@
-# cluster_name        = "staging"
-# registry_storage_gb = 50
+# cluster_name          = "staging"
+# registry_storage_gb   = 50
+# external_registry_url = "registry.staging.example.internal/dataspace"

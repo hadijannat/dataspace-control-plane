@@ -178,7 +178,7 @@ For architecture guidebooks, orchestration rules, and the full ownership map, se
 
 ### AI-assisted development
 
-This repository supports [Claude Code](https://claude.ai/code) agent-teams with a 4-wave build model. Agent configuration, subagent definitions, and wave management skills are provisioned locally via `CLAUDE.md` and `.claude/` (both gitignored — not part of the cloned repository). Tracked architecture guides live in [`docs/agents/`](docs/agents/index.md).
+This repository supports [Claude Code](https://claude.ai/code) agent-teams with a 4-wave build model. The root `CLAUDE.md` and `.claude/` directory are gitignored (not part of the cloned repository). Per-directory `CLAUDE.md` files (e.g. `core/CLAUDE.md`) are tracked and contain layer-specific development guidance. Architecture guides live in [`docs/agents/`](docs/agents/index.md).
 
 ## Project Navigation
 

@@ -6,6 +6,8 @@ workflows and activities into the procedure registry.
 """
 from __future__ import annotations
 
+from dataspace_control_plane_procedures.registry import build_definition
+
 from .workflow import RotateCredentialsWorkflow
 from .manifest import MANIFEST, TASK_QUEUE, WORKFLOW_TYPE
 from .input import RotationCarryState, RotationResult, RotationStartInput, RotationStatusQuery
@@ -36,6 +38,14 @@ StartInput = RotationStartInput
 Result = RotationResult
 StatusQuery = RotationStatusQuery
 manifest = MANIFEST
+definition = build_definition(
+    api_module_name=__name__,
+    manifest=MANIFEST,
+    start_input_type=RotationStartInput,
+    status_query_type=RotationStatusQuery,
+    workflow_types=ALL_WORKFLOWS,
+    activity_functions=ALL_ACTIVITIES,
+)
 
 
 def register() -> None:
@@ -43,12 +53,9 @@ def register() -> None:
 
     Registers all workflows and activities for the machine-trust task queue.
     """
-    from dataspace_control_plane_procedures.registry import _register
+    from dataspace_control_plane_procedures.registry import _register_definition
 
-    for wf in ALL_WORKFLOWS:
-        _register(TASK_QUEUE, workflow=wf)
-    for act in ALL_ACTIVITIES:
-        _register(TASK_QUEUE, activity=act)
+    _register_definition(definition)
 
 
 __all__ = [
@@ -70,6 +77,7 @@ __all__ = [
     "Result",
     "StatusQuery",
     "manifest",
+    "definition",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

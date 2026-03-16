@@ -86,6 +86,7 @@ async def test_company_onboarding_accepts_review_update_and_completes(time_skipp
             assert isinstance(result, OnboardingResult)
             assert result.status == "completed"
             assert result.registration_ref.startswith("reg:")
+            assert result.wallet_did == "did:web:bpnl000000000001.example.com"
 
 
 @pytest.mark.asyncio

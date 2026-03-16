@@ -8,6 +8,7 @@ from app.services.temporal_gateway import TemporalGateway
 class FakeWorkflowHandle:
     def __init__(self, workflow_id: str):
         self.id = workflow_id
+        self.first_execution_run_id = f"run:{workflow_id}"
 
 
 class FakeTemporalClient:
@@ -47,8 +48,9 @@ async def test_gateway_uses_manifest_backed_dispatch():
         catalog,
     )
 
-    assert handle.id == "company-onboarding:tenant-a:lei-1"
+    assert handle.workflow_id == "company-onboarding:tenant-a:lei-1"
+    assert handle.run_id == "run:company-onboarding:tenant-a:lei-1"
     assert client.calls[0]["workflow"] == "CompanyOnboardingWorkflow"
     assert client.calls[0]["task_queue"] == "onboarding"
     assert client.calls[0]["search_attributes"]["procedure_type"] == ["company-onboarding"]
-    assert client.calls[0]["search_attributes"]["status"] == ["STARTED"]
+    assert client.calls[0]["search_attributes"]["status"] == ["running"]

@@ -20,7 +20,7 @@ PYTEST ?= pytest
 
 COVERAGE_XML ?= coverage.xml
 PYTEST_COV  ?= --cov --cov-config=.coveragerc --cov-branch --cov-report=xml:$(COVERAGE_XML)
-LOCAL_TEST_PATHS := tests/unit tests/compatibility/test_schema_meta_compliance.py
+LOCAL_TEST_PATHS := tests/unit tests/compatibility/test_schema_meta_compliance.py apps/control-api/tests apps/temporal-workers/tests procedures/tests
 GATE_TEST_PATHS  := tests/integration tests/e2e tests/compatibility/dsp-tck tests/compatibility/dcp-tck tests/tenancy tests/crypto-boundaries
 CHAOS_TEST_PATHS := tests/chaos
 
@@ -79,7 +79,7 @@ test-schemas:  ## Verify schemas/ artifact layer (unit + offline schema validati
 
 .PHONY: test-procedures
 test-procedures:  ## Verify procedures/ orchestration layer (unit + replay)
-	pytest tests/unit -k procedures
+	pytest procedures/tests
 	pytest tests/integration/replay
 
 .PHONY: test-adapters
@@ -93,6 +93,8 @@ test-packs:  ## Verify packs/ overlay layer
 
 .PHONY: test-apps
 test-apps:  ## Verify apps/ runtime surfaces
+	pytest apps/control-api/tests
+	pytest apps/temporal-workers/tests
 	pytest tests/integration -k apps
 	pytest tests/e2e -k web_console
 

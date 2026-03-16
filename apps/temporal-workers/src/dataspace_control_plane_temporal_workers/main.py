@@ -6,18 +6,28 @@ import asyncio
 import structlog
 import logging
 
-from src.settings import settings
-from src.bootstrap.client import create_temporal_client
-from src.bootstrap.search_attributes import ensure_search_attributes
-from src.bootstrap.registry import verify_registry
-from src.health import ProbeState, start_probe_server
-from src.telemetry import setup_telemetry
-from src.worker_groups.onboarding import run_onboarding_worker
-from src.worker_groups.trust import run_trust_worker
-from src.worker_groups.twins import run_twins_worker
-from src.worker_groups.contracts import run_contracts_worker
-from src.worker_groups.compliance import run_compliance_worker
-from src.worker_groups.maintenance import run_maintenance_worker
+from dataspace_control_plane_temporal_workers.settings import settings
+from dataspace_control_plane_temporal_workers.bootstrap.client import create_temporal_client
+from dataspace_control_plane_temporal_workers.bootstrap.search_attributes import (
+    ensure_search_attributes,
+)
+from dataspace_control_plane_temporal_workers.bootstrap.registry import verify_registry
+from dataspace_control_plane_temporal_workers.health import ProbeState, start_probe_server
+from dataspace_control_plane_temporal_workers.telemetry import setup_telemetry
+from dataspace_control_plane_temporal_workers.worker_groups.onboarding import (
+    run_onboarding_worker,
+)
+from dataspace_control_plane_temporal_workers.worker_groups.trust import run_trust_worker
+from dataspace_control_plane_temporal_workers.worker_groups.twins import run_twins_worker
+from dataspace_control_plane_temporal_workers.worker_groups.contracts import (
+    run_contracts_worker,
+)
+from dataspace_control_plane_temporal_workers.worker_groups.compliance import (
+    run_compliance_worker,
+)
+from dataspace_control_plane_temporal_workers.worker_groups.maintenance import (
+    run_maintenance_worker,
+)
 
 structlog.configure(
     wrapper_class=structlog.make_filtering_bound_logger(

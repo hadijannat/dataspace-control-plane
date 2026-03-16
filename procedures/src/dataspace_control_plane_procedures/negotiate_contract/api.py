@@ -5,6 +5,8 @@ its Temporal Worker instances. register() wires entries into the shared registry
 """
 from __future__ import annotations
 
+from dataspace_control_plane_procedures.registry import build_definition
+
 from .manifest import MANIFEST, TASK_QUEUE, WORKFLOW_TYPE
 from .input import NegotiationCarryState, NegotiationResult, NegotiationStartInput, NegotiationStatusQuery
 from .workflow import NegotiateContractWorkflow
@@ -38,16 +40,21 @@ StartInput = NegotiationStartInput
 Result = NegotiationResult
 StatusQuery = NegotiationStatusQuery
 manifest = MANIFEST
+definition = build_definition(
+    api_module_name=__name__,
+    manifest=MANIFEST,
+    start_input_type=NegotiationStartInput,
+    status_query_type=NegotiationStatusQuery,
+    workflow_types=ALL_WORKFLOWS,
+    activity_functions=ALL_ACTIVITIES,
+)
 
 
 def register() -> None:
     """Wire this procedure into the shared registry."""
-    from dataspace_control_plane_procedures.registry import _register
+    from dataspace_control_plane_procedures.registry import _register_definition
 
-    for wf in ALL_WORKFLOWS:
-        _register(TASK_QUEUE, workflow=wf)
-    for act in ALL_ACTIVITIES:
-        _register(TASK_QUEUE, activity=act)
+    _register_definition(definition)
 
 
 __all__ = [
@@ -68,6 +75,7 @@ __all__ = [
     "Result",
     "StatusQuery",
     "manifest",
+    "definition",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

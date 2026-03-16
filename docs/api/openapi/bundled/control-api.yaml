@@ -296,6 +296,12 @@ paths:
         - streams
       summary: Issue Stream Ticket
       operationId: issue_stream_ticket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamTicketRequest'
+        required: true
       responses:
         '200':
           description: Successful Response
@@ -303,6 +309,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StreamTicketResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
       security:
         - HTTPBearer: []
   /api/v1/streams/workflows/{workflow_id}:
@@ -337,41 +349,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/webhooks/management:
-    post:
-      tags:
-        - webhooks
-      summary: Receive Management Webhook
-      operationId: receive_management_webhook
-      parameters:
-        - name: X-Dataspace-Event-Type
-          in: header
-          required: false
-          schema:
-            type: string
-            default: unknown
-            title: X-Dataspace-Event-Type
-        - name: X-Dataspace-Signature
-          in: header
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            title: X-Dataspace-Signature
-      responses:
-        '202':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebhookAcceptedResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     AcceptedResponse:
@@ -382,7 +359,7 @@ components:
         status:
           type: string
           title: Status
-          default: STARTED
+          default: running
         poll_url:
           type: string
           title: Poll Url
@@ -408,7 +385,7 @@ components:
         workflow_id:
             The Temporal workflow identifier for the accepted procedure.
         status:
-            Always ``"STARTED"`` for 202 responses.
+            Always ``"running"`` for 202 responses.
         poll_url:
             Relative URL to GET for the current procedure status.
         stream_url:
@@ -561,6 +538,16 @@ components:
         status:
           type: string
           title: Status
+        phase:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Phase
+        progress_percent:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Progress Percent
         result:
           anyOf:
             - {}
@@ -574,6 +561,11 @@ components:
         search_attributes:
           type: object
           title: Search Attributes
+        links:
+          additionalProperties:
+            type: string
+          type: object
+          title: Links
         started_at:
           anyOf:
             - type: string
@@ -597,8 +589,8 @@ components:
         Attributes
         ----------
         status:
-            One of ``RUNNING``, ``COMPLETED``, ``FAILED``, ``CANCELLED``,
-            ``TIMED_OUT``.
+            One of ``running``, ``completed``, ``failed``, ``cancelled``,
+            ``timed_out``, ``pending``, ``paused``, or ``waiting_for_approval``.
         result:
             Workflow result payload when ``status == "COMPLETED"``, otherwise
             ``None``.
@@ -661,6 +653,15 @@ components:
         - procedure_type
         - tenant_id
       title: StartProcedureRequest
+    StreamTicketRequest:
+      properties:
+        workflow_id:
+          type: string
+          title: Workflow Id
+      type: object
+      required:
+        - workflow_id
+      title: StreamTicketRequest
     StreamTicketResponse:
       properties:
         ticket:
@@ -723,19 +724,6 @@ components:
         - msg
         - type
       title: ValidationError
-    WebhookAcceptedResponse:
-      properties:
-        accepted:
-          type: boolean
-          title: Accepted
-          default: true
-        correlation_id:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Correlation Id
-      type: object
-      title: WebhookAcceptedResponse
   securitySchemes:
     HTTPBearer:
       type: http

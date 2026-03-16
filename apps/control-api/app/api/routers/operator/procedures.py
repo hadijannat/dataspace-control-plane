@@ -3,18 +3,19 @@ Operator procedure launch and status endpoints.
 All mutations return 202 with a workflow handle — never block on completion.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from dataspace_control_plane_adapters.infrastructure.temporal_client.errors import (
+    WorkflowAlreadyStartedError,
+)
 from pydantic import BaseModel, Field
 
 from app.api.deps.resources import (
     get_database_pool,
-    get_idempotency_store,
+    get_procedure_catalog,
+    get_start_procedure_service,
     maybe_get_database_pool,
     maybe_get_temporal_gateway,
-    get_procedure_catalog,
-    get_temporal_gateway,
 )
 from app.api.deps.auth import get_current_principal
-from app.application.commands.procedures import StartProcedureCommand
 from app.application.dto.procedures import (
     ProcedureHandleDTO,
     ProcedureListDTO,
@@ -22,10 +23,12 @@ from app.application.dto.procedures import (
 )
 from app.auth.principals import Principal
 from app.auth.tenant_context import TenantScope
-from app.services import audit
 from app.services import read_models
-from app.services.procedure_catalog import ProcedureCatalog
 from app.services.procedure_status import load_procedure_status
+from app.services.start_procedure_service import (
+    IdempotencyConflictError,
+    StartProcedureService,
+)
 from app.services.temporal_gateway import TemporalGateway
 
 router = APIRouter()
@@ -52,10 +55,8 @@ async def start_procedure(
     body: StartProcedureRequest,
     request: Request,
     principal: Principal = Depends(get_current_principal),
-    gateway: TemporalGateway = Depends(get_temporal_gateway),
-    procedure_catalog: ProcedureCatalog = Depends(get_procedure_catalog),
-    idempotency_store = Depends(get_idempotency_store),
-) -> ProcedureHandleDTO:
+    service: StartProcedureService = Depends(get_start_procedure_service),
+):
     """
     Start a durable procedure. Returns immediately with a workflow handle.
     The actual work executes in temporal-workers.
@@ -66,93 +67,38 @@ async def start_procedure(
     """
     correlation_id: str | None = getattr(request.state, "correlation_id", None)
 
-    # Tenant authorisation — principal must have access to the requested tenant.
-    if not principal.can_access_tenant(body.tenant_id):
+    try:
+        return await service.start(
+            procedure_type=body.procedure_type,
+            tenant_id=body.tenant_id,
+            legal_entity_id=body.legal_entity_id,
+            payload=body.payload,
+            idempotency_key=body.idempotency_key,
+            principal=principal,
+            correlation_id=correlation_id,
+            poll_url_template="/api/v1/operator/procedures/{workflow_id}",
+            audit_event_type="procedure.started",
+        )
+    except PermissionError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Access to tenant '{body.tenant_id}' is not permitted",
-        )
-
-    # Idempotency check — return cached result if the key has been seen before.
-    if body.idempotency_key:
-        cached = await idempotency_store.check(body.idempotency_key)
-        if cached is not None:
-            return ProcedureHandleDTO(
-                workflow_id=cached["workflow_id"],
-                procedure_type=cached["procedure_type"],
-                tenant_id=cached["tenant_id"],
-                status=cached["status"],
-                poll_url=f"/api/v1/operator/procedures/{cached['workflow_id']}",
-                stream_url=f"/api/v1/streams/workflows/{cached['workflow_id']}",
-                correlation_id=cached.get("correlation_id"),
-            )
-
-    # Build command.
-    cmd = StartProcedureCommand(
-        procedure_type=body.procedure_type,
-        tenant_id=body.tenant_id,
-        legal_entity_id=body.legal_entity_id,
-        payload=body.payload,
-        idempotency_key=body.idempotency_key,
-        actor_subject=principal.subject,
-    )
-
-    # Dispatch to Temporal via gateway.
-    try:
-        handle = await gateway.start_procedure(cmd, procedure_catalog)
+            detail=str(exc),
+        ) from exc
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
-    except Exception as exc:
-        if "already" in str(exc).lower() and "workflow" in str(exc).lower():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="A matching workflow is already running",
-            ) from exc
-        raise
-
-    workflow_id = handle.id
-
-    # Emit audit event.
-    await audit.emit(
-        event_type="procedure.started",
-        actor_subject=principal.subject,
-        tenant_id=body.tenant_id,
-        resource_type="procedure",
-        resource_id=workflow_id,
-        metadata={
-            "procedure_type": body.procedure_type,
-            "correlation_id": correlation_id,
-            "idempotency_key": body.idempotency_key,
-        },
-    )
-
-    result = ProcedureHandleDTO(
-        workflow_id=workflow_id,
-        procedure_type=body.procedure_type,
-        tenant_id=body.tenant_id,
-        status="STARTED",
-        poll_url=f"/api/v1/operator/procedures/{workflow_id}",
-        stream_url=f"/api/v1/streams/workflows/{workflow_id}",
-        correlation_id=correlation_id,
-    )
-
-    # Cache result for idempotency on future duplicate requests.
-    if body.idempotency_key:
-        await idempotency_store.store(
-            body.idempotency_key,
-            {
-                "workflow_id": result.workflow_id,
-                "procedure_type": result.procedure_type,
-                "tenant_id": result.tenant_id,
-                "status": result.status,
-                "correlation_id": result.correlation_id,
-            },
-        )
-
-    return result
+    except IdempotencyConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+    except WorkflowAlreadyStartedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A matching workflow is already running",
+        ) from exc
 
 
 @router.get(
@@ -167,17 +113,18 @@ async def list_procedures(
     offset: int = 0,
     pool = Depends(get_database_pool),
 ) -> ProcedureListDTO:
+    normalized_status_filter = status_filter.strip().lower() if status_filter else None
     rows = await read_models.list_procedures(
         pool,
         tenant_id=tenant_id,
-        status=status_filter,
+        status=normalized_status_filter,
         limit=limit,
         offset=offset,
     )
     total = await read_models.count_procedures(
         pool,
         tenant_id=tenant_id,
-        status=status_filter,
+        status=normalized_status_filter,
     )
     return ProcedureListDTO(
         items=[
@@ -185,10 +132,13 @@ async def list_procedures(
                 workflow_id=row["workflow_id"],
                 procedure_type=row.get("procedure_type", ""),
                 tenant_id=row.get("tenant_id", ""),
-                status=row.get("status", "RUNNING"),
+                status=row.get("status", "running"),
+                phase=row.get("phase"),
+                progress_percent=row.get("progress_percent"),
                 result=row.get("result"),
                 failure_message=row.get("failure_message"),
                 search_attributes=row.get("search_attributes", {}) or {},
+                links=row.get("links", {}) or {},
                 started_at=row.get("started_at").isoformat() if row.get("started_at") else None,
                 updated_at=row.get("updated_at").isoformat() if row.get("updated_at") else None,
             )
@@ -208,8 +158,9 @@ async def list_procedures(
 async def get_procedure_status(
     workflow_id: str,
     principal: Principal = Depends(get_current_principal),
+    catalog = Depends(get_procedure_catalog),
     gateway: TemporalGateway | None = Depends(maybe_get_temporal_gateway),
-    pool = Depends(maybe_get_database_pool),
+    pool=Depends(maybe_get_database_pool),
 ) -> ProcedureStatusDTO:
     """
     Poll procedure status.
@@ -220,6 +171,7 @@ async def get_procedure_status(
     """
     status_snapshot = await load_procedure_status(
         workflow_id,
+        catalog=catalog,
         gateway=gateway,
         pool=pool,
     )

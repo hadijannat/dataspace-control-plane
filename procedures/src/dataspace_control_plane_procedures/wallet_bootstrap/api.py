@@ -5,6 +5,8 @@ register()) to wire this procedure into its Worker instances.
 """
 from __future__ import annotations
 
+from dataspace_control_plane_procedures.registry import build_definition
+
 from dataspace_control_plane_procedures.wallet_bootstrap.input import (
     WalletCarryState,
     WalletResult,
@@ -30,6 +32,14 @@ StartInput = WalletStartInput
 Result = WalletResult
 StatusQuery = WalletStatusQuery
 manifest = MANIFEST
+definition = build_definition(
+    api_module_name=__name__,
+    manifest=MANIFEST,
+    start_input_type=WalletStartInput,
+    status_query_type=WalletStatusQuery,
+    workflow_types=ALL_WORKFLOWS,
+    activity_functions=ALL_ACTIVITIES,
+)
 
 
 def register() -> None:
@@ -37,12 +47,9 @@ def register() -> None:
 
     Call this from populate_from_procedures() in registry.py.
     """
-    from dataspace_control_plane_procedures.registry import _register
+    from dataspace_control_plane_procedures.registry import _register_definition
 
-    for wf in ALL_WORKFLOWS:
-        _register(TASK_QUEUE, workflow=wf)
-    for act in ALL_ACTIVITIES:
-        _register(TASK_QUEUE, activity=act)
+    _register_definition(definition)
 
 
 # Re-export manifest for convenience
@@ -65,6 +72,7 @@ __all__ = [
     "Result",
     "StatusQuery",
     "manifest",
+    "definition",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "MANIFEST",

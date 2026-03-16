@@ -7,7 +7,8 @@ status: approved
 ---
 
 The **control-api** is the primary HTTP surface for operator workflows,
-automation, workflow status tracking, and management webhooks. It is
+automation, and workflow status tracking. Management webhooks are mounted only
+when webhook signing is explicitly configured. It is
 implemented with FastAPI and publishes an OpenAPI 3.1 description exported from
 the running application contract.
 
@@ -21,7 +22,7 @@ The current API surface is organized by audience:
 | Operator API | `/api/v1/operator/*` | browser and operator tooling | stable |
 | Public automation API | `/api/v1/public/*` | machine clients | stable |
 | Workflow streams | `/api/v1/streams/*` | real-time clients | stable |
-| Management webhooks | `/api/v1/webhooks/*` | upstream integrations | stable |
+| Management webhooks | `/api/v1/webhooks/*` | upstream integrations | conditional |
 | UI runtime config | `/ui/runtime-config.json` | web-console bootstrap | implementation detail |
 
 ## Current Endpoint Groups
@@ -39,7 +40,6 @@ The current API surface is organized by audience:
 | `GET` | `/api/v1/public/procedures/{workflow_id}` | public workflow status lookup |
 | `POST` | `/api/v1/streams/tickets` | mint an SSE stream ticket |
 | `GET` | `/api/v1/streams/workflows/{workflow_id}` | SSE workflow status stream |
-| `POST` | `/api/v1/webhooks/management` | signed inbound management webhook |
 
 ## Guides
 
@@ -60,3 +60,8 @@ The committed API artifacts live under [`api/openapi/`](openapi/index.md):
 
 Use the human guides for behavior, expectations, and client patterns. Use the
 OpenAPI files for exact wire shapes and generated client workflows.
+
+When `CONTROL_API_WEBHOOK_SHARED_SECRET` is configured, the API also mounts
+`POST /api/v1/webhooks/management` for signed inbound management webhooks. The
+default exported OpenAPI artifact omits that route because the docs export path
+does not enable webhook handling by default.

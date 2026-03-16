@@ -2,7 +2,7 @@
 title: "8. Crosscutting Concepts"
 summary: "Multi-tenancy, durable execution, canonical model, audit, machine trust, observability, and schema governance — concepts that apply across all platform layers."
 owner: docs-lead
-last_reviewed: "2026-03-14"
+last_reviewed: "2026-03-16"
 status: approved
 ---
 
@@ -24,11 +24,24 @@ Tenant isolation is enforced at three independent layers, each providing defense
 
 All multi-step business processes run as Temporal workflows in `procedures/`. The durable execution model has the following implications:
 
+- **Procedure discovery is explicit**: `procedures/` exports `ProcedureDefinition` objects and a shared discovery API. `apps/control-api` and `apps/temporal-workers` consume that registry directly. Worker startup fails fast if zero procedure definitions are discovered; runtime behavior must never depend on `sys.path` mutation or import side effects.
 - **Activities are idempotent**: Every activity that has external side effects (Keycloak realm creation, Vault key creation, Postgres INSERT, DPP registry submission) must be idempotent. If an activity is retried after a previous partial success, it must detect the prior completion and return the same result without duplicating the side effect.
 - **Workflow code is deterministic**: Temporal replays workflow history to reconstruct state after restarts. Workflow code must be deterministic — no `random`, no `datetime.now()`, no external state reads inside workflow functions. Use `workflow.now()` for time, and pass non-deterministic inputs as activity results.
 - **Workflow code is the runbook**: The sequence of activities in a Temporal workflow definition is exactly the sequence an operator would execute manually. Runbooks in `docs/runbooks/` reference the workflow definition for context.
 - **Replay testing**: `tests/integration/replay/` contains replay safety tests that execute a workflow, capture the history, and replay it to verify determinism. These tests must pass before any procedure change merges.
 - **Time-skipping**: Time-dependent workflows (certificate expiry, metering window close, token refresh) are tested using `WorkflowEnvironment.start_time_skipping()`, which advances the Temporal clock without real-time waiting.
+
+## Procedure Launch and Runtime State
+
+Procedure start is split into two contracts:
+
+- **HTTP request idempotency**: The API persists scoped idempotency records in Postgres under `(tenant_id, procedure_type, idempotency_key)` together with a request fingerprint. Same key plus same fingerprint replays the accepted handle; same key plus different fingerprint returns `409`.
+- **Business-process identity**: Each procedure manifest defines the workflow ID template. Entity procedures such as `company-onboarding` therefore reject duplicate active workflows for the same business key even if the caller provides a new HTTP idempotency key.
+
+Runtime status is also split by responsibility:
+
+- **running workflows** expose canonical `ProcedureRuntimeState` via a workflow query so phase and progress are visible immediately
+- **Postgres projections** provide the fallback and list-view status model for dashboards, pagination, and degraded-mode reads
 
 ## Canonical Model
 
@@ -56,6 +69,10 @@ Service-to-service authentication follows the machine trust model:
 3. **Signing**: When a service needs to sign an artifact, it calls the Vault Transit API via the `adapters/infra/vault/` module. The adapter passes the payload bytes and receives the signature bytes. No private key material is handled.
 4. **Never**: Service account credentials (client_secret) must never appear in: application logs, OTLP traces, Postgres records, Temporal workflow history, or git-committed configuration files. The `tests/crypto-boundaries/key_references/test_no_raw_keys.py` gate checks for patterns indicating credential leakage.
 
+For browser SSE subscriptions, the control-api can mint a short-lived HMAC
+stream ticket. Tickets are scoped to one `workflow_id`, one `tenant_id`, and
+audience `procedure-stream`; they are not general bearer substitutes.
+
 ## Observability
 
 All platform services emit OTLP (OpenTelemetry Protocol) signals:
@@ -71,6 +88,11 @@ The OTel Collector gateway enforces **telemetry redaction** before export:
 - Span attributes from `Authorization` headers are dropped.
 
 **Alert routing**: Critical alerts (workflow stall, Vault sealed, Postgres unavailable) → PagerDuty. Warning alerts (task queue depth rising, connection pool saturation) → Slack `#platform-alerts`.
+
+The control-api startup path also performs schema readiness checks for Postgres
+before enabling durable procedure features. Missing required tables or an
+outdated migration level keep the database dependency in degraded mode until
+operators complete the rollout.
 
 ## Schema Governance
 

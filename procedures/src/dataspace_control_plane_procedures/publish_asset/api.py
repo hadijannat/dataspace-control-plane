@@ -1,6 +1,8 @@
 """Public API surface for the publish_asset procedure."""
 from __future__ import annotations
 
+from dataspace_control_plane_procedures.registry import build_definition
+
 from dataspace_control_plane_procedures.publish_asset.workflow import PublishAssetWorkflow
 from dataspace_control_plane_procedures.publish_asset.input import (
     PublishAssetResult,
@@ -21,16 +23,21 @@ StartInput = PublishAssetStartInput
 Result = PublishAssetResult
 StatusQuery = PublishAssetStatusQuery
 manifest = MANIFEST
+definition = build_definition(
+    api_module_name=__name__,
+    manifest=MANIFEST,
+    start_input_type=PublishAssetStartInput,
+    status_query_type=PublishAssetStatusQuery,
+    workflow_types=ALL_WORKFLOWS,
+    activity_functions=ALL_ACTIVITIES,
+)
 
 
 def register() -> None:
     """Side-effect registration into the global procedure registry."""
-    from dataspace_control_plane_procedures.registry import _register
+    from dataspace_control_plane_procedures.registry import _register_definition
 
-    for wf in ALL_WORKFLOWS:
-        _register(TASK_QUEUE, workflow=wf)
-    for act in ALL_ACTIVITIES:
-        _register(TASK_QUEUE, activity=act)
+    _register_definition(definition)
 
 
 __all__ = [
@@ -47,6 +54,7 @@ __all__ = [
     "Result",
     "StatusQuery",
     "manifest",
+    "definition",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "MANIFEST",

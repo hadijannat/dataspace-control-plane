@@ -10,10 +10,12 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps.auth import get_stream_principal
 from app.api.deps.resources import (
+    get_procedure_catalog,
     maybe_get_database_pool,
     maybe_get_temporal_gateway,
 )
 from app.auth.principals import Principal
+from app.services.procedure_catalog import ProcedureCatalog
 from app.services.procedure_status import load_procedure_status
 from app.services.temporal_gateway import TemporalGateway
 from app.services.workflow_streams import iter_workflow_status_events
@@ -26,6 +28,7 @@ async def stream_workflow_status(
     workflow_id: str,
     request: Request,
     principal: Principal = Depends(get_stream_principal),
+    catalog: ProcedureCatalog = Depends(get_procedure_catalog),
     gateway: TemporalGateway | None = Depends(maybe_get_temporal_gateway),
     pool = Depends(maybe_get_database_pool),
 ) -> EventSourceResponse:
@@ -37,6 +40,7 @@ async def stream_workflow_status(
     """
     procedure = await load_procedure_status(
         workflow_id,
+        catalog=catalog,
         gateway=gateway,
         pool=pool,
     )
@@ -59,6 +63,7 @@ async def stream_workflow_status(
     async def event_generator():
         async for event in iter_workflow_status_events(
             workflow_id,
+            catalog=catalog,
             gateway=gateway,
             pool=pool,
             should_stop=request.is_disconnected,

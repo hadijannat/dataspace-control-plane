@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException, Request, status
 
+from app.services.start_procedure_service import StartProcedureService
 from app.services.procedure_catalog import ProcedureCatalog
 from app.services.temporal_gateway import TemporalGateway
 
@@ -52,6 +53,32 @@ def get_procedure_catalog(request: Request) -> ProcedureCatalog:
 def get_idempotency_store(request: Request):
     return _require_state_attr(
         request,
-        "idempotency_store",
-        "idempotency store not available",
+        "idempotency_repository",
+        "idempotency repository not available",
+    )
+
+
+def get_procedure_runtime_repository(request: Request):
+    return _require_state_attr(
+        request,
+        "procedure_runtime_repository",
+        "procedure runtime repository not available",
+    )
+
+
+def get_audit_sink(request: Request):
+    return _require_state_attr(
+        request,
+        "audit_sink",
+        "audit sink not available",
+    )
+
+
+def get_start_procedure_service(request: Request) -> StartProcedureService:
+    return StartProcedureService(
+        catalog=get_procedure_catalog(request),
+        gateway=get_temporal_gateway(request),
+        idempotency_repository=get_idempotency_store(request),
+        procedure_runtime_repository=get_procedure_runtime_repository(request),
+        audit_sink=get_audit_sink(request),
     )

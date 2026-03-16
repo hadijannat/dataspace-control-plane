@@ -6,6 +6,26 @@ last_reviewed: "2026-03-16"
 status: approved
 ---
 
+## v0.2.0 (2026-03-16)
+
+This hardening pass aligned the published contract with the explicit procedure
+registry, durable idempotency store, canonical runtime status model, and
+workflow-scoped stream ticket behavior.
+
+### Behavior Changes
+
+- start endpoints now reject unknown payload fields with `422`
+- accepted workflow handles now use lowercase canonical status values such as
+  `running`
+- idempotency is now durable and scoped by tenant, procedure type, and
+  idempotency key, with `409` on same-key/different-payload reuse
+- business-key workflow IDs are generated from the procedure manifest rather
+  than the raw HTTP idempotency key
+- stream tickets are issued for one workflow only and require `workflow_id` in
+  the ticket mint request body
+- management webhooks are mounted only when
+  `CONTROL_API_WEBHOOK_SHARED_SECRET` is configured
+
 ## v0.1.0 (2026-03-16)
 
 This docs-as-code baseline aligns the published API docs with the live FastAPI
@@ -26,7 +46,6 @@ surface.
 | `GET` | `/api/v1/public/procedures/{workflow_id}` |
 | `POST` | `/api/v1/streams/tickets` |
 | `GET` | `/api/v1/streams/workflows/{workflow_id}` |
-| `POST` | `/api/v1/webhooks/management` |
 
 ### Notable Corrections
 

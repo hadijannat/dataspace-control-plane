@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "temporal-workers"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "temporalio>=1.7.0",
     "pydantic-settings>=2.3.0",
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["src/dataspace_control_plane_temporal_workers"]
 
 [project.optional-dependencies]
 dev = [

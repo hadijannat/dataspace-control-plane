@@ -45,7 +45,7 @@ class AcceptedResponse(BaseModel):
     workflow_id:
         The Temporal workflow identifier for the accepted procedure.
     status:
-        Always ``"STARTED"`` for 202 responses.
+        Always ``"running"`` for 202 responses.
     poll_url:
         Relative URL to GET for the current procedure status.
     stream_url:
@@ -55,7 +55,7 @@ class AcceptedResponse(BaseModel):
     """
 
     workflow_id: str
-    status: str = "STARTED"
+    status: str = "running"
     poll_url: str
     stream_url: str
     correlation_id: str | None = None

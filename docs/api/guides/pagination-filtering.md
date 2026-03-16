@@ -48,7 +48,7 @@ Tenant visibility is authorization-aware:
 ## Operator Procedure Listing
 
 ```http
-GET /api/v1/operator/procedures/?tenant_id=tenant-acme&status=RUNNING&limit=20&offset=0
+GET /api/v1/operator/procedures/?tenant_id=tenant-acme&status=running&limit=20&offset=0
 Authorization: Bearer {token}
 ```
 
@@ -57,7 +57,7 @@ Additional procedure-specific filters:
 | Parameter | Type | Meaning |
 | --- | --- | --- |
 | `tenant_id` | string | Required tenant scope for the read-model query |
-| `status` | string | Optional status filter, exposed as `status_filter` in the route implementation |
+| `status` | string | Optional lowercase status filter, normalized before the read-model query |
 
 The procedure list endpoint returns workflow snapshots derived from the
 read-model projection. Use the workflow stream URL from an accepted response if

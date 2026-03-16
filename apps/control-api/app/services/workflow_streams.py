@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 
 import structlog
@@ -11,16 +12,18 @@ from app.settings import settings
 
 logger = structlog.get_logger(__name__)
 
-_TERMINAL_STATES = {"COMPLETED", "FAILED", "CANCELLED", "TERMINATED", "TIMED_OUT"}
+_TERMINAL_STATES = {"completed", "failed", "cancelled", "timed_out"}
 
 
-def _status_key(snapshot: ProcedureStatusDTO) -> tuple:
-    return (snapshot.status, snapshot.updated_at, snapshot.failure_message)
+def _status_key(snapshot: ProcedureStatusDTO) -> str:
+    payload = json.dumps(snapshot.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()
 
 
 async def iter_workflow_status_events(
     workflow_id: str,
     *,
+    catalog,
     gateway,
     pool,
     should_stop,
@@ -45,6 +48,7 @@ async def iter_workflow_status_events(
             snapshot = await asyncio.wait_for(
                 load_procedure_status(
                     workflow_id,
+                    catalog=catalog,
                     gateway=gateway,
                     pool=pool,
                 ),

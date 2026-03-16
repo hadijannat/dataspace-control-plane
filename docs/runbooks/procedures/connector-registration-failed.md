@@ -2,7 +2,7 @@
 title: "Connector Registration Failed"
 summary: "Runbook for diagnosing and recovering from EDC connector registration failures in the provisioning-agent."
 owner: infra-lead
-last_reviewed: "2026-03-14"
+last_reviewed: "2026-03-16"
 severity: "P2"
 affected_services:
   - provisioning-agent
@@ -15,7 +15,7 @@ status: approved
 - **Alert names**: `ConnectorRegistrationFailed`, `ProvisioningAgentError`
 - **Alert conditions**: `connector_registration_failed_total` counter incrementing, OR provisioning-agent logs showing repeated registration attempt failures
 - **Manual trigger**: Operator reports that a newly onboarded company's EDC connector is not visible in the Catena-X dataspace catalog; or operator reports `status: failed` on a company that completed Keycloak provisioning but failed at connector registration
-- **Typical symptom**: Company record in Postgres has `status: provisioning` and the OnboardingWorkflow Temporal history shows failure at the `register_edc_connector` activity
+- **Typical symptom**: The `CompanyOnboardingWorkflow` status is `failed` or stalled during connector bootstrap and the workflow history shows failure around the connector bootstrap activity
 
 ## Scope and Blast Radius
 
@@ -58,7 +58,7 @@ kubectl exec -it postgres-0 -n dataspace-infra -- \
 
 ### Step 1: Find the failed workflow in Temporal UI
 
-Navigate to `https://temporal.your-org.internal` → Namespace: `dataspace` → filter by workflow type `OnboardingWorkflow` and status `Failed` or `Running`. Click the workflow for the affected `company_id`.
+Navigate to `https://temporal.your-org.internal` → Namespace: `dataspace` → filter by workflow type `CompanyOnboardingWorkflow` and status `Failed` or `Running`. Click the workflow for the affected legal entity.
 
 Look at the workflow event history for the last activity before failure. Common failure points:
 
@@ -111,15 +111,29 @@ kubectl rollout restart deployment/edc-connector -n <tenant-namespace>
 kubectl rollout status deployment/edc-connector -n <tenant-namespace>
 ```
 
-Then re-submit the registration:
+Then re-submit the onboarding start request only if the original workflow is no
+longer active:
 
 ```bash
-# Re-submit via control-api (idempotent — uses the same idempotency key as the original)
-curl -X POST https://api.your-org.internal/api/v1/companies \
+# Re-submit via control-api.
+# Same idempotency key + same payload replays the original accepted handle.
+# A different idempotency key against the same active business key returns 409.
+curl -X POST https://api.your-org.internal/api/v1/operator/procedures/start \
   -H "Authorization: Bearer <token>" \
-  -H "Idempotency-Key: <original-idempotency-key>" \
   -H "Content-Type: application/json" \
-  -d '{"legalEntityId": "<BPNL>", "displayName": "<name>"}'
+  -d '{
+    "procedure_type": "company-onboarding",
+    "tenant_id": "<tenant-id>",
+    "legal_entity_id": "<legal-entity-id>",
+    "idempotency_key": "<idempotency-key>",
+    "payload": {
+      "legal_entity_name": "<display-name>",
+      "bpnl": "<bpnl>",
+      "jurisdiction": "<country-code>",
+      "contact_email": "<ops@example.com>",
+      "connector_url": "https://connector.example.com"
+    }
+  }'
 ```
 
 ### Scenario B: Connector reachable but registration rejected
@@ -131,6 +145,10 @@ kubectl logs deployment/edc-connector -n <tenant-namespace> --tail=100 | grep -E
 ```
 
 Common causes: missing required DID in management API call, wrong connector ID format, or missing trust credential. Fix the connector configuration and re-submit.
+
+If the original workflow is still `running`, do not try to bypass it with a new
+idempotency key. The onboarding workflow uses a business-key workflow ID and
+the API returns `409` until the existing run is resolved.
 
 ## Evidence Capture Requirements
 

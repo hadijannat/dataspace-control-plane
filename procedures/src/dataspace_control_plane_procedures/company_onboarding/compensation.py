@@ -8,7 +8,14 @@ from __future__ import annotations
 from temporalio import workflow
 
 from .state import OnboardingWorkflowState
-from .activities import compensate_registration, CompensateRegistrationInput
+from .activities import (
+    CompensateConnectorBootstrapInput,
+    CompensateRegistrationInput,
+    CompensateWalletBootstrapInput,
+    compensate_connector_bootstrap,
+    compensate_registration,
+    compensate_wallet_bootstrap,
+)
 
 
 async def run_compensation(state: OnboardingWorkflowState) -> None:
@@ -20,6 +27,28 @@ async def run_compensation(state: OnboardingWorkflowState) -> None:
             await workflow.execute_activity(
                 compensate_registration,
                 CompensateRegistrationInput(registration_ref=marker.resource_id),
+                **PROVISIONING_OPTIONS,
+            )
+            state.compensation.mark_compensated(
+                marker.action,
+                marker.resource_id,
+                completed_at=workflow.now(),
+            )
+        elif marker.action == "bootstrap_wallet":
+            await workflow.execute_activity(
+                compensate_wallet_bootstrap,
+                CompensateWalletBootstrapInput(wallet_ref=marker.resource_id),
+                **PROVISIONING_OPTIONS,
+            )
+            state.compensation.mark_compensated(
+                marker.action,
+                marker.resource_id,
+                completed_at=workflow.now(),
+            )
+        elif marker.action == "bootstrap_connector":
+            await workflow.execute_activity(
+                compensate_connector_bootstrap,
+                CompensateConnectorBootstrapInput(connector_binding_id=marker.resource_id),
                 **PROVISIONING_OPTIONS,
             )
             state.compensation.mark_compensated(

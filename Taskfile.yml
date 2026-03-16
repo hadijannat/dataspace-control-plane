@@ -17,7 +17,7 @@ vars:
   PYTEST: pytest
   COVERAGE_XML: coverage.xml
   PYTEST_COV: --cov --cov-config=.coveragerc --cov-branch --cov-report=xml:coverage.xml
-  LOCAL_TEST_PATHS: tests/unit tests/compatibility/test_schema_meta_compliance.py
+  LOCAL_TEST_PATHS: tests/unit tests/compatibility/test_schema_meta_compliance.py apps/control-api/tests apps/temporal-workers/tests procedures/tests
   GATE_TEST_PATHS: tests/integration tests/e2e tests/compatibility/dsp-tck tests/compatibility/dcp-tck tests/tenancy tests/crypto-boundaries
   CHAOS_TEST_PATHS: tests/chaos
 
@@ -91,8 +91,8 @@ tasks:
   test:procedures:
     desc: Verify procedures/ orchestration layer (unit + replay)
     cmds:
-      - pytest tests/unit -k procedures
-      - pytest tests/unit -k replay
+      - pytest procedures/tests
+      - pytest tests/integration/replay
 
   test:adapters:
     desc: Verify adapters/ integration layer (pure-Python adapter tests)
@@ -108,6 +108,8 @@ tasks:
   test:apps:
     desc: Verify apps/ runtime surfaces
     cmds:
+      - pytest apps/control-api/tests
+      - pytest apps/temporal-workers/tests
       - pytest tests/integration -k apps
       - pytest tests/e2e -k web_console
 

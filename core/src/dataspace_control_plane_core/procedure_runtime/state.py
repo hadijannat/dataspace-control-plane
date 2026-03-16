@@ -2,13 +2,15 @@
 from .workflow_contracts import (
     ManualReviewState,
     ProcedureSnapshot,
-    ProcedureState,
     ProcedureStatus,
+    ProcedureState,
 )
+from .runtime_state import ProcedureRuntimeState
 
 __all__ = [
     "ManualReviewState",
     "ProcedureSnapshot",
+    "ProcedureRuntimeState",
     "ProcedureState",
     "ProcedureStatus",
 ]

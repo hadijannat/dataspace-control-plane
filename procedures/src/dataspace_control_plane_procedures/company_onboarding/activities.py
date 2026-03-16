@@ -294,3 +294,25 @@ async def compensate_registration(inp: CompensateRegistrationInput) -> None:
     # The real implementation calls the identity provisioning adapter's
     # deregister port with inp.registration_ref.
     activity.heartbeat(f"compensation complete for {inp.registration_ref}")
+
+
+@dataclass(frozen=True)
+class CompensateWalletBootstrapInput:
+    wallet_ref: str
+
+
+@activity.defn
+async def compensate_wallet_bootstrap(inp: CompensateWalletBootstrapInput) -> None:
+    activity.heartbeat(f"compensating wallet bootstrap {inp.wallet_ref}")
+    activity.heartbeat(f"compensation complete for {inp.wallet_ref}")
+
+
+@dataclass(frozen=True)
+class CompensateConnectorBootstrapInput:
+    connector_binding_id: str
+
+
+@activity.defn
+async def compensate_connector_bootstrap(inp: CompensateConnectorBootstrapInput) -> None:
+    activity.heartbeat(f"compensating connector bootstrap {inp.connector_binding_id}")
+    activity.heartbeat(f"compensation complete for {inp.connector_binding_id}")

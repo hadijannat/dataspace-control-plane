@@ -1,13 +1,14 @@
 ---
 title: "Idempotency Guide"
-summary: "Idempotent procedure-start semantics for the current control-api implementation, including TTL and operator versus public behavior."
+summary: "Durable procedure-start idempotency semantics, including scoped keys, request fingerprints, and business-key workflow identities."
 owner: docs-lead
 last_reviewed: "2026-03-16"
 status: approved
 ---
 
-Idempotency currently applies to the workflow-start endpoints, not to every
-mutation route in the conceptual platform design.
+Idempotency applies to the workflow-start endpoints. It prevents duplicate HTTP
+starts; it does not replace the business-key workflow identity defined by each
+procedure manifest.
 
 ## Covered Endpoints
 
@@ -21,14 +22,22 @@ provided.
 
 ## Store Semantics
 
-The current implementation uses the in-process `IdempotencyStore` in
-`apps/control-api/app/services/idempotency.py`.
+The current implementation uses the durable Postgres-backed
+`PostgresIdempotencyRepository`.
 
-- default TTL is 24 hours (`86400` seconds)
-- cached values are stored after a successful accepted start response
-- expired entries are evicted lazily on read
-- the scaffold is process-local, so multi-replica deployments need a shared
-  backend before idempotency becomes cluster-wide
+- scope key: `(tenant_id, procedure_type, idempotency_key)`
+- request fingerprint: canonicalized workflow input plus the caller's auth
+  scope
+- stored fields: `workflow_id`, `run_id`, accepted response JSON, status, and
+  timestamps
+- storage table: `http_idempotency_keys`
+
+The acquire/finalize flow is atomic at the row level:
+
+- same scoped key + same fingerprint → replay the original accepted response
+- same scoped key + different fingerprint → `409 Conflict`
+- new scoped key → reserve the row, start the workflow, then finalize with the
+  run metadata
 
 ## What Gets Replayed
 
@@ -41,12 +50,31 @@ than starting a second workflow:
 - `stream_url`
 - `correlation_id` when available
 
-## Current Limitations
+## Business-Key Workflow IDs
 
-- there is no explicit in-flight collision state in the scaffold
-- cache scope is the raw idempotency key within the process-local store, not yet
-  a durable `{tenant, route, key}` composite persisted in shared storage
+Workflow IDs are generated from the procedure definition, not the idempotency
+key. For `company-onboarding`, the workflow identity is:
+
+```text
+company-onboarding:{tenant_id}:{legal_entity_id}
+```
+
+That means there are two distinct duplicate protections:
+
+- HTTP idempotency stops duplicate start requests from the same caller intent
+- Temporal workflow identity stops duplicate entity workflows for the same
+  business key
+
+If a caller submits a new idempotency key for a workflow that is already active
+for the same business key, the API returns `409`.
+
+## Current Boundaries
+
 - non-start endpoints do not currently participate in the same mechanism
+- the operator and public start endpoints share the same underlying
+  idempotency and workflow identity rules, but expose different accepted
+  response shapes
+- replay returns the original accepted handle, not a synthetic "duplicate"
+  envelope
 
-Treat this as a stable caller convenience for the current start routes, not yet
-as the final platform-wide idempotency model.
+Treat this as the stable start-route contract for the current control plane.

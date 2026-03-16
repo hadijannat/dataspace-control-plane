@@ -1,4 +1,7 @@
-from src.health import ProbeState, render_probe_response
+from dataspace_control_plane_temporal_workers.health import (
+    ProbeState,
+    render_probe_response,
+)
 
 
 def test_liveness_is_available_before_workers_are_ready():

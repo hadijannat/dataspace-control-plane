@@ -115,7 +115,7 @@ tasks:
     desc: Verify infra/ delivery substrate (helm lint + terraform validate)
     cmds:
       - bash infra/helm/scripts/lint.sh
-      - for: { glob: "infra/terraform/environments/*/" }
+      - for: { glob: "infra/terraform/roots/*/*/" }
         cmd: terraform -chdir={{.ITEM}} validate
 
   test:docs:

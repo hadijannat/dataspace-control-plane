@@ -48,4 +48,4 @@ ENV PYTHONUNBUFFERED=1 \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD python -c "import os; os.kill(1, 0)"
 
-ENTRYPOINT ["python", "-m", "src.worker"]
+ENTRYPOINT ["python", "-m", "src.main"]

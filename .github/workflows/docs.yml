@@ -46,6 +46,7 @@ jobs:
           cache-dependency-glob: |
             docs/requirements.txt
             apps/control-api/pyproject.toml
+            adapters/pyproject.toml
             procedures/pyproject.toml
             core/pyproject.toml
 
@@ -64,10 +65,13 @@ jobs:
       - name: Install Python dependencies
         # Install only the packages the docs job actually exercises:
         # - docs/requirements.txt: MkDocs, Material, minify, PyYAML
-        # - apps/control-api (+ core, procedures transitively): for OpenAPI export test
+        # - apps/control-api (+ core, procedures, adapters transitively): for OpenAPI export test
+        # adapters must be installed because apps/control-api declares it as a runtime dep;
+        # without it uv cannot resolve the install graph (the package is not on PyPI).
         run: |
           uv pip install --system -r docs/requirements.txt
-          uv pip install --system -e core -e procedures -e apps/control-api
+          uv pip install --system -e core -e adapters -e procedures -e apps/control-api
+
 
       - name: Install docs Node dependencies
         run: pnpm --dir docs install --frozen-lockfile

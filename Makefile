@@ -99,6 +99,7 @@ test-apps:  ## Verify apps/ runtime surfaces
 .PHONY: test-infra
 test-infra:  ## Verify infra/ delivery substrate (helm lint + terraform validate)
 	bash infra/helm/scripts/lint.sh
+	@command -v terraform >/dev/null 2>&1 || { echo "terraform not found — skipping validate"; exit 0; }
 	@for layer in infra/terraform/roots/*/*/; do \
 	  echo "→ terraform validate $${layer}"; \
 	  terraform -chdir="$${layer}" validate; \

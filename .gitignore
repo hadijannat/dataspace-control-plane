@@ -23,8 +23,9 @@
 # Keep all Claude Code project state local to each workstation.
 .claude/
 
-# Keep CLAUDE guidance files local rather than publishing them to the remote.
-CLAUDE.md
+# Keep root-level CLAUDE guidance file local — subdirectory CLAUDE.md files
+# (e.g. docs/CLAUDE.md) are intentional published docs and must be tracked.
+/CLAUDE.md
 
 # Generated audit log written by the audit-config-change hook.
 .claude/config-audit.log

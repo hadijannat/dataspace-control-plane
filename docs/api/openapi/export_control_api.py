@@ -21,10 +21,9 @@ def _bootstrap_import_path() -> None:
 def _bootstrap_env() -> None:
     os.environ.setdefault("CONTROL_API_DEBUG", "true")
     os.environ.setdefault("CONTROL_API_DOCS_PUBLIC", "true")
-    os.environ.setdefault(
-        "CONTROL_API_STREAM_TICKET_SECRET",
-        "docs-export-stream-ticket-secret-0123456789",
-    )
+    # Intentionally short (< 32 chars) so it cannot satisfy the production ≥32-char
+    # guard if debug mode is ever inadvertently disabled. Never use in deployed envs.
+    os.environ.setdefault("CONTROL_API_STREAM_TICKET_SECRET", "docs-only")
 
 
 def build_schema() -> dict:

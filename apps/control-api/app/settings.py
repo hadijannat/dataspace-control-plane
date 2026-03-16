@@ -1,5 +1,10 @@
+import logging
+import secrets
+
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -61,6 +66,12 @@ class Settings(BaseSettings):
     def validate_stream_ticket_secret(cls, v: str | None, info) -> str | None:
         debug = (info.data or {}).get("debug", False)
         if debug:
+            if not v:
+                v = secrets.token_urlsafe(48)
+                _logger.warning(
+                    "stream_ticket_secret not set — generated ephemeral secret for "
+                    "debug mode. Do NOT use debug=True in production."
+                )
             return v
         if not v:
             raise ValueError(

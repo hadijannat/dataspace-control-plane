@@ -133,7 +133,7 @@ class StartProcedureService:
             procedure_type=procedure_type,
             tenant_id=tenant_id,
             status=accepted.status,
-            phase="accepted",
+            phase="pending",
             progress_percent=0,
             search_attributes=search_attributes,
             links={

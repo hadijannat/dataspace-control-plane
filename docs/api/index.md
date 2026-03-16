@@ -1,85 +1,62 @@
 ---
 title: "API Reference"
-summary: "Overview of the control-api HTTP REST surface, versioning policy, authentication, idempotency, and links to the OpenAPI spec and guides."
+summary: "Overview of the live control-api HTTP surface, stability boundaries, and the split between human guides and machine-derived OpenAPI artifacts."
 owner: docs-lead
-last_reviewed: "2026-03-14"
+last_reviewed: "2026-03-16"
 status: approved
 ---
 
-# API Reference
+The **control-api** is the primary HTTP surface for operator workflows,
+automation, workflow status tracking, and management webhooks. It is
+implemented with FastAPI and publishes an OpenAPI 3.1 description exported from
+the running application contract.
 
-The **control-api** is the primary HTTP interface for the Dataspace Control Plane. It is implemented with FastAPI (Python 3.12) and served via Uvicorn. The API follows REST conventions with JSON request and response bodies, URL-based versioning, RFC 7807 Problem Details error responses, and idempotency key support on all mutation endpoints.
+## Stability Model
 
-## Versioning
+The current API surface is organized by audience:
 
-All stable endpoints are served under `/api/v1/`. Backward-compatible additions (new optional fields, new response properties, new query parameters) are made within the same version without a version bump. Breaking changes (removed fields, changed semantics, changed error responses) require a new version prefix (`/api/v2/`).
+| Surface | Prefix | Audience | Stability |
+| --- | --- | --- | --- |
+| Health probes | `/health/*` | kube probes and operators | stable |
+| Operator API | `/api/v1/operator/*` | browser and operator tooling | stable |
+| Public automation API | `/api/v1/public/*` | machine clients | stable |
+| Workflow streams | `/api/v1/streams/*` | real-time clients | stable |
+| Management webhooks | `/api/v1/webhooks/*` | upstream integrations | stable |
+| UI runtime config | `/ui/runtime-config.json` | web-console bootstrap | implementation detail |
 
-| Prefix | Stability | Purpose |
-|--------|-----------|---------|
-| `/api/v1/` | Stable | Production-grade endpoints. Changes follow backward-compatibility rules. |
-| `/api/v1/internal/` | Unstable | Internal platform endpoints used by temporal-workers and provisioning-agent. May change without notice. |
-| `/api/health` | Stable | Liveness and readiness probes (no version prefix — required by Kubernetes) |
+## Current Endpoint Groups
 
-## Authentication
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/health/live` | liveness probe |
+| `GET` | `/health/ready` | readiness probe with dependency snapshot |
+| `GET` | `/api/v1/operator/tenants/` | paginated tenant listing |
+| `GET` | `/api/v1/operator/tenants/{tenant_id}` | tenant details for an authorized tenant |
+| `POST` | `/api/v1/operator/procedures/start` | operator-scoped workflow start |
+| `GET` | `/api/v1/operator/procedures/` | paginated procedure listing by tenant |
+| `GET` | `/api/v1/operator/procedures/{workflow_id}` | workflow status lookup |
+| `POST` | `/api/v1/public/procedures/start` | automation-facing workflow start |
+| `GET` | `/api/v1/public/procedures/{workflow_id}` | public workflow status lookup |
+| `POST` | `/api/v1/streams/tickets` | mint an SSE stream ticket |
+| `GET` | `/api/v1/streams/workflows/{workflow_id}` | SSE workflow status stream |
+| `POST` | `/api/v1/webhooks/management` | signed inbound management webhook |
 
-All requests to `/api/v1/` require a valid Bearer JWT issued by Keycloak. Unauthenticated requests receive `401 Unauthorized` with a Problem Details body (`/errors/authentication-required`).
+## Guides
 
-See the [Authentication Guide](guides/auth.md) for:
-- Human operator flow (Authorization Code + PKCE)
-- Service-to-service flow (client_credentials)
-- Required Keycloak roles per endpoint
-- Token structure and claims
+- [Authentication](guides/auth.md)
+- [Idempotency](guides/idempotency.md)
+- [Pagination and Filtering](guides/pagination-filtering.md)
+- [Workflow Handles](guides/workflows.md)
+- [Server-Sent Events](guides/sse.md)
+- [Error Model](guides/error-model.md)
 
-## Idempotency
+## Machine-Derived Reference
 
-All `POST`, `PATCH`, and `DELETE` endpoints accept an `Idempotency-Key: <uuid-v4>` header. Requests with the same key from the same tenant within a 24-hour TTL window receive the cached response. This enables safe retry without duplicating side effects.
+The committed API artifacts live under [`api/openapi/`](openapi/index.md):
 
-See the [Idempotency Guide](guides/idempotency.md) for the full contract.
+- `source/` is the canonical exported OpenAPI 3.1 spec from the FastAPI app
+- `bundled/` is the Redocly-bundled single-file artifact committed for review
+- `generated/` is reserved for CI-only rendered outputs and is not versioned
 
-## Long-Running Operations
-
-Operations that start a Temporal workflow return `202 Accepted` immediately with a workflow handle: `{"workflowId": "...", "runId": "...", "statusUrl": "..."}`. Poll the `statusUrl` for completion.
-
-See the [Workflow Handles Guide](guides/workflows.md) and [Server-Sent Events Guide](guides/sse.md) for alternatives to polling.
-
-## Error Model
-
-All error responses use [RFC 7807 Problem Details](https://datatracker.ietf.org/doc/html/rfc7807) format:
-
-```json
-{
-  "type": "/errors/validation-failed",
-  "title": "Validation Failed",
-  "status": 422,
-  "detail": "Field 'legalEntityId' is required.",
-  "instance": "/api/v1/companies",
-  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "validationErrors": [
-    {"field": "legalEntityId", "message": "Field is required"}
-  ]
-}
-```
-
-See the [Error Model Guide](guides/error-model.md) for the full type URI table.
-
-## OpenAPI Specification
-
-The OpenAPI 3.1 specification is the authoritative machine-readable contract for all control-api endpoints. FastAPI generates the spec from the route definitions; the committed source spec in `docs/api/openapi/source/control-api.yaml` is the design-time reference.
-
-See [OpenAPI Reference](openapi/index.md) for the spec location, bundling workflow, and Redocly linting commands.
-
-## Quick Endpoint Index
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/health` | Liveness probe |
-| `GET` | `/api/health/ready` | Readiness probe |
-| `POST` | `/api/v1/companies` | Register a new company (starts OnboardingWorkflow) |
-| `GET` | `/api/v1/companies/{companyId}` | Get company details |
-| `POST` | `/api/v1/usage-events` | Record a usage event |
-| `GET` | `/api/v1/usage-events` | List usage events (paginated) |
-| `POST` | `/api/v1/contracts/negotiations` | Start a contract negotiation |
-| `GET` | `/api/v1/contracts/negotiations/{negotiationId}` | Get negotiation status |
-| `POST` | `/api/v1/passports` | Create a new DPP passport |
-| `GET` | `/api/v1/passports/{passportId}` | Get passport details |
-| `POST` | `/api/v1/passports/{passportId}/lifecycle-transitions` | Transition passport lifecycle state |
+Use the human guides for behavior, expectations, and client patterns. Use the
+OpenAPI files for exact wire shapes and generated client workflows.

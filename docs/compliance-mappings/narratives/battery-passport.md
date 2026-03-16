@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Battery Passport Compliance Narrative
-
 ## Obligation Source
 
 - **EU Regulation 2023/1542** — Battery Regulation, repealing Directive 2006/66/EC
@@ -20,6 +18,7 @@ status: approved
 ### BP-01: Battery Identifier (BattID)
 
 Each battery subject to the regulation must have a unique Battery Identifier (BattID) that:
+
 - Is globally unique
 - Links to the Battery Passport
 - Is physically inscribed or attached to the battery
@@ -102,3 +101,9 @@ The Battery Passport must be serializable as an IDTA Asset Administration Shell 
 | `schemas/dpp/source/base/access-class.schema.json` | Annex XIII access tier field path definitions |
 | `schemas/aas/source/` | AAS Release 25-01 shell and submodel schemas |
 | `schemas/dpp/source/exports/evidence-envelope.schema.json` | Evidence artifact for Battery Passport creation events |
+
+## Related OSCAL Artifacts
+
+- [Battery Passport profile](../oscal/profiles/battery-passport-profile.yaml)
+- [Battery Passport mapping](../oscal/mappings/battery-passport-mapping.yaml)
+- [Platform component definition](../oscal/component-definitions/platform-component.yaml)

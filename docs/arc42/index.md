@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Architecture Documentation (arc42)
-
 This section documents the platform architecture using the [arc42 template](https://arc42.org/), a proven 12-section structure for communicating software and system architecture. arc42 is technology-agnostic and explicitly designed for living documentation — it is maintained alongside code, not after the fact.
 
 This is the **living architecture documentation**. It is updated whenever architectural decisions change, new layers are scaffolded, or runtime behavior is refined. For the decision log, see the [ADR index](../adr/index.md).

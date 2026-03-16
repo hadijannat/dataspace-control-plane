@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Dataspace Control Plane
-
 The **Dataspace Control Plane** is a multi-ecosystem industrial data sharing platform that enables organizations to participate in regulated dataspaces (Catena-X, Gaia-X, Manufacturing-X) and comply with EU product regulations (Battery Passport under Regulation 2023/1542, Digital Product Passports under ESPR Regulation 2024/1781).
 
 The platform provides a unified control surface for credential issuance, ODRL policy negotiation, Digital Product Passport lifecycle management, and durable workflow orchestration — all under strict tenant isolation and cryptographic audit.
@@ -48,7 +46,7 @@ The platform provides a unified control surface for credential issuance, ODRL po
 
 ## Dependency Flow
 
-```
+```text
 schemas/ ──► core/ ──► procedures/ ──► apps/
   │                 └──► adapters/  ──► apps/
   │                 └──► packs/     ──► apps/

@@ -1,0 +1,97 @@
+name: docs
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/docs.yml"
+      - "Makefile"
+      - "Taskfile.yml"
+      - "mkdocs.yml"
+      - "docs/**"
+      - "tests/unit/docs/**"
+      - "apps/control-api/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/docs.yml"
+      - "Makefile"
+      - "Taskfile.yml"
+      - "mkdocs.yml"
+      - "docs/**"
+      - "tests/unit/docs/**"
+      - "apps/control-api/**"
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6"
+          enable-cache: true
+          cache-dependency-glob: |
+            docs/requirements.txt
+            apps/control-api/pyproject.toml
+            procedures/pyproject.toml
+            core/pyproject.toml
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: docs/pnpm-lock.yaml
+
+      - name: Install Python dependencies
+        # Install only the packages the docs job actually exercises:
+        # - docs/requirements.txt: MkDocs, Material, minify, PyYAML
+        # - apps/control-api (+ core, procedures transitively): for OpenAPI export test
+        run: |
+          uv pip install --system -r docs/requirements.txt
+          uv pip install --system -e core -e procedures -e apps/control-api
+
+      - name: Install docs Node dependencies
+        run: pnpm --dir docs install --frozen-lockfile
+
+      - name: Regenerate OpenAPI artifacts
+        # Re-export the source spec and re-bundle it using CI's exact library
+        # versions before running contract tests. Without a Python lockfile the
+        # installed FastAPI/Pydantic versions may differ from the developer's
+        # machine and produce slightly different schema output; pre-generating
+        # here ensures the pytest comparison and redocly diff both pass.
+        run: |
+          python docs/api/openapi/export_control_api.py
+          # Note: pnpm --dir docs exec changes cwd to docs/, so the output path
+          # is relative to docs/ (not the repo root).
+          pnpm --dir docs exec redocly bundle api/openapi/source/control-api.yaml \
+            --output api/openapi/bundled/control-api.yaml
+
+      - name: Run docs verification
+        run: make test-docs
+
+      - name: Upload built site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: site/
+          retention-days: 14

@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# ESPR Digital Product Passport Compliance Narrative
-
 ## Obligation Source
 
 - **EU Regulation 2024/1781 (ESPR)** — Ecodesign for Sustainable Products Regulation, mandating Digital Product Passports for regulated product categories
@@ -51,9 +49,12 @@ Each physical product unit must bear a data carrier (QR code, NFC tag, or digita
 ## Gap Status
 
 !!! warning "Delegated Acts Not Yet Published"
-    The most significant compliance gap for ESPR is that the delegated acts defining product-category-specific field requirements have not yet been published by the European Commission for most categories. `packs/espr_dpp/delegated_acts/` contains a template structure for delegated act field definitions. This template **must be updated** when the relevant delegated acts are published.
-
-    See **Risk R-04** in `docs/arc42/11-risks-and-technical-debt.md` for tracking.
+    The most significant compliance gap for ESPR is that the delegated acts defining
+    product-category-specific field requirements have not yet been published by the
+    European Commission for most categories. `packs/espr_dpp/delegated_acts/`
+    contains a template structure for delegated act field definitions. This template
+    **must be updated** when the relevant delegated acts are published. See
+    **Risk R-04** in `docs/arc42/11-risks-and-technical-debt.md` for tracking.
 
 | Obligation | Status | Gap |
 |-----------|--------|-----|
@@ -79,3 +80,8 @@ Each physical product unit must bear a data carrier (QR code, NFC tag, or digita
 | 2024-08-18 | EU Regulation 2024/1781 entered into force |
 | 2025-2026 | Delegated acts published per product category (rolling) |
 | 2027+ | DPP mandatory for first product categories (batteries: 2024 for large industrial; other categories per delegated act timeline) |
+
+## Related OSCAL Artifacts
+
+- [Platform component definition](../oscal/component-definitions/platform-component.yaml)
+- [Battery Passport mapping](../oscal/mappings/battery-passport-mapping.yaml)

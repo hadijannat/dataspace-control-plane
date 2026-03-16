@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Architecture Decision Records
-
 Architecture Decision Records (ADRs) document the significant design decisions made during platform development. The platform uses [MADR (Markdown Architectural Decision Records)](https://adr.github.io/madr/) format, which provides a lightweight, version-control-friendly structure that integrates naturally with the docs-as-code workflow.
 
 ## ADR Status Meanings
@@ -47,6 +45,7 @@ All new ADRs must start from [_template.md](_template.md). The template enforces
 ## Relationship to arc42
 
 Every ADR that is accepted should be referenced from at least one arc42 section:
+
 - If it addresses a constraint → [Section 2](../arc42/02-constraints.md)
 - If it is a fundamental architectural bet → [Section 4](../arc42/04-solution-strategy.md)
 - If it governs a crosscutting concept → [Section 8](../arc42/08-crosscutting-concepts.md)

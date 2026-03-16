@@ -10,8 +10,6 @@ affected_services:
 status: approved
 ---
 
-# Vault Transit Failures
-
 ## Trigger / Alert Source
 
 - **Alert names**: `VaultTransitSigningFailureRate`, `VaultSealedAlert`, `VaultUnreachable`
@@ -214,7 +212,7 @@ EOF
 |---------|-----|
 | Grafana — Vault Dashboard | `https://grafana.your-org.internal/d/vault-overview` |
 | Vault UI | `https://vault.your-org.internal` |
-| Loki — temporal-workers vault errors | `{namespace="dataspace-platform", app="temporal-workers"} |= "vault" \| json \| level="ERROR"` |
+| Loki — temporal-workers vault errors | `{namespace="dataspace-platform", app="temporal-workers"} \|= "vault" \| json \| level="ERROR"` |
 | Temporal UI — stalled workflows | `https://temporal.your-org.internal/namespaces/dataspace/workflows?status=Running` |
 
 ## Escalation Contacts

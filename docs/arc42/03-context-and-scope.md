@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 3. Context and Scope
-
 ## Business Context
 
 The Dataspace Control Plane sits at the intersection of multiple regulated ecosystems and enterprise systems. Its business scope is to broker data sharing agreements between industrial organizations while generating the cryptographically verifiable evidence required by regulators and dataspace operators.

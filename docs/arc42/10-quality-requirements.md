@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 10. Quality Requirements
-
 ## Quality Tree
 
 ```mermaid

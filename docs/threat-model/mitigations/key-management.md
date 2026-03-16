@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Mitigations: Key Management
-
 Key management threats target the platform's cryptographic boundary: the Vault Transit engine and PKI issuer. For authentication threats that use the same keys, see [auth-identity.md](auth-identity.md). The Vault Transit ADR is [ADR-0004](../../adr/0004-vault-transit-for-signing-keys.md).
 
 ## Threat Table
@@ -26,7 +24,7 @@ Key management threats target the platform's cryptographic boundary: the Vault T
 
 **Why the mitigation holds**: When a Transit key is created with `exportable=false`, the Vault API returns an error for all export operations regardless of the caller's token policy:
 
-```
+```text
 Error reading transit/export/signing-key/dataspace-signing: Error making API request.
 Code: 403. Errors:
 * exportable must be set to export a key

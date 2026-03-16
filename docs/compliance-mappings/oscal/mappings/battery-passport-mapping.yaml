@@ -15,16 +15,27 @@ mapping:
       - satisfies: the source control's obligation is fulfilled by the target control's implementation
       - equivalent: the source and target controls impose the same requirement from different frameworks
       - partially-satisfies: the source obligation is partially covered by the target; additional implementation needed
+    props:
+      - name: source-standard
+        value: "EU Regulation 2023/1542 Annex XIII"
+      - name: source-version
+        value: "Delegated Regulation (EU) 2024/1328"
+      - name: effective-date
+        value: "2024-02-18"
+      - name: pack-reference
+        value: "packs/battery_passport/"
+      - name: pack-reference
+        value: "packs/catenax/"
     parties:
       - uuid: "party-platform-team"
         type: organization
         name: Dataspace Platform Team
   source-resource:
-    href: "profiles/battery-passport-profile.yaml"
+    href: "../profiles/battery-passport-profile.yaml"
     type: profile
-    remarks: "Battery Regulation EU 2023/1542 Annex XIII control profile (to be created)"
+    remarks: "Battery Regulation EU 2023/1542 Annex XIII control profile"
   target-resource:
-    href: "profiles/catena-x-profile.yaml"
+    href: "../profiles/catena-x-profile.yaml"
     type: profile
   maps:
     - sources:

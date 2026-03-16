@@ -11,6 +11,15 @@ profile:
       Operating Model 4.0, the DSP protocol specification, and the DCP protocol
       specification. This profile is consumed by the platform-component.yaml component
       definition to document which platform components implement each control.
+    props:
+      - name: source-standard
+        value: "Catena-X Operating Model"
+      - name: source-version
+        value: "4.0"
+      - name: effective-date
+        value: "2026-03-14"
+      - name: pack-reference
+        value: "packs/catenax/"
     links:
       - href: "https://catena-x.net/operating-model"
         rel: "reference"

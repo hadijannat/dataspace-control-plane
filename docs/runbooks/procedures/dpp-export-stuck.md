@@ -10,8 +10,6 @@ affected_services:
 status: approved
 ---
 
-# DPP Export Stuck
-
 ## Trigger / Alert Source
 
 - **Alert names**: `DPPExportWorkflowStalledAlert`
@@ -61,6 +59,7 @@ kubectl logs deployment/temporal-workers -n dataspace-platform --tail=50 | grep 
 Navigate to `https://temporal.your-org.internal` → Namespace: `dataspace` → Workflow Type: `DPPExportWorkflow` → Status: `Running`.
 
 Click the stuck workflow and examine the event history:
+
 - **Last event type**: `ActivityTaskScheduled` with the activity type shown
 - **Time since last event**: how long the current activity has been running
 

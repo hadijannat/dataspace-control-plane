@@ -11,8 +11,6 @@ affected_services:
 status: approved
 ---
 
-# Temporal Workers Stalled
-
 ## Trigger / Alert Source
 
 - **Alert names**: `TemporalTaskQueueBacklogHigh`, `TemporalWorkflowCompletionRateZero`, `TemporalWorkerPodCrashLoopBackOff`
@@ -92,6 +90,7 @@ kubectl logs deployment/temporal-workers -n dataspace-platform --tail=200 | grep
 ```
 
 Common patterns:
+
 - `vault: connection refused` or `vault: 403 Forbidden` → Vault connectivity issue (see Scenario B)
 - `psycopg2.OperationalError: could not connect to server` → Postgres unavailable (see [Postgres Unavailable](postgres-unavailable.md))
 - `NonDeterminismError: ...` → workflow code has a determinism bug (see Scenario C)
@@ -111,6 +110,7 @@ kubectl exec -it deployment/temporal-workers -n dataspace-platform -- \
 ### Step 4: Check Temporal UI for stuck workflows
 
 Navigate to the Temporal UI at `https://temporal.your-org.internal`. In the `dataspace` namespace:
+
 - Filter by `Status: Running` to see all in-progress workflows
 - Click into a stalled workflow to see the last event in the history
 - Look at the last activity name and whether it has exceeded its retry count
@@ -150,6 +150,7 @@ Signing activities fail with 403 or connection refused. The workers themselves a
 See [Vault Transit Failures](vault-transit-failures.md) for full remediation.
 
 Quick check:
+
 ```bash
 kubectl exec -it deployment/temporal-workers -n dataspace-platform -- \
   curl -sk https://vault.dataspace-infra.svc.cluster.local:8200/v1/sys/health | python3 -m json.tool

@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 8. Crosscutting Concepts
-
 Crosscutting concepts apply uniformly across all platform layers. Violating any of these concepts in any layer is a breaking architectural decision that requires an ADR.
 
 ## Multi-Tenancy
@@ -67,6 +65,7 @@ All platform services emit OTLP (OpenTelemetry Protocol) signals:
 - **Logs**: Structured JSON logs forwarded via OTLP to Loki. Log records include `trace_id` for correlation.
 
 The OTel Collector gateway enforces **telemetry redaction** before export:
+
 - Attributes matching patterns `.*token.*`, `.*secret.*`, `.*password.*`, `.*key.*` are replaced with `[REDACTED]`.
 - HTTP request bodies are never included in traces.
 - Span attributes from `Authorization` headers are dropped.

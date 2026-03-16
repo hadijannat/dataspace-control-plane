@@ -1,156 +1,76 @@
 ---
 title: "Authentication Guide"
-summary: "Human operator and service-to-service authentication flows, token structure, required roles, and code examples."
+summary: "Bearer-token and stream-ticket authentication for operator, public, and streaming control-api endpoints."
 owner: docs-lead
-last_reviewed: "2026-03-14"
+last_reviewed: "2026-03-16"
 status: approved
 ---
 
-# Authentication Guide
+The control-api authenticates most requests with Keycloak-issued Bearer JWTs.
+The workflow stream endpoint also supports short-lived stream tickets so browser
+clients can subscribe without custom headers.
 
-All control-api endpoints under `/api/v1/` require a Bearer JWT issued by the tenant's Keycloak realm. The authentication flow differs between human operators (browser sessions) and machine service accounts (automated API calls).
+## Bearer JWT Validation
 
-## Human Operator Authentication (Authorization Code + PKCE)
+Bearer authentication is enforced by `get_current_principal()` and
+`validate_token()` in the control-api auth layer.
 
-Human operators authenticate via the Keycloak Authorization Code flow with PKCE (Proof Key for Code Exchange). The web-console handles this flow automatically using the Keycloak JavaScript adapter.
+The API validates:
 
-**Flow summary:**
+- signature against the issuer JWKS
+- `aud` against `CONTROL_API_OIDC_AUDIENCE`
+- `iss` against `CONTROL_API_OIDC_ISSUER`
 
-1. Browser navigates to the web-console.
-2. Web-console redirects to `https://keycloak/realms/{realm}/protocol/openid-connect/auth?client_id=web-console&response_type=code&scope=openid&code_challenge={challenge}&code_challenge_method=S256&redirect_uri={callback}`.
-3. Operator authenticates with Keycloak (username/password + MFA if enforced).
-4. Keycloak redirects to the callback URL with `?code={authorization_code}`.
-5. Web-console exchanges the code: `POST https://keycloak/realms/{realm}/protocol/openid-connect/token` with `grant_type=authorization_code&code={code}&code_verifier={verifier}`.
-6. Keycloak returns `{"access_token": "...", "refresh_token": "...", "expires_in": 300}`.
-7. Web-console includes the access token as `Authorization: Bearer {access_token}` on every API call.
+On success, the token becomes a `Principal` with:
 
-**Token TTL**: 5 minutes for human tokens. Use the `refresh_token` (24-hour TTL) to obtain new access tokens silently.
+| Claim source | Principal field | Notes |
+| --- | --- | --- |
+| `sub` | `subject` | stable caller identity |
+| `email` | `email` | optional |
+| `realm_access.roles` | `realm_roles` | includes `dataspace-admin` when present |
+| `resource_access[control-api].roles` | `client_roles` | client-scoped roles |
+| `tenant_ids` | `tenant_ids` | tenant access set enforced by API logic |
 
-## Service-to-Service Authentication (client_credentials)
+## Operator and Public Endpoints
 
-Machine services authenticate using the OAuth 2.0 `client_credentials` grant. The `client_id` and `client_secret` are Keycloak service account credentials provisioned during company onboarding and stored in Vault.
+Both `/api/v1/operator/*` and `/api/v1/public/*` require `Authorization:
+Bearer ...`.
 
-**Token request:**
+Authorization is tenant-aware:
 
-```http
-POST https://keycloak/realms/{realm}/protocol/openid-connect/token
-Content-Type: application/x-www-form-urlencoded
+- callers may only act on tenants included in `tenant_ids`
+- realm role `dataspace-admin` bypasses tenant-specific filtering
+- workflow lookups and stream subscriptions are denied if the resolved workflow
+  tenant is outside the principal scope
 
-grant_type=client_credentials&
-client_id={service_client_id}&
-client_secret={service_client_secret}
-```
+## Workflow Stream Authentication
 
-**Response:**
+`GET /api/v1/streams/workflows/{workflow_id}` supports two modes:
 
-```json
-{
-  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expires_in": 900,
-  "token_type": "Bearer"
-}
-```
+1. standard Bearer auth
+2. query-string `ticket` auth minted by `POST /api/v1/streams/tickets`
 
-**Token TTL**: 15 minutes for machine tokens. Cache the token and refresh 60 seconds before expiry to avoid failed requests due to clock skew.
+Stream tickets are HMAC-signed, short-lived envelopes containing:
 
-**Python example:**
+- caller subject
+- caller email
+- realm roles
+- client roles
+- tenant IDs
+- expiration timestamp
 
-```python
-import httpx
-import time
+Use tickets for browser flows that cannot easily attach custom headers to SSE
+requests.
 
-class KeycloakTokenCache:
-    def __init__(self, realm_url: str, client_id: str, client_secret: str):
-        self.token_url = f"{realm_url}/protocol/openid-connect/token"
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self._token: str | None = None
-        self._expires_at: float = 0.0
+## Human vs Machine Flows
 
-    async def get_token(self) -> str:
-        if self._token and time.monotonic() < self._expires_at - 60:
-            return self._token
+The repo assumes two common patterns:
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                self.token_url,
-                data={
-                    "grant_type": "client_credentials",
-                    "client_id": self.client_id,
-                    "client_secret": self.client_secret,
-                },
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-            )
-            response.raise_for_status()
-            data = response.json()
-            self._token = data["access_token"]
-            self._expires_at = time.monotonic() + data["expires_in"]
-            return self._token
+- human operator flow: web-console obtains a Keycloak access token and calls the
+  operator endpoints
+- machine flow: automation obtains a service-account token and calls the public
+  API or webhook-related endpoints
 
-    async def get_auth_header(self) -> dict[str, str]:
-        token = await self.get_token()
-        return {"Authorization": f"Bearer {token}"}
-```
-
-## Token Structure and Claims
-
-All JWTs issued by Keycloak for the platform contain the following claims:
-
-| Claim | Type | Description |
-|-------|------|-------------|
-| `sub` | string (UUID) | Subject — the Keycloak user ID or service account ID |
-| `azp` | string | Authorized party — the client ID that requested the token |
-| `iss` | string (URI) | Issuer — the Keycloak realm URL: `https://keycloak/realms/{realm}` |
-| `exp` | integer (Unix ts) | Expiration timestamp |
-| `iat` | integer (Unix ts) | Issued-at timestamp |
-| `realm_access.roles` | string[] | Realm-level roles assigned to this principal |
-| `resource_access.control-api.roles` | string[] | control-api client-level roles |
-| `tenant_id` | string | Custom claim: the platform tenant ID (set by Keycloak mapper) |
-
-**Example decoded payload:**
-
-```json
-{
-  "sub": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-  "azp": "web-console",
-  "iss": "https://keycloak/realms/tenant-BPNL000000000001",
-  "exp": 1710000300,
-  "iat": 1710000000,
-  "realm_access": {
-    "roles": ["operator", "offline_access"]
-  },
-  "resource_access": {
-    "control-api": {
-      "roles": ["operator"]
-    }
-  },
-  "tenant_id": "tenant-BPNL000000000001"
-}
-```
-
-## Required Roles
-
-The control-api enforces role-based access control via Keycloak roles validated in the JWT:
-
-| Role | Grant | Permitted operations |
-|------|-------|---------------------|
-| `operator` | Human operators, provisioning-agent | All mutation endpoints: POST/PATCH/DELETE on companies, negotiations, passports |
-| `viewer` | Human operators (read-only) | All GET endpoints only |
-| `service-account` | Machine services (temporal-workers, edc-extension) | Usage event recording, internal status updates |
-| `admin` | Platform administrators only | Company suspension, tenant deletion |
-
-Requests with insufficient roles receive `403 Forbidden` with a Problem Details body (`/errors/authorization-denied`).
-
-## JWKS Endpoint
-
-The control-api validates tokens by fetching the public key set from Keycloak's JWKS endpoint:
-
-```
-GET https://keycloak/realms/{realm}/protocol/openid-connect/certs
-```
-
-The JWKS URL is configured via the `KEYCLOAK_JWKS_URL` environment variable. The control-api caches the JWKS and refreshes it on key rotation (detected by `kid` mismatch in incoming JWTs).
-
-## MFA Enforcement
-
-For human operators in production, MFA is enforced at the Keycloak realm level. Operators must register a TOTP authenticator (RFC 6238) on first login. MFA is not required for machine service accounts.
+The docs layer does not currently define additional per-role policy beyond what
+the application enforces in `Principal.can_access_tenant()` and the
+`dataspace-admin` override.

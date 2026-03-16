@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Catena-X Compliance Narrative
-
 ## Obligation Source
 
 - **Catena-X Operating Model 4.0** — defines the rules for network participation, onboarding, and data sharing
@@ -73,6 +71,11 @@ New participants must receive a `DataspaceParticipantCredential` and a `Membersh
 Conformance with DSP and DCP is verified by the `tests/compatibility/dsp-tck/` and `tests/compatibility/dcp-tck/` TCK suites. These suites use the Eclipse Foundation's official TCK test vectors.
 
 **Current status**: TCK directories scaffolded; TCK test artifacts and running EDC counterparty in staging are not yet available (Risk R-02 in `docs/arc42/11-risks-and-technical-debt.md`).
+
+## Related OSCAL Artifacts
+
+- [Catena-X profile](../oscal/profiles/catena-x-profile.yaml)
+- [Platform component definition](../oscal/component-definitions/platform-component.yaml)
 
 ## Schema References
 

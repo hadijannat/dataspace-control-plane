@@ -1,0 +1,102 @@
+{
+  "version": "2.2.0",
+  "summary": {
+    "title": "Dataspace Control Plane — Machine Trust Threat Model",
+    "owner": "docs-lead, infra-lead",
+    "description": "Focused STRIDE model for machine credentials, stream tickets, and inbound webhook authenticity.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Machine Trust Flow",
+        "diagramType": "STRIDE",
+        "placeholder": "Machine trust diagram",
+        "thumbnail": "./public/content/images/thumbnail.jpg",
+        "version": "2.2.0",
+        "cells": [
+          {
+            "position": {
+              "x": 150,
+              "y": 120
+            },
+            "size": {
+              "width": 128,
+              "height": 64
+            },
+            "attrs": {
+              "text": {
+                "text": "Keycloak"
+              }
+            },
+            "shape": "process",
+            "id": "process-keycloak",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "Keycloak",
+              "description": "Issues operator and machine JWTs.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 390,
+              "y": 120
+            },
+            "size": {
+              "width": 128,
+              "height": 64
+            },
+            "attrs": {
+              "text": {
+                "text": "control-api"
+              }
+            },
+            "shape": "process",
+            "id": "process-control-api",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "control-api",
+              "description": "Validates Bearer tokens, stream tickets, and webhook signatures.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 630,
+              "y": 120
+            },
+            "size": {
+              "width": 128,
+              "height": 64
+            },
+            "attrs": {
+              "text": {
+                "text": "External Webhook Sender"
+              }
+            },
+            "shape": "external",
+            "id": "external-webhook-sender",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.ExternalEntity",
+              "name": "External Webhook Sender",
+              "description": "Upstream system invoking the management webhook endpoint.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

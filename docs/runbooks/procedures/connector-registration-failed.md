@@ -10,8 +10,6 @@ affected_services:
 status: approved
 ---
 
-# Connector Registration Failed
-
 ## Trigger / Alert Source
 
 - **Alert names**: `ConnectorRegistrationFailed`, `ProvisioningAgentError`
@@ -63,6 +61,7 @@ kubectl exec -it postgres-0 -n dataspace-infra -- \
 Navigate to `https://temporal.your-org.internal` → Namespace: `dataspace` → filter by workflow type `OnboardingWorkflow` and status `Failed` or `Running`. Click the workflow for the affected `company_id`.
 
 Look at the workflow event history for the last activity before failure. Common failure points:
+
 - `create_keycloak_realm` → Keycloak issue (see [Keycloak Realm Misconfigured](../external-dependencies/keycloak-realm-misconfigured.md))
 - `register_edc_connector` → connector or provisioning-agent issue (this runbook)
 - `sign_did_document` → Vault issue (see [Vault Transit Failures](../incidents/vault-transit-failures.md))
@@ -78,6 +77,7 @@ kubectl exec -it deployment/provisioning-agent -n dataspace-platform -- \
 ```
 
 **If connection refused**: The EDC connector pod is not running or not reachable. Check:
+
 ```bash
 kubectl get pods -n <tenant-namespace>
 kubectl logs deployment/edc-connector -n <tenant-namespace> --tail=50

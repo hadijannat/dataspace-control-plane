@@ -1,5 +1,8 @@
 ---
 title: "Packs as pure overlays over core semantics — no pack may redefine core domain concepts"
+summary: "Architecture decision record establishing packs as overlays over core semantics."
+owner: docs-lead
+last_reviewed: "2026-03-16"
 status: accepted
 date: 2026-03-14
 decision-makers:
@@ -13,8 +16,6 @@ consulted:
 informed:
   - all-leads
 ---
-
-# Packs as pure overlays over core semantics
 
 ## Context and Problem Statement
 

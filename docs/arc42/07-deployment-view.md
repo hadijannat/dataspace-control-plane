@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 7. Deployment View
-
 ## Kubernetes Namespace Layout
 
 The platform is deployed on Kubernetes, split across four namespaces with strict network policy boundaries. Cross-namespace traffic is permitted only on the interfaces documented in [Section 3 (Context and Scope)](03-context-and-scope.md).
@@ -89,7 +87,7 @@ graph TB
 
 Infrastructure is provisioned in a strict order to ensure each layer's dependencies are available before it is installed. This order is enforced by Terraform module `depends_on` declarations and Helm post-install hooks.
 
-```
+```text
 Step 1: terraform bootstrap
   → Creates: VPC, subnets, DNS zones, TLS certificates (ACM/Vault PKI bootstrap)
   → Outputs: cluster endpoint, service account annotations

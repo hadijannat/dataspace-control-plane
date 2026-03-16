@@ -10,6 +10,19 @@ component-definition:
       they implement the controls required for Catena-X participation, ESPR DPP
       compliance, and Battery Passport compliance. Components map to the platform's
       runtime services and supporting infrastructure.
+    props:
+      - name: source-standard
+        value: "Dataspace Control Plane Internal Control Baseline"
+      - name: source-version
+        value: "2026.03"
+      - name: effective-date
+        value: "2026-03-16"
+      - name: pack-reference
+        value: "packs/catenax/"
+      - name: pack-reference
+        value: "packs/espr_dpp/"
+      - name: pack-reference
+        value: "packs/battery_passport/"
     parties:
       - uuid: "party-platform-team"
         type: organization

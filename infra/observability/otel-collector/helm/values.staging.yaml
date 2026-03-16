@@ -117,7 +117,7 @@ config:
       - (?i)authorization
       - (?i)api.key
       - (?i)client.secret
-      summary: debug
+      summary: silent
     k8sattributes:
       auth_type: serviceAccount
       passthrough: false

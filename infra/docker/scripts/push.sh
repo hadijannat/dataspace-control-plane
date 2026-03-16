@@ -49,6 +49,18 @@ echo ""
 
 mkdir -p "$DIGEST_DIR"
 
+# Release builds require digest-pinned base images to prevent supply-chain drift
+if [[ "$TARGET" == "release" ]]; then
+  if [[ -z "${PYTHON_BASE_IMAGE:-}" ]] || [[ "$PYTHON_BASE_IMAGE" != *"@sha256:"* ]]; then
+    echo "ERROR: Release builds require PYTHON_BASE_IMAGE to be digest-pinned (e.g. python:3.12-slim@sha256:...)" >&2
+    exit 1
+  fi
+  if [[ -z "${NODE_BASE_IMAGE:-}" ]] || [[ "$NODE_BASE_IMAGE" != *"@sha256:"* ]]; then
+    echo "ERROR: Release builds require NODE_BASE_IMAGE to be digest-pinned (e.g. node:20-slim@sha256:...)" >&2
+    exit 1
+  fi
+fi
+
 ENV_VARS=(
   "TAG=$TAG"
   "REGISTRY=$REGISTRY"
@@ -62,12 +74,14 @@ if [[ -n "${NODE_BASE_IMAGE:-}" ]]; then
   ENV_VARS+=("NODE_BASE_IMAGE=$NODE_BASE_IMAGE")
 fi
 
-# Build and push
+# Build and push using the same array pattern as build.sh
+BAKE_ARGS=()
+for file in "${BAKE_FILES[@]}"; do
+  BAKE_ARGS+=(--file "$file")
+done
+
 env "${ENV_VARS[@]}" docker buildx bake \
-  --file "${BAKE_FILES[0]}" \
-  --file "${BAKE_FILES[1]}" \
-  --file "${BAKE_FILES[2]}" \
-  --file "${BAKE_FILES[3]}" \
+  "${BAKE_ARGS[@]}" \
   --push \
   "$TARGET"
 

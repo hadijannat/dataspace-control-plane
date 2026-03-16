@@ -102,6 +102,8 @@ def check_image(name, image):
     digest = image.get("digest")
     if not isinstance(digest, str) or not digest.startswith(digest_pattern):
         raise SystemExit(f"{name}: image.digest must be set to a sha256 digest")
+    if digest == "sha256:REPLACE_WITH_REAL_DIGEST":
+        raise SystemExit(f"{name}: image.digest is still a placeholder — must be a real sha256 digest")
 
 if chart == "platform":
     for component in ("control-api", "temporal-workers", "web-console", "provisioning-agent"):

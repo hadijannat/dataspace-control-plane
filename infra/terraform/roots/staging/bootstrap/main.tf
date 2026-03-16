@@ -9,6 +9,10 @@ module "dataspace_namespace" {
     "app.kubernetes.io/part-of" = "dataspace-control-plane"
     "cluster"                   = var.cluster_name
   }
+  annotations = {
+    "infra.dataspace.io/managed-by" = "terraform"
+    "infra.dataspace.io/env"        = "staging"
+  }
 }
 
 module "terraform_state_namespace" {

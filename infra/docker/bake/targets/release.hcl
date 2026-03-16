@@ -23,6 +23,9 @@ target "control-api-release" {
   cache-from = ["type=registry,ref=${REGISTRY}/control-api:buildcache"]
   cache-to   = ["type=registry,ref=${REGISTRY}/control-api:buildcache,mode=max"]
   output     = ["type=registry"]
+  args = {
+    PYTHON_BASE_IMAGE = PYTHON_BASE_IMAGE
+  }
 }
 
 target "temporal-workers-release" {
@@ -31,6 +34,9 @@ target "temporal-workers-release" {
   cache-from = ["type=registry,ref=${REGISTRY}/temporal-workers:buildcache"]
   cache-to   = ["type=registry,ref=${REGISTRY}/temporal-workers:buildcache,mode=max"]
   output     = ["type=registry"]
+  args = {
+    PYTHON_BASE_IMAGE = PYTHON_BASE_IMAGE
+  }
 }
 
 target "web-console-release" {
@@ -39,6 +45,9 @@ target "web-console-release" {
   cache-from = ["type=registry,ref=${REGISTRY}/web-console:buildcache"]
   cache-to   = ["type=registry,ref=${REGISTRY}/web-console:buildcache,mode=max"]
   output     = ["type=registry"]
+  args = {
+    NODE_BASE_IMAGE = NODE_BASE_IMAGE
+  }
 }
 
 target "provisioning-agent-release" {
@@ -47,4 +56,7 @@ target "provisioning-agent-release" {
   cache-from = ["type=registry,ref=${REGISTRY}/provisioning-agent:buildcache"]
   cache-to   = ["type=registry,ref=${REGISTRY}/provisioning-agent:buildcache,mode=max"]
   output     = ["type=registry"]
+  args = {
+    PYTHON_BASE_IMAGE = PYTHON_BASE_IMAGE
+  }
 }

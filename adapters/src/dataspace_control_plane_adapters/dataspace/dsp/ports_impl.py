@@ -22,11 +22,9 @@ from ..._shared.auth import StaticTokenProvider
 from ..._shared.http import AsyncAdapterClient
 from .config import DspSettings
 from .errors import DspNegotiationError
+from .messages import _DSP_CONTEXT, _DSP_VOCAB
 
 logger = logging.getLogger(__name__)
-
-_DSP_CONTEXT = "https://w3id.org/dspace/2025/1/context.jsonld"
-_DSP_VOCAB = "https://w3id.org/dspace/2025/1/vocab/"
 
 
 class DspAgreementRegistry:

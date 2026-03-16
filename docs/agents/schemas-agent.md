@@ -24,6 +24,9 @@ status: approved
 - `schemas/dpp`
 - `schemas/metering`
 - `schemas/enterprise-mapping`
+- `schemas/_shared`
+- `schemas/tools`
+- `schemas/locks`
 
 ## Explicitly Non-Owned Paths
 

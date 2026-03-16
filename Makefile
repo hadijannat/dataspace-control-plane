@@ -69,9 +69,8 @@ test-unit:  ## Run the repo-wide default spine (unit + schema compatibility)
 	$(PYTEST) $(LOCAL_TEST_PATHS) $(PYTEST_COV)
 
 .PHONY: test-core
-test-core:  ## Verify core/ semantic layer (unit + tenancy)
+test-core:  ## Verify core/ semantic layer (unit + tenancy gate via test-gates)
 	pytest tests/unit -k core
-	pytest tests/tenancy -k core
 
 .PHONY: test-schemas
 test-schemas:  ## Verify schemas/ artifact layer (unit + offline schema validation)
@@ -100,9 +99,9 @@ test-apps:  ## Verify apps/ runtime surfaces
 .PHONY: test-infra
 test-infra:  ## Verify infra/ delivery substrate (helm lint + terraform validate)
 	bash infra/helm/scripts/lint.sh
-	@for env in infra/terraform/environments/*/; do \
-	  echo "→ terraform validate $${env}"; \
-	  terraform -chdir="$${env}" validate; \
+	@for layer in infra/terraform/roots/*/*/; do \
+	  echo "→ terraform validate $${layer}"; \
+	  terraform -chdir="$${layer}" validate; \
 	done
 
 .PHONY: test-docs

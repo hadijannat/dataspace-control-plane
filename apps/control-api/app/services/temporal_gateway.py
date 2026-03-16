@@ -1,24 +1,27 @@
-"""
-Temporal gateway: thin facade over the Temporal client.
-All workflow interaction from route handlers goes through here.
-
-Routing table
--------------
-``PROCEDURE_TYPE_TO_TASK_QUEUE`` maps logical procedure type names to the
-Temporal task queue that hosts the corresponding worker. Adding a new
-procedure type requires only a new entry here plus a matching worker
-registration in ``apps/temporal-workers``.
-"""
+"""Temporal gateway: thin facade over the Temporal client."""
 import uuid
+from dataclasses import dataclass
 from typing import Any
 
 import structlog
-from temporalio.client import Client, WorkflowExecutionDescription, WorkflowHandle
+from dataspace_control_plane_adapters.infrastructure.temporal_client.errors import (
+    TemporalRpcError,
+    WorkflowAlreadyStartedError,
+    WorkflowNotFoundError,
+)
+from temporalio.client import Client, WorkflowExecutionDescription
+from temporalio.common import WorkflowIDConflictPolicy, WorkflowIDReusePolicy
 
 from app.application.commands.procedures import StartProcedureCommand
 from app.services.procedure_catalog import ProcedureCatalog, ProcedureDefinition
 
 logger = structlog.get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class StartedWorkflow:
+    workflow_id: str
+    run_id: str | None = None
 
 
 class TemporalGateway:
@@ -29,34 +32,8 @@ class TemporalGateway:
         self,
         command: StartProcedureCommand,
         catalog: ProcedureCatalog,
-    ) -> WorkflowHandle:
-        """
-        Dispatch a ``StartProcedureCommand`` to the appropriate Temporal task queue.
-
-        The task queue is resolved from ``PROCEDURE_TYPE_TO_TASK_QUEUE``. A
-        ``ValueError`` is raised for unknown procedure types so callers can
-        return HTTP 422 rather than silently enqueuing to a non-existent queue.
-
-        The workflow_id is taken from ``command.idempotency_key`` when present;
-        otherwise a deterministic ``<procedure_type>-<tenant_id>-<uuid4>``
-        string is generated. Using the idempotency key as the workflow_id gives
-        Temporal's built-in deduplication for free.
-
-        Parameters
-        ----------
-        command:
-            Fully populated ``StartProcedureCommand`` from the route handler.
-
-        Returns
-        -------
-        WorkflowHandle
-            Handle to the newly started (or already-running) workflow.
-
-        Raises
-        ------
-        ValueError
-            If ``command.procedure_type`` is not in ``PROCEDURE_TYPE_TO_TASK_QUEUE``.
-        """
+    ) -> StartedWorkflow:
+        """Dispatch a validated start command through the manifest-backed catalog."""
         definition = catalog.resolve(command.procedure_type)
         workflow_input = catalog.build_workflow_input(
             definition,
@@ -79,16 +56,70 @@ class TemporalGateway:
             actor=command.actor_subject,
         )
 
-        handle = await self._client.start_workflow(
-            definition.workflow_type,
-            workflow_input,
-            id=workflow_id,
-            task_queue=definition.task_queue,
+        return await self.start_definition(
+            definition=definition,
+            workflow_input=workflow_input,
+            workflow_id=workflow_id,
             search_attributes=search_attributes,
             id_conflict_policy=id_conflict_policy,
             id_reuse_policy=id_reuse_policy,
         )
-        return handle
+
+    async def start_definition(
+        self,
+        *,
+        definition: ProcedureDefinition,
+        workflow_input: Any,
+        workflow_id: str,
+        search_attributes: dict[str, list[str]],
+        id_conflict_policy=None,
+        id_reuse_policy=None,
+    ) -> StartedWorkflow:
+        if id_conflict_policy is None or id_reuse_policy is None:
+            id_conflict_policy, id_reuse_policy = self._client_conflict_policy(definition)
+
+        try:
+            handle = await self._client.start_workflow(
+                definition.workflow_type,
+                workflow_input,
+                id=workflow_id,
+                task_queue=definition.task_queue,
+                search_attributes=search_attributes,
+                id_conflict_policy=id_conflict_policy,
+                id_reuse_policy=id_reuse_policy,
+            )
+            return StartedWorkflow(
+                workflow_id=handle.id,
+                run_id=getattr(handle, "first_execution_run_id", None),
+            )
+        except Exception as exc:
+            message = str(exc).lower()
+            if "already" in message and "workflow" in message:
+                raise WorkflowAlreadyStartedError(workflow_id) from exc
+            raise TemporalRpcError(
+                f"Failed to start workflow id={workflow_id!r}: {exc}",
+                upstream_code=type(exc).__name__,
+            ) from exc
+
+    def _client_conflict_policy(
+        self,
+        definition: ProcedureDefinition,
+    ) -> tuple[WorkflowIDConflictPolicy, WorkflowIDReusePolicy]:
+        conflict_policy = definition.manifest.conflict_policy
+        if conflict_policy == "use_existing":
+            return (
+                WorkflowIDConflictPolicy.USE_EXISTING,
+                WorkflowIDReusePolicy.REJECT_DUPLICATE,
+            )
+        if conflict_policy == "reject":
+            return (
+                WorkflowIDConflictPolicy.FAIL,
+                WorkflowIDReusePolicy.REJECT_DUPLICATE,
+            )
+        return (
+            WorkflowIDConflictPolicy.UNSPECIFIED,
+            WorkflowIDReusePolicy.ALLOW_DUPLICATE,
+        )
 
     async def start_workflow(
         self,
@@ -97,23 +128,8 @@ class TemporalGateway:
         args: dict[str, Any],
         workflow_id: str | None = None,
         search_attributes: dict[str, Any] | None = None,
-    ) -> WorkflowHandle:
-        """
-        Low-level workflow start. Prefer ``start_procedure`` for procedure dispatch.
-
-        Parameters
-        ----------
-        workflow_type:
-            Temporal workflow type name (registered workflow class name).
-        task_queue:
-            Target task queue.
-        args:
-            Workflow input arguments forwarded verbatim.
-        workflow_id:
-            Explicit workflow ID; a UUID-based default is used when omitted.
-        search_attributes:
-            Optional Temporal search attributes (reserved for future use).
-        """
+    ) -> StartedWorkflow:
+        """Low-level workflow start. Prefer ``start_procedure`` for procedure dispatch."""
         wid = workflow_id or f"{workflow_type}-{uuid.uuid4()}"
         logger.info(
             "temporal.start_workflow",
@@ -121,22 +137,70 @@ class TemporalGateway:
             workflow_type=workflow_type,
             task_queue=task_queue,
         )
-        handle = await self._client.start_workflow(
-            workflow_type,
-            args,
-            id=wid,
-            task_queue=task_queue,
-        )
-        return handle
+        try:
+            handle = await self._client.start_workflow(
+                workflow_type,
+                args,
+                id=wid,
+                task_queue=task_queue,
+            )
+            return StartedWorkflow(
+                workflow_id=handle.id,
+                run_id=getattr(handle, "first_execution_run_id", None),
+            )
+        except Exception as exc:
+            message = str(exc).lower()
+            if "already" in message and "workflow" in message:
+                raise WorkflowAlreadyStartedError(wid) from exc
+            raise TemporalRpcError(
+                f"Failed to start workflow id={wid!r}: {exc}",
+                upstream_code=type(exc).__name__,
+            ) from exc
+
+    async def get_result(self, workflow_id: str) -> Any:
+        try:
+            handle = self._client.get_workflow_handle(workflow_id)
+            return await handle.result()
+        except Exception as exc:
+            if "not found" in str(exc).lower():
+                raise WorkflowNotFoundError(workflow_id) from exc
+            raise TemporalRpcError(
+                f"Failed to fetch workflow result id={workflow_id!r}: {exc}",
+                upstream_code=type(exc).__name__,
+            ) from exc
 
     async def signal_workflow(self, workflow_id: str, signal_name: str, payload: Any = None) -> None:
-        handle = self._client.get_workflow_handle(workflow_id)
-        await handle.signal(signal_name, payload)
+        try:
+            handle = self._client.get_workflow_handle(workflow_id)
+            await handle.signal(signal_name, payload)
+        except Exception as exc:
+            if "not found" in str(exc).lower():
+                raise WorkflowNotFoundError(workflow_id) from exc
+            raise TemporalRpcError(
+                f"Failed to signal workflow id={workflow_id!r}: {exc}",
+                upstream_code=type(exc).__name__,
+            ) from exc
 
     async def query_workflow(self, workflow_id: str, query_name: str) -> Any:
-        handle = self._client.get_workflow_handle(workflow_id)
-        return await handle.query(query_name)
+        try:
+            handle = self._client.get_workflow_handle(workflow_id)
+            return await handle.query(query_name)
+        except Exception as exc:
+            if "not found" in str(exc).lower():
+                raise WorkflowNotFoundError(workflow_id) from exc
+            raise TemporalRpcError(
+                f"Failed to query workflow id={workflow_id!r}: {exc}",
+                upstream_code=type(exc).__name__,
+            ) from exc
 
     async def describe_workflow(self, workflow_id: str) -> WorkflowExecutionDescription:
-        handle = self._client.get_workflow_handle(workflow_id)
-        return await handle.describe()
+        try:
+            handle = self._client.get_workflow_handle(workflow_id)
+            return await handle.describe()
+        except Exception as exc:
+            if "not found" in str(exc).lower():
+                raise WorkflowNotFoundError(workflow_id) from exc
+            raise TemporalRpcError(
+                f"Failed to describe workflow id={workflow_id!r}: {exc}",
+                upstream_code=type(exc).__name__,
+            ) from exc

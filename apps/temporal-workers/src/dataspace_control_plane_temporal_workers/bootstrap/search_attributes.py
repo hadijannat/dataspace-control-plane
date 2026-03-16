@@ -18,7 +18,7 @@ from __future__ import annotations
 import structlog
 from temporalio.client import Client
 from temporalio.service import RPCError
-from src.bootstrap.procedure_catalog import import_procedures_package
+from dataspace_control_plane_procedures._shared.search_attributes import ALL_SA_KEYS
 
 logger = structlog.get_logger(__name__)
 
@@ -43,35 +43,8 @@ def _derive_type(key: object) -> str:
 
 
 def _build_sa_type_map() -> dict[str, str]:
-    """Build {attr_name: type_string} from procedures._shared.search_attributes.ALL_SA_KEYS.
-
-    Falls back to a hardcoded, correctly-typed map when the procedures package
-    is not yet installed in this environment.
-    """
-    try:
-        import_procedures_package()
-        from dataspace_control_plane_procedures._shared.search_attributes import (
-            ALL_SA_KEYS,
-        )
-        return {key.name: _derive_type(key) for key in ALL_SA_KEYS}
-    except ImportError:
-        logger.warning(
-            "search_attributes.procedures_not_installed",
-            message=(
-                "procedures package not found — using hardcoded SA map. "
-                "Install dataspace-control-plane-procedures to derive types automatically."
-            ),
-        )
-        return {
-            "tenant_id": "Keyword",
-            "legal_entity_id": "Keyword",
-            "procedure_type": "Keyword",
-            "external_reference": "Keyword",
-            "agreement_id": "Keyword",
-            "asset_id": "Keyword",
-            "status": "Keyword",
-            "pack_id": "Keyword",
-        }
+    """Build {attr_name: type_string} from the canonical procedures package."""
+    return {key.name: _derive_type(key) for key in ALL_SA_KEYS}
 
 
 # Built once at module load; worker startup calls ensure_search_attributes() to register.

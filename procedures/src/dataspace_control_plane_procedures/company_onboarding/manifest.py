@@ -16,7 +16,7 @@ MANIFEST = ProcedureManifest(
     supported_packs=SUPPORTED_PACKS,
     version_markers=VERSION_MARKERS,
     lifecycle="entity",
-    conflict_policy="use_existing",
+    conflict_policy="reject",
     supports_manual_review=True,
     supports_continue_as_new=True,
 )

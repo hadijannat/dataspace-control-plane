@@ -2,7 +2,7 @@
 title: "6. Runtime View"
 summary: "Dynamic behavior of the dataspace control plane: company onboarding, contract negotiation, and DPP export runtime scenarios."
 owner: docs-lead
-last_reviewed: "2026-03-14"
+last_reviewed: "2026-03-16"
 status: approved
 ---
 
@@ -10,27 +10,35 @@ The runtime view documents the most important dynamic behaviors of the platform 
 
 ## Scenario 1: Company Onboarding
 
-Company onboarding provisions a new tenant: creates a Keycloak realm, issues a DID document signed by Vault Transit, creates the Postgres tenant record with RLS, and returns the operator's credentials.
+Company onboarding starts through the generic procedure API, uses a manifest
+derived business-key workflow ID, persists durable HTTP idempotency state, and
+returns a workflow handle immediately. The workflow then provisions a tenant,
+bootstraps wallet and connector state, conditionally binds hierarchy when
+`parent_bpnl` is provided, and reports live phase and progress through a
+workflow query.
 
 ```mermaid
 sequenceDiagram
     actor Operator
-    participant WC as web-console
     participant CA as control-api
+    participant PG as PostgreSQL
     participant TS as Temporal Server
     participant TW as temporal-workers
     participant KC as Keycloak
     participant VT as Vault Transit
-    participant PG as PostgreSQL
+    participant SSE as SSE client
 
-    Operator->>WC: Submit company registration form
-    WC->>CA: POST /api/v1/companies {legalEntityId, displayName}
-    CA->>CA: Validate request body against Company schema
-    CA->>TS: StartWorkflow(OnboardingWorkflow, company_id, tenant_id)
-    CA-->>WC: 202 Accepted {workflowId, runId, statusUrl}
-    WC-->>Operator: "Provisioning in progress..." + status poll
+    Operator->>CA: POST /api/v1/operator/procedures/start
+    Note over Operator,CA: procedure_type=company-onboarding,<br/>tenant_id, legal_entity_id,<br/>payload includes contact_email,<br/>connector_url, parent_bpnl?
+    CA->>CA: Validate payload against ProcedureDefinition
+    CA->>PG: UPSERT http_idempotency_keys(...)
+    CA->>TS: StartWorkflow(CompanyOnboardingWorkflow, workflow_id="company-onboarding:{tenant_id}:{legal_entity_id}")
+    CA-->>Operator: 202 Accepted {workflow_id, status:"running", poll_url, stream_url}
+    Operator->>CA: POST /api/v1/streams/tickets {workflow_id}
+    CA-->>Operator: 200 {ticket, expires_in_seconds}
+    Operator->>SSE: Open EventSource with workflow-scoped ticket
 
-    TS->>TW: Schedule OnboardingWorkflow
+    TS->>TW: Schedule CompanyOnboardingWorkflow
 
     TW->>KC: CreateRealm(tenant_id)
     KC-->>TW: realm created
@@ -39,29 +47,32 @@ sequenceDiagram
     KC-->>TW: client_id, client_secret (ephemeral, written to Vault)
 
     TW->>VT: CreateKey(tenant_id-signing, exportable=false)
-    VT-->>TW: key_id (no private material returned)
+    VT-->>TW: wallet_ref, wallet_did
 
-    TW->>VT: Sign(DID document JSON, key_id)
-    VT-->>TW: signature bytes (key never leaves Vault)
+    alt parent_bpnl present
+        TW->>PG: Bind hierarchy(parent_bpnl, bpnl)
+        PG-->>TW: hierarchy bound
+    else parent_bpnl absent
+        TW->>TW: Mark hierarchy_skipped
+    end
 
-    TW->>PG: INSERT tenant(tenant_id, did, realm, status='provisioned') [RLS enforced]
-    PG-->>TW: success
+    TW->>PG: UPSERT procedures(status, phase, progress_percent, links)
+    PG-->>TW: projection updated
+    TW-->>SSE: status event {status:"running", phase:"technical_integration_completed", progress_percent:60}
 
-    TW->>TS: CompleteWorkflow(company_id, did, realm, status)
+    TW->>TS: CompleteWorkflow(workflow_id, wallet_did, registration_ref, compliance_ref)
 
-    Operator->>WC: Poll GET /api/v1/companies/{companyId}
-    WC->>CA: GET /api/v1/companies/{companyId}
-    CA->>PG: SELECT company WHERE company_id=? [RLS applied]
-    PG-->>CA: company record
-    CA-->>WC: 200 {companyId, status: "provisioned", did}
-    WC-->>Operator: Onboarding complete — DID and realm displayed
+    Operator->>CA: GET /api/v1/operator/procedures/{workflow_id}
+    CA-->>Operator: 200 {status:"completed", result:{wallet_did,...}}
+    TW-->>SSE: status event {status:"completed", progress_percent:100}
 ```
 
 **Key invariants:**
 
 - `client_secret` is written to Vault immediately after Keycloak creates it; it is never logged or stored in Postgres.
-- The DID document is signed before the tenant record is written; if signing fails, the tenant record is never created.
-- The workflow is idempotent: if restarted after Postgres write, the existing record is returned.
+- Wallet bootstrap persists both `wallet_ref` and the externally visible `wallet_did`; the workflow result returns the DID, not the internal reference.
+- Hierarchy binding is authoritative on the activity result: when `parent_bpnl` is absent, onboarding skips the hierarchy-bound phase instead of claiming success.
+- The API rejects duplicate active onboarding runs for the same `{tenant_id, legal_entity_id}` business key with `409`.
 
 ## Scenario 2: Contract Negotiation
 

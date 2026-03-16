@@ -1,8 +1,6 @@
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_DEFAULT_STREAM_TICKET_SECRET = "dev-stream-ticket-secret"
-
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="CONTROL_API_", env_file=".env", extra="ignore")
@@ -48,8 +46,8 @@ class Settings(BaseSettings):
 
     # Streams
     stream_poll_interval_seconds: float = 2.0
-    stream_ticket_secret: str = _DEFAULT_STREAM_TICKET_SECRET
-    stream_ticket_ttl_seconds: int = 300
+    stream_ticket_secret: str | None = None
+    stream_ticket_ttl_seconds: int = 120
 
     # Webhooks
     webhook_shared_secret: str | None = None
@@ -60,19 +58,17 @@ class Settings(BaseSettings):
 
     @field_validator("stream_ticket_secret", mode="after")
     @classmethod
-    def validate_stream_ticket_secret(cls, v: str, info) -> str:
-        # In debug/dev mode all checks are skipped — default short secret is allowed.
+    def validate_stream_ticket_secret(cls, v: str | None, info) -> str | None:
         debug = (info.data or {}).get("debug", False)
         if debug:
             return v
+        if not v:
+            raise ValueError(
+                "stream_ticket_secret must be configured when stream tickets are enabled"
+            )
         if len(v) < 32:
             raise ValueError(
                 "stream_ticket_secret must be at least 32 characters long in production"
-            )
-        if v == _DEFAULT_STREAM_TICKET_SECRET:
-            raise ValueError(
-                "stream_ticket_secret must not use the default development value in production; "
-                "set CONTROL_API_STREAM_TICKET_SECRET to a unique secret of ≥32 characters"
             )
         return v
 

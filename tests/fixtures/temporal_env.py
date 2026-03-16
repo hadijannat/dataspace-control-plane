@@ -1,36 +1,25 @@
-"""
-Temporal testing environment fixtures.
-Uses temporalio.testing.WorkflowEnvironment for time-skipping unit-level workflow tests.
-Requires the temporalio package.
-"""
+"""Temporal testing environment fixtures."""
 from __future__ import annotations
+
+import asyncio
 
 import pytest
 
 
-# ---------------------------------------------------------------------------
-# Workflow environment
-# ---------------------------------------------------------------------------
-
-
 @pytest.fixture(scope="session")
-async def temporal_env():
-    """
-    Session-scoped time-skipping Temporal WorkflowEnvironment.
-
-    Requires temporalio. Yields env, shuts down on teardown.
-    """
+def temporal_env():
+    """Session-scoped time-skipping Temporal WorkflowEnvironment."""
     pytest.importorskip("temporalio", reason="temporalio required for temporal_env")
     from temporalio.testing import WorkflowEnvironment
 
-    env = await WorkflowEnvironment.start_time_skipping()
-    yield env
-    await env.shutdown()
-
-
-# ---------------------------------------------------------------------------
-# Temporal client
-# ---------------------------------------------------------------------------
+    loop = asyncio.new_event_loop()
+    try:
+        env = loop.run_until_complete(WorkflowEnvironment.start_time_skipping())
+        setattr(env, "_fixture_loop", loop)
+        yield env
+        loop.run_until_complete(env.shutdown())
+    finally:
+        loop.close()
 
 
 @pytest.fixture(scope="session")
@@ -39,19 +28,9 @@ def temporal_client(temporal_env):
     return temporal_env.client
 
 
-# ---------------------------------------------------------------------------
-# Temporal worker
-# ---------------------------------------------------------------------------
-
-
 @pytest.fixture(scope="function")
-async def temporal_worker(temporal_client, request: pytest.FixtureRequest):
-    """
-    Function-scoped Temporal Worker.
-
-    task_queue is read from request.param, defaulting to 'test-queue'.
-    Yields the worker. Cancels on teardown.
-    """
+def temporal_worker(temporal_client, request: pytest.FixtureRequest):
+    """Function-scoped Temporal worker started on the shared test loop."""
     pytest.importorskip("temporalio", reason="temporalio required for temporal_worker")
     from temporalio.worker import Worker
 
@@ -66,5 +45,13 @@ async def temporal_worker(temporal_client, request: pytest.FixtureRequest):
         workflows=config.get("workflows", []),
         activities=config.get("activities", []),
     )
-    async with worker:
+    fixture_loop = getattr(request.getfixturevalue("temporal_env"), "_fixture_loop", None)
+    active_loop = fixture_loop
+    if active_loop is None:
+        raise RuntimeError("Temporal test loop is not available")
+
+    active_loop.run_until_complete(worker.__aenter__())
+    try:
         yield worker
+    finally:
+        active_loop.run_until_complete(worker.__aexit__(None, None, None))

@@ -2,7 +2,7 @@
 title: "Temporal Workers Stalled"
 summary: "Runbook for diagnosing and recovering from Temporal worker stalls — task queue backlog, worker crash loops, Temporal Server connectivity issues, or Vault dependencies blocking activities."
 owner: infra-lead
-last_reviewed: "2026-03-14"
+last_reviewed: "2026-03-16"
 severity: "P1"
 affected_services:
   - temporal-workers
@@ -94,7 +94,8 @@ Common patterns:
 - `vault: connection refused` or `vault: 403 Forbidden` → Vault connectivity issue (see Scenario B)
 - `psycopg2.OperationalError: could not connect to server` → Postgres unavailable (see [Postgres Unavailable](postgres-unavailable.md))
 - `NonDeterminismError: ...` → workflow code has a determinism bug (see Scenario C)
-- `grpc._channel._InactiveRpcError: StatusCode.UNAVAILABLE` → Temporal Server unreachable (see Scenario D)
+- `Procedure discovery returned zero definitions` or `zero procedure definitions discovered` → packaging or registry startup failure (see Scenario D)
+- `grpc._channel._InactiveRpcError: StatusCode.UNAVAILABLE` → Temporal Server unreachable (see Scenario E)
 
 ### Step 3: Check Temporal Server connectivity
 
@@ -181,7 +182,32 @@ temporal workflow terminate \
 kubectl rollout undo deployment/temporal-workers -n dataspace-platform
 ```
 
-### Scenario D: Temporal Server unreachable
+### Scenario D: Procedure registry or packaging startup failure
+
+If the worker process exits during bootstrap with a zero-procedure discovery
+error, the runtime package or explicit `ProcedureDefinition` exports are
+missing.
+
+Quick checks:
+
+```bash
+# Check the crash reason
+kubectl logs deployment/temporal-workers -n dataspace-platform --previous | grep -E "procedure|discovery|definition"
+
+# Verify the package is installed, not imported via repo-root hacks
+kubectl exec -it deployment/temporal-workers -n dataspace-platform -- \
+  python3 -c "import dataspace_control_plane_temporal_workers, dataspace_control_plane_procedures; print('ok')"
+```
+
+If imports fail:
+
+- confirm the image contains editable or wheel installs for
+  `apps/temporal-workers` and `procedures/`
+- confirm each procedure package exports a `definition` object
+- roll back the worker deployment if the failure started immediately after a
+  packaging or registry change
+
+### Scenario E: Temporal Server unreachable
 
 ```bash
 # Check Temporal Server pods

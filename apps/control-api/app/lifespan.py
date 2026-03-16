@@ -8,13 +8,19 @@ HTTP 503 until those resources are healthy.
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-import asyncpg
 import structlog
+from dataspace_control_plane_adapters.infrastructure.postgres.api import (
+    AsyncPgPool,
+    PostgresAuditSink,
+    PostgresIdempotencyRepository,
+    PostgresPoolSettings,
+    PostgresProcedureRuntimeRepository,
+    PostgresSchemaChecker,
+)
 from fastapi import FastAPI
 from temporalio.client import Client as TemporalClient
 
 from app.settings import settings
-from app.services.idempotency import IdempotencyStore
 from app.services.procedure_catalog import ProcedureCatalog
 
 logger = structlog.get_logger(__name__)
@@ -30,7 +36,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.temporal_client = None
     app.state.database_pool = None
     app.state.procedure_catalog = ProcedureCatalog.discover()
-    app.state.idempotency_store = IdempotencyStore(ttl_seconds=86400)
+    app.state.idempotency_repository = None
+    app.state.procedure_runtime_repository = None
+    app.state.audit_sink = None
     app.state.resource_status = {
         "temporal": False,
         "database": False,
@@ -38,12 +46,33 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     }
 
     try:
-        app.state.database_pool = await asyncpg.create_pool(
-            dsn=_normalize_database_url(settings.database_url),
-            min_size=1,
-            max_size=5,
-            command_timeout=30,
+        pool = AsyncPgPool(
+            PostgresPoolSettings(
+                dsn=_normalize_database_url(settings.database_url),
+                min_size=1,
+                max_size=5,
+                statement_timeout_ms=30_000,
+            )
         )
+        await pool.open()
+        readiness = await PostgresSchemaChecker(pool).verify_required_state(
+            required_tables=("procedures", "http_idempotency_keys", "audit_records"),
+            required_version=3,
+        )
+        if not readiness.is_ready:
+            if readiness.missing_tables:
+                raise RuntimeError(
+                    "database schema missing required tables: "
+                    + ", ".join(readiness.missing_tables)
+                )
+            raise RuntimeError(
+                "database schema version is behind the required migration level: "
+                f"current={readiness.current_version} required={readiness.required_version}"
+            )
+        app.state.database_pool = pool
+        app.state.idempotency_repository = PostgresIdempotencyRepository(pool)
+        app.state.procedure_runtime_repository = PostgresProcedureRuntimeRepository(pool)
+        app.state.audit_sink = PostgresAuditSink(pool)
         app.state.resource_status["database"] = True
         logger.info("startup.database_connected")
     except Exception as exc:

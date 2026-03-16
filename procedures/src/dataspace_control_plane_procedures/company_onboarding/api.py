@@ -1,4 +1,6 @@
 """Public exports for company_onboarding procedure."""
+from dataspace_control_plane_procedures.registry import build_definition
+
 from .workflow import CompanyOnboardingWorkflow
 from .manifest import MANIFEST, WORKFLOW_TYPE, TASK_QUEUE
 from .input import OnboardingStartInput, OnboardingResult, OnboardingStatusQuery, OnboardingCarryState
@@ -13,6 +15,8 @@ from .activities import (
     run_compliance_baseline,
     emit_onboarding_evidence,
     compensate_registration,
+    compensate_wallet_bootstrap,
+    compensate_connector_bootstrap,
 )
 
 ALL_WORKFLOWS = [CompanyOnboardingWorkflow]
@@ -26,6 +30,8 @@ ALL_ACTIVITIES = [
     run_compliance_baseline,
     emit_onboarding_evidence,
     compensate_registration,
+    compensate_wallet_bootstrap,
+    compensate_connector_bootstrap,
 ]
 
 WorkflowClass = CompanyOnboardingWorkflow
@@ -33,15 +39,21 @@ StartInput = OnboardingStartInput
 Result = OnboardingResult
 StatusQuery = OnboardingStatusQuery
 manifest = MANIFEST
+definition = build_definition(
+    api_module_name=__name__,
+    manifest=MANIFEST,
+    start_input_type=OnboardingStartInput,
+    status_query_type=OnboardingStatusQuery,
+    workflow_types=ALL_WORKFLOWS,
+    activity_functions=ALL_ACTIVITIES,
+)
 
 
 def register() -> None:
-    """Called by registry.populate_from_procedures() at worker startup."""
-    from dataspace_control_plane_procedures.registry import _register
-    for wf in ALL_WORKFLOWS:
-        _register(TASK_QUEUE, workflow=wf)
-    for act in ALL_ACTIVITIES:
-        _register(TASK_QUEUE, activity=act)
+    """Backward-compatible hook for legacy callers."""
+    from dataspace_control_plane_procedures.registry import _register_definition
+
+    _register_definition(definition)
 
 
 __all__ = [
@@ -61,6 +73,7 @@ __all__ = [
     "Result",
     "StatusQuery",
     "manifest",
+    "definition",
     "ALL_WORKFLOWS",
     "ALL_ACTIVITIES",
     "register",

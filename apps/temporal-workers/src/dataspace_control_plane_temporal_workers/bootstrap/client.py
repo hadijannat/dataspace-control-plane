@@ -2,7 +2,7 @@
 import structlog
 from temporalio.client import Client, TLSConfig
 
-from src.settings import settings
+from dataspace_control_plane_temporal_workers.settings import settings
 
 logger = structlog.get_logger(__name__)
 

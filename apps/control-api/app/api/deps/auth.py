@@ -24,7 +24,8 @@ async def get_stream_principal(
 
     ticket = request.query_params.get("ticket")
     if ticket:
-        return principal_from_stream_ticket(ticket)
+        workflow_id = str(request.path_params.get("workflow_id", ""))
+        return principal_from_stream_ticket(ticket, workflow_id=workflow_id)
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

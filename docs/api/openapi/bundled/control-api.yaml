@@ -6,14 +6,11 @@ info:
   license:
     name: Proprietary - Internal Use Only
     identifier: LicenseRef-Proprietary-Internal-Use-Only
-servers:
-  - url: /
-    description: Environment-relative deployment base URL.
 paths:
   /health/live:
     get:
       tags:
-        - health
+      - health
       summary: Liveness
       operationId: liveness_health_live_get
       responses:
@@ -26,7 +23,7 @@ paths:
   /health/ready:
     get:
       tags:
-        - health
+      - health
       summary: Readiness
       operationId: readiness_health_ready_get
       responses:
@@ -39,34 +36,38 @@ paths:
   /api/v1/operator/tenants/:
     get:
       tags:
-        - operator
+      - operator
       summary: List Tenants
-      description: |-
-        Return a paginated list of tenants visible to the authenticated principal.
+      description: 'Return a paginated list of tenants visible to the authenticated
+        principal.
+
 
         Admin principals (``dataspace-admin`` realm role) see all tenants.
+
         Non-admin principals see only the tenants in their ``tenant_ids`` claim,
+
         which is enforced by the read-model query once full RBAC is wired.
 
-        Returns a consistent paginated response body for the SPA and generated SDK.
+
+        Returns a consistent paginated response body for the SPA and generated SDK.'
       operationId: operator_list_tenants
       security:
-        - HTTPBearer: []
+      - HTTPBearer: []
       parameters:
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 50
-            title: Limit
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-            title: Offset
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
       responses:
         '200':
           description: Successful Response
@@ -83,24 +84,26 @@ paths:
   /api/v1/operator/tenants/{tenant_id}:
     get:
       tags:
-        - operator
+      - operator
       summary: Get Tenant
-      description: |-
-        Return a single tenant record by its ``tenant_id``.
+      description: 'Return a single tenant record by its ``tenant_id``.
+
 
         Returns HTTP 403 if the principal does not have access to the requested
+
         tenant, HTTP 404 if the tenant does not exist, and HTTP 503 if the
-        read-model pool is not yet available.
+
+        read-model pool is not yet available.'
       operationId: operator_get_tenant
       security:
-        - HTTPBearer: []
+      - HTTPBearer: []
       parameters:
-        - name: tenant_id
-          in: path
-          required: true
-          schema:
-            type: string
-            title: Tenant Id
+      - name: tenant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Id
       responses:
         '200':
           description: Successful Response
@@ -117,15 +120,19 @@ paths:
   /api/v1/operator/procedures/start:
     post:
       tags:
-        - operator
+      - operator
       summary: Start Procedure
-      description: |-
-        Start a durable procedure. Returns immediately with a workflow handle.
+      description: 'Start a durable procedure. Returns immediately with a workflow
+        handle.
+
         The actual work executes in temporal-workers.
 
+
         Idempotency: if an ``idempotency_key`` is provided and a result was
+
         already stored for it within the TTL window, the cached handle is
-        returned without starting a second workflow.
+
+        returned without starting a second workflow.'
       operationId: operator_start_procedure
       requestBody:
         content:
@@ -147,38 +154,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
-        - HTTPBearer: []
+      - HTTPBearer: []
   /api/v1/operator/procedures/:
     get:
       tags:
-        - operator
+      - operator
       summary: List Procedures
       operationId: operator_list_procedures
       security:
-        - HTTPBearer: []
+      - HTTPBearer: []
       parameters:
-        - name: status
-          in: query
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            title: Status
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 50
-            title: Limit
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-            title: Offset
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
       responses:
         '200':
           description: Successful Response
@@ -195,24 +202,26 @@ paths:
   /api/v1/operator/procedures/{workflow_id}:
     get:
       tags:
-        - operator
+      - operator
       summary: Get Procedure Status
-      description: |-
-        Poll procedure status.
+      description: 'Poll procedure status.
+
 
         Queries Temporal for a live status snapshot via the ``get_status``
+
         workflow query. If Temporal is unreachable or returns nothing, falls back
-        to the read-model projection.
+
+        to the read-model projection.'
       operationId: operator_get_procedure_status
       security:
-        - HTTPBearer: []
+      - HTTPBearer: []
       parameters:
-        - name: workflow_id
-          in: path
-          required: true
-          schema:
-            type: string
-            title: Workflow Id
+      - name: workflow_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Workflow Id
       responses:
         '200':
           description: Successful Response
@@ -229,20 +238,20 @@ paths:
   /api/v1/public/procedures/start:
     post:
       tags:
-        - public
+      - public
       summary: Start Public Procedure
       operationId: public_start_procedure
       security:
-        - HTTPBearer: []
+      - HTTPBearer: []
       parameters:
-        - name: Idempotency-Key
-          in: header
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            title: Idempotency-Key
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
       requestBody:
         required: true
         content:
@@ -265,18 +274,18 @@ paths:
   /api/v1/public/procedures/{workflow_id}:
     get:
       tags:
-        - public
+      - public
       summary: Get Public Procedure Status
       operationId: public_get_procedure_status
       security:
-        - HTTPBearer: []
+      - HTTPBearer: []
       parameters:
-        - name: workflow_id
-          in: path
-          required: true
-          schema:
-            type: string
-            title: Workflow Id
+      - name: workflow_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Workflow Id
       responses:
         '200':
           description: Successful Response
@@ -293,9 +302,15 @@ paths:
   /api/v1/streams/tickets:
     post:
       tags:
-        - streams
+      - streams
       summary: Issue Stream Ticket
       operationId: issue_stream_ticket
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StreamTicketRequest'
+        required: true
       responses:
         '200':
           description: Successful Response
@@ -303,69 +318,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StreamTicketResponse'
-      security:
-        - HTTPBearer: []
-  /api/v1/streams/workflows/{workflow_id}:
-    get:
-      tags:
-        - streams
-      summary: Stream Workflow Status
-      description: |-
-        Open a Server-Sent Events stream for a specific workflow execution.
-
-        Events are derived from shared workflow status snapshots. The stream closes
-        when the workflow reaches a terminal state or the client disconnects.
-      operationId: stream_workflow_status
-      security:
-        - HTTPBearer: []
-      parameters:
-        - name: workflow_id
-          in: path
-          required: true
-          schema:
-            type: string
-            title: Workflow Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/webhooks/management:
-    post:
+      security:
+      - HTTPBearer: []
+  /api/v1/streams/workflows/{workflow_id}:
+    get:
       tags:
-        - webhooks
-      summary: Receive Management Webhook
-      operationId: receive_management_webhook
+      - streams
+      summary: Stream Workflow Status
+      description: 'Open a Server-Sent Events stream for a specific workflow execution.
+
+
+        Events are derived from shared workflow status snapshots. The stream closes
+
+        when the workflow reaches a terminal state or the client disconnects.'
+      operationId: stream_workflow_status
+      security:
+      - HTTPBearer: []
       parameters:
-        - name: X-Dataspace-Event-Type
-          in: header
-          required: false
-          schema:
-            type: string
-            default: unknown
-            title: X-Dataspace-Event-Type
-        - name: X-Dataspace-Signature
-          in: header
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            title: X-Dataspace-Signature
+      - name: workflow_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Workflow Id
       responses:
-        '202':
+        '200':
           description: Successful Response
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/WebhookAcceptedResponse'
+              schema: {}
         '422':
           description: Validation Error
           content:
@@ -382,7 +369,7 @@ components:
         status:
           type: string
           title: Status
-          default: STARTED
+          default: running
         poll_url:
           type: string
           title: Poll Url
@@ -391,30 +378,22 @@ components:
           title: Stream Url
         correlation_id:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Correlation Id
       type: object
       required:
-        - workflow_id
-        - poll_url
-        - stream_url
+      - workflow_id
+      - poll_url
+      - stream_url
       title: AcceptedResponse
-      description: |-
-        Standard HTTP 202 response body for commands that start a workflow.
-
-        Attributes
-        ----------
-        workflow_id:
-            The Temporal workflow identifier for the accepted procedure.
-        status:
-            Always ``"STARTED"`` for 202 responses.
-        poll_url:
-            Relative URL to GET for the current procedure status.
-        stream_url:
-            Relative URL to subscribe to for real-time SSE status events.
-        correlation_id:
-            Echo of the ``X-Correlation-ID`` header from the request, when present.
+      description: "Standard HTTP 202 response body for commands that start a workflow.\n\
+        \nAttributes\n----------\nworkflow_id:\n    The Temporal workflow identifier\
+        \ for the accepted procedure.\nstatus:\n    Always ``\"running\"`` for 202\
+        \ responses.\npoll_url:\n    Relative URL to GET for the current procedure\
+        \ status.\nstream_url:\n    Relative URL to subscribe to for real-time SSE\
+        \ status events.\ncorrelation_id:\n    Echo of the ``X-Correlation-ID`` header\
+        \ from the request, when present."
     HTTPValidationError:
       properties:
         detail:
@@ -435,14 +414,14 @@ components:
           default: 0.1.0
         dependencies:
           anyOf:
-            - additionalProperties:
-                type: boolean
-              type: object
-            - type: 'null'
+          - additionalProperties:
+              type: boolean
+            type: object
+          - type: 'null'
           title: Dependencies
       type: object
       required:
-        - status
+      - status
       title: HealthResponse
     PaginatedResponse_TenantSummary_:
       properties:
@@ -462,10 +441,10 @@ components:
           title: Offset
       type: object
       required:
-        - items
-        - total
-        - limit
-        - offset
+      - items
+      - total
+      - limit
+      - offset
       title: PaginatedResponse[TenantSummary]
     ProcedureHandleDTO:
       properties:
@@ -489,28 +468,30 @@ components:
           title: Stream Url
         correlation_id:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Correlation Id
         started_at:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Started At
       type: object
       required:
-        - workflow_id
-        - procedure_type
-        - tenant_id
-        - status
-        - poll_url
-        - stream_url
+      - workflow_id
+      - procedure_type
+      - tenant_id
+      - status
+      - poll_url
+      - stream_url
       title: ProcedureHandleDTO
-      description: |-
-        Immediate response returned when a procedure is accepted (HTTP 202).
+      description: 'Immediate response returned when a procedure is accepted (HTTP
+        202).
+
 
         Contains all the information a caller needs to poll for completion or
-        subscribe to the SSE stream.
+
+        subscribe to the SSE stream.'
     ProcedureListDTO:
       properties:
         items:
@@ -529,24 +510,15 @@ components:
           title: Offset
       type: object
       required:
-        - items
-        - total
-        - limit
-        - offset
+      - items
+      - total
+      - limit
+      - offset
       title: ProcedureListDTO
-      description: |-
-        Paginated list of procedure status snapshots.
-
-        Attributes
-        ----------
-        items:
-            Page of procedure status records.
-        total:
-            Total number of matching records (for pagination UI).
-        limit:
-            Page size used for this request.
-        offset:
-            Offset used for this request.
+      description: "Paginated list of procedure status snapshots.\n\nAttributes\n\
+        ----------\nitems:\n    Page of procedure status records.\ntotal:\n    Total\
+        \ number of matching records (for pagination UI).\nlimit:\n    Page size used\
+        \ for this request.\noffset:\n    Offset used for this request."
     ProcedureStatusDTO:
       properties:
         workflow_id:
@@ -561,52 +533,59 @@ components:
         status:
           type: string
           title: Status
+        phase:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phase
+        progress_percent:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Progress Percent
         result:
           anyOf:
-            - {}
-            - type: 'null'
+          - {}
+          - type: 'null'
           title: Result
         failure_message:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Failure Message
         search_attributes:
           type: object
           title: Search Attributes
+        links:
+          additionalProperties:
+            type: string
+          type: object
+          title: Links
         started_at:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Started At
         updated_at:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Updated At
       type: object
       required:
-        - workflow_id
-        - procedure_type
-        - tenant_id
-        - status
+      - workflow_id
+      - procedure_type
+      - tenant_id
+      - status
       title: ProcedureStatusDTO
-      description: |-
-        Full status snapshot of a procedure, returned by the poll endpoint.
-
-        Attributes
-        ----------
-        status:
-            One of ``RUNNING``, ``COMPLETED``, ``FAILED``, ``CANCELLED``,
-            ``TIMED_OUT``.
-        result:
-            Workflow result payload when ``status == "COMPLETED"``, otherwise
-            ``None``.
-        failure_message:
-            Human-readable failure description when ``status == "FAILED"``.
-        search_attributes:
-            Temporal search attributes attached to the workflow execution, useful
-            for filtering in the Temporal UI.
+      description: "Full status snapshot of a procedure, returned by the poll endpoint.\n\
+        \nAttributes\n----------\nstatus:\n    One of ``running``, ``completed``,\
+        \ ``failed``, ``cancelled``,\n    ``timed_out``, ``pending``, ``paused``,\
+        \ or ``waiting_for_approval``.\nresult:\n    Workflow result payload when\
+        \ ``status == \"COMPLETED\"``, otherwise\n    ``None``.\nfailure_message:\n\
+        \    Human-readable failure description when ``status == \"FAILED\"``.\nsearch_attributes:\n\
+        \    Temporal search attributes attached to the workflow execution, useful\n\
+        \    for filtering in the Temporal UI."
     PublicStartProcedureRequest:
       properties:
         procedure_type:
@@ -618,21 +597,21 @@ components:
           title: Tenant Id
         legal_entity_id:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Legal Entity Id
         payload:
           type: object
           title: Payload
         idempotency_key:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Idempotency Key
       type: object
       required:
-        - procedure_type
-        - tenant_id
+      - procedure_type
+      - tenant_id
       title: PublicStartProcedureRequest
     StartProcedureRequest:
       properties:
@@ -645,22 +624,31 @@ components:
           title: Tenant Id
         legal_entity_id:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Legal Entity Id
         payload:
           type: object
           title: Payload
         idempotency_key:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Idempotency Key
       type: object
       required:
-        - procedure_type
-        - tenant_id
+      - procedure_type
+      - tenant_id
       title: StartProcedureRequest
+    StreamTicketRequest:
+      properties:
+        workflow_id:
+          type: string
+          title: Workflow Id
+      type: object
+      required:
+      - workflow_id
+      title: StreamTicketRequest
     StreamTicketResponse:
       properties:
         ticket:
@@ -671,8 +659,8 @@ components:
           title: Expires In Seconds
       type: object
       required:
-        - ticket
-        - expires_in_seconds
+      - ticket
+      - expires_in_seconds
       title: StreamTicketResponse
     TenantSummary:
       properties:
@@ -687,14 +675,14 @@ components:
           title: Status
         legal_entity_id:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Legal Entity Id
       type: object
       required:
-        - tenant_id
-        - display_name
-        - status
+      - tenant_id
+      - display_name
+      - status
       title: TenantSummary
       description: Compact tenant record returned by list and get endpoints.
     ValidationError:
@@ -702,8 +690,8 @@ components:
         loc:
           items:
             anyOf:
-              - type: string
-              - type: integer
+            - type: string
+            - type: integer
           type: array
           title: Location
         msg:
@@ -719,24 +707,14 @@ components:
           title: Context
       type: object
       required:
-        - loc
-        - msg
-        - type
+      - loc
+      - msg
+      - type
       title: ValidationError
-    WebhookAcceptedResponse:
-      properties:
-        accepted:
-          type: boolean
-          title: Accepted
-          default: true
-        correlation_id:
-          anyOf:
-            - type: string
-            - type: 'null'
-          title: Correlation Id
-      type: object
-      title: WebhookAcceptedResponse
   securitySchemes:
     HTTPBearer:
       type: http
       scheme: bearer
+servers:
+- url: /
+  description: Environment-relative deployment base URL.

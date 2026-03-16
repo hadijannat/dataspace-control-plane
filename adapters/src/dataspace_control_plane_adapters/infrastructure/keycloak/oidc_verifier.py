@@ -104,7 +104,8 @@ class OidcVerifier:
                     jwk_set,
                     algorithms=_ALGORITHMS,
                     audience=self._settings.client_id,
-                    options={"verify_aud": True, "verify_exp": True},
+                    issuer=self._settings.issuer,
+                    options={"verify_aud": True, "verify_exp": True, "verify_iss": True},
                 )
                 return claims
             except ExpiredSignatureError as exc:

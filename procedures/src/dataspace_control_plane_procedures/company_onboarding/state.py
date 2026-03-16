@@ -11,6 +11,7 @@ class OnboardingWorkflowState:
     approval_ref: str = ""
     bpnl: str = ""
     wallet_ref: str = ""
+    wallet_did: str = ""
     connector_ref: str = ""
     compliance_ref: str = ""
     manual_review: ManualReviewState = field(default_factory=ManualReviewState)

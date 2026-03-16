@@ -38,7 +38,7 @@ async def list_procedures(
     tenant_id:
         Tenant scope filter — always required to enforce tenancy boundaries.
     status:
-        Optional status filter (e.g. ``"RUNNING"``, ``"COMPLETED"``). When
+        Optional status filter (e.g. ``"running"``, ``"completed"``). When
         ``None``, all statuses are returned.
     limit:
         Maximum number of rows to return (asyncpg ``$3``).
@@ -55,7 +55,7 @@ async def list_procedures(
             rows = await conn.fetch(
                 """
                 SELECT workflow_id, procedure_type, tenant_id, status,
-                       result, failure_message, search_attributes,
+                       phase, progress_percent, result, failure_message, search_attributes, links,
                        started_at, updated_at
                 FROM   procedures
                 WHERE  1=1
@@ -74,7 +74,7 @@ async def list_procedures(
             rows = await conn.fetch(
                 """
                 SELECT workflow_id, procedure_type, tenant_id, status,
-                       result, failure_message, search_attributes,
+                       phase, progress_percent, result, failure_message, search_attributes, links,
                        started_at, updated_at
                 FROM   procedures
                 WHERE  1=1
@@ -141,7 +141,7 @@ async def get_procedure(pool: Any, workflow_id: str) -> dict | None:
         row = await conn.fetchrow(
             """
             SELECT workflow_id, procedure_type, tenant_id, status,
-                   result, failure_message, search_attributes,
+                   phase, progress_percent, result, failure_message, search_attributes, links,
                    started_at, updated_at
             FROM   procedures
             WHERE  1=1

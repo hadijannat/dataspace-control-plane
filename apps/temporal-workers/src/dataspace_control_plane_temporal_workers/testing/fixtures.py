@@ -7,11 +7,11 @@ import pytest
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
-from src.bootstrap.task_queues import (
+from dataspace_control_plane_temporal_workers.bootstrap.task_queues import (
     ONBOARDING, MACHINE_TRUST, TWINS_PUBLICATION,
     CONTRACTS_NEGOTIATION, COMPLIANCE, MAINTENANCE,
 )
-from src.bootstrap.registry import (
+from dataspace_control_plane_temporal_workers.bootstrap.registry import (
     ONBOARDING_WORKFLOWS, ONBOARDING_ACTIVITIES,
     MACHINE_TRUST_WORKFLOWS, MACHINE_TRUST_ACTIVITIES,
     TWINS_WORKFLOWS, TWINS_ACTIVITIES,

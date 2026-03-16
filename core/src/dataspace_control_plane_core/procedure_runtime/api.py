@@ -27,6 +27,7 @@ from .messages import (
 from .ports import ProcedureRegistryPort, WorkflowGatewayPort
 from .procedure_ids import ProcedureHandle as StableProcedureHandle
 from .progress import ProcedureProgress
+from .runtime_state import ProcedureRuntimeState
 from .retry_policy import RetryPolicy
 from .search_attributes import (
     AGREEMENT_ID,
@@ -66,6 +67,7 @@ __all__ = [
     "ProcedureVersionMarker",
     "ManualReviewState",
     "ProcedureProgress",
+    "ProcedureRuntimeState",
     "CancelProcedure",
     "ApproveProcedure",
     "RejectProcedure",

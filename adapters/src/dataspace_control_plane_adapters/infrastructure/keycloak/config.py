@@ -84,6 +84,11 @@ class KeycloakSettings(AdapterSettings):
         )
 
     @property
+    def issuer(self) -> str:
+        """Expected OIDC issuer URL for JWT verification."""
+        return f"{str(self.base_url).rstrip('/')}/realms/{self.realm}"
+
+    @property
     def admin_base_url(self) -> str:
         """Admin REST API base URL for this realm."""
         return f"{str(self.base_url).rstrip('/')}/admin/realms/{self.realm}"

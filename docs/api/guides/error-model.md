@@ -17,8 +17,13 @@ Examples:
 
 - `401` from Bearer or stream-ticket validation
 - `403` from tenant access checks
+- `409` from idempotency-key fingerprint conflicts or duplicate business-key
+  workflow starts
 - `404` for missing procedures or tenants
-- `422` for route-level validation failures
+- `422` for route-level validation failures, including unexpected procedure
+  payload keys
+- `503` when runtime dependencies are unavailable or stream tickets are not
+  configured
 
 Typical shape:
 

@@ -15,6 +15,7 @@ class OnboardingStartInput:
     jurisdiction: str
     contact_email: str
     connector_url: str
+    parent_bpnl: str | None = None
     pack_id: str = "catena-x"
     idempotency_key: str = ""
 
@@ -32,11 +33,13 @@ class OnboardingResult:
 
 @dataclass(frozen=True)
 class OnboardingStatusQuery:
+    status: str
     phase: str
     blocking_reason: str
     external_refs: dict[str, str]
     next_required_action: str
     is_complete: bool
+    progress_percent: int = 0
 
 
 @dataclass
@@ -47,6 +50,7 @@ class OnboardingCarryState:
     approval_ref: str
     bpnl: str
     wallet_ref: str
+    wallet_did: str
     connector_ref: str
     compliance_ref: str
     dedupe_ids: set[str]

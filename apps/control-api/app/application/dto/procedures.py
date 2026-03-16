@@ -35,8 +35,8 @@ class ProcedureStatusDTO(BaseModel):
     Attributes
     ----------
     status:
-        One of ``RUNNING``, ``COMPLETED``, ``FAILED``, ``CANCELLED``,
-        ``TIMED_OUT``.
+        One of ``running``, ``completed``, ``failed``, ``cancelled``,
+        ``timed_out``, ``pending``, ``paused``, or ``waiting_for_approval``.
     result:
         Workflow result payload when ``status == "COMPLETED"``, otherwise
         ``None``.
@@ -51,9 +51,12 @@ class ProcedureStatusDTO(BaseModel):
     procedure_type: str
     tenant_id: str
     status: str
+    phase: str | None = None
+    progress_percent: int | None = None
     result: Any | None = None
     failure_message: str | None = None
     search_attributes: dict[str, Any] = Field(default_factory=dict)
+    links: dict[str, str] = Field(default_factory=dict)
     started_at: str | None = None
     updated_at: str | None = None
 

@@ -1,63 +1,73 @@
-"""
-OIDC token validation via cached JWKS.
-Validates bearer tokens issued by Keycloak; extracts principal.
-"""
-import time
-from typing import Any
+"""OIDC token validation backed by the shared Keycloak adapter."""
+from __future__ import annotations
 
-import httpx
+from functools import lru_cache
+from urllib.parse import urlparse
+
 import structlog
-from jose import JWTError, jwt
+from dataspace_control_plane_adapters.infrastructure.keycloak.api import (
+    JwksCache,
+    KeycloakJwksRefreshError,
+    KeycloakSettings,
+    KeycloakTokenExpiredError,
+    KeycloakTokenInvalidError,
+    OidcVerifier,
+)
+from pydantic import SecretStr
 
-from app.settings import settings
 from app.auth.principals import Principal
+from app.settings import settings
 
 logger = structlog.get_logger(__name__)
 
-_jwks_cache: dict[str, Any] = {}
-_jwks_fetched_at: float = 0.0
+
+def _issuer_parts() -> tuple[str, str]:
+    issuer = str(settings.oidc_issuer).rstrip("/")
+    parsed = urlparse(issuer)
+    marker = "/realms/"
+    if marker not in parsed.path:
+        raise RuntimeError(f"Unsupported OIDC issuer format: {issuer}")
+    base_path, realm = parsed.path.rsplit(marker, 1)
+    base_url = f"{parsed.scheme}://{parsed.netloc}{base_path}".rstrip("/")
+    return base_url, realm
 
 
-async def _get_jwks() -> dict[str, Any]:
-    global _jwks_cache, _jwks_fetched_at
-    now = time.monotonic()
-    if now - _jwks_fetched_at < settings.oidc_jwks_cache_ttl and _jwks_cache:
-        return _jwks_cache
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{settings.oidc_issuer}/.well-known/openid-configuration")
-        resp.raise_for_status()
-        jwks_uri = resp.json()["jwks_uri"]
-        jwks_resp = await client.get(jwks_uri)
-        jwks_resp.raise_for_status()
-        _jwks_cache = jwks_resp.json()
-        _jwks_fetched_at = now
-    return _jwks_cache
+@lru_cache(maxsize=1)
+def _verifier() -> OidcVerifier:
+    base_url, realm = _issuer_parts()
+    keycloak_settings = KeycloakSettings.model_construct(
+        base_url=base_url,
+        realm=realm,
+        client_id=settings.oidc_audience,
+        client_secret=SecretStr(""),
+        jwks_cache_ttl_s=settings.oidc_jwks_cache_ttl,
+        admin_client_id="admin-cli",
+    )
+    return OidcVerifier(keycloak_settings, JwksCache(keycloak_settings))
 
 
 async def validate_token(token: str) -> Principal:
-    """Validate a bearer JWT and return a Principal. Raises HTTPException on failure."""
+    """Validate a bearer JWT and return a Principal."""
     from fastapi import HTTPException, status
 
     try:
-        jwks = await _get_jwks()
-        claims = jwt.decode(
-            token,
-            jwks,
-            algorithms=["RS256"],
-            audience=settings.oidc_audience,
-            issuer=str(settings.oidc_issuer),
-        )
-    except JWTError as exc:
+        claims = await _verifier().verify(token)
+    except KeycloakTokenExpiredError as exc:
+        logger.warning("auth.token_expired", error=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    except (KeycloakTokenInvalidError, KeycloakJwksRefreshError) as exc:
         logger.warning("auth.token_invalid", error=str(exc))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
+            detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from exc
 
-    realm_roles = frozenset(
-        claims.get("realm_access", {}).get("roles", [])
-    )
+    realm_roles = frozenset(claims.get("realm_access", {}).get("roles", []))
     client_roles = frozenset(
         claims.get("resource_access", {}).get(settings.oidc_audience, {}).get("roles", [])
     )

@@ -18,7 +18,7 @@ class ListProceduresQuery:
     tenant_id:
         Tenant scope — all returned procedures belong to this tenant.
     status_filter:
-        Optional status to filter on (e.g. ``"RUNNING"``, ``"COMPLETED"``).
+        Optional status to filter on (e.g. ``"running"``, ``"completed"``).
         When ``None``, procedures of all statuses are returned.
     limit:
         Maximum number of results to return (default 50).

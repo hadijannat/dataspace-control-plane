@@ -13,7 +13,9 @@ clients can subscribe without custom headers.
 ## Bearer JWT Validation
 
 Bearer authentication is enforced by `get_current_principal()` and
-`validate_token()` in the control-api auth layer.
+`validate_token()` in the control-api auth layer. Token verification uses the
+shared adapter Keycloak verifier and JWKS cache rather than an app-local JWKS
+implementation.
 
 The API validates:
 
@@ -57,10 +59,14 @@ Stream tickets are HMAC-signed, short-lived envelopes containing:
 - realm roles
 - client roles
 - tenant IDs
+- tenant ID for the requested workflow
+- requested workflow ID
+- `aud = procedure-stream`
 - expiration timestamp
 
 Use tickets for browser flows that cannot easily attach custom headers to SSE
-requests.
+requests. A ticket minted for one workflow cannot be replayed against another
+workflow ID.
 
 ## Human vs Machine Flows
 
@@ -69,7 +75,8 @@ The repo assumes two common patterns:
 - human operator flow: web-console obtains a Keycloak access token and calls the
   operator endpoints
 - machine flow: automation obtains a service-account token and calls the public
-  API or webhook-related endpoints
+  API; when webhooks are enabled, inbound callers must also satisfy the shared
+  webhook signature requirement
 
 The docs layer does not currently define additional per-role policy beyond what
 the application enforces in `Principal.can_access_tenant()` and the

@@ -57,6 +57,18 @@ from dataspace_control_plane_adapters.infrastructure.postgres.repositories.negot
 from dataspace_control_plane_adapters.infrastructure.postgres.read_models.operator_grants import (
     PostgresGrantRepository,
 )
+from dataspace_control_plane_adapters.infrastructure.postgres.repositories.idempotency_repository import (
+    IdempotencyAcquireResult,
+    IdempotencyRecord,
+    PostgresIdempotencyRepository,
+)
+from dataspace_control_plane_adapters.infrastructure.postgres.repositories.procedure_runtime_repository import (
+    PostgresProcedureRuntimeRepository,
+)
+from dataspace_control_plane_adapters.infrastructure.postgres.schema import (
+    PostgresSchemaChecker,
+    SchemaReadiness,
+)
 
 __all__ = [
     # Pool
@@ -91,4 +103,10 @@ __all__ = [
     "PostgresNegotiationRepository",
     "PostgresEntitlementRepository",
     "PostgresGrantRepository",
+    "IdempotencyRecord",
+    "IdempotencyAcquireResult",
+    "PostgresIdempotencyRepository",
+    "PostgresProcedureRuntimeRepository",
+    "PostgresSchemaChecker",
+    "SchemaReadiness",
 ]

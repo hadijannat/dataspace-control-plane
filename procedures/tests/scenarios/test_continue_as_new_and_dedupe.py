@@ -46,6 +46,7 @@ async def test_company_onboarding_carry_state_preserves_dedupe_ids(time_skipping
         approval_ref="approval:tenant-a:reg:tenant-a:legal-entity-a",
         bpnl=start_input.bpnl,
         wallet_ref="",
+        wallet_did="",
         connector_ref="",
         compliance_ref="",
         dedupe_ids={"approval-evt-1"},

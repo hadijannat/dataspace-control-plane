@@ -50,7 +50,8 @@ def create_app() -> FastAPI:
     app.include_router(operator_router, prefix="/api/v1/operator", tags=["operator"])
     app.include_router(public_router, prefix="/api/v1/public", tags=["public"])
     app.include_router(streams_router, prefix="/api/v1/streams", tags=["streams"])
-    app.include_router(webhooks_router, prefix="/api/v1/webhooks", tags=["webhooks"])
+    if settings.webhook_shared_secret:
+        app.include_router(webhooks_router, prefix="/api/v1/webhooks", tags=["webhooks"])
 
     return app
 

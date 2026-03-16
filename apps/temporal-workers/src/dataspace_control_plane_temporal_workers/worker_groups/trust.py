@@ -4,9 +4,12 @@ import structlog
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from src.bootstrap.task_queues import MACHINE_TRUST
-from src.bootstrap.registry import MACHINE_TRUST_WORKFLOWS, MACHINE_TRUST_ACTIVITIES
-from src.settings import settings
+from dataspace_control_plane_temporal_workers.bootstrap.task_queues import MACHINE_TRUST
+from dataspace_control_plane_temporal_workers.bootstrap.registry import (
+    MACHINE_TRUST_WORKFLOWS,
+    MACHINE_TRUST_ACTIVITIES,
+)
+from dataspace_control_plane_temporal_workers.settings import settings
 
 logger = structlog.get_logger(__name__)
 

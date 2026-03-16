@@ -63,13 +63,20 @@ def test_replay_golden_files_load_cleanly() -> None:
 
 
 @pytest.mark.integration
-def test_temporal_env_starts(temporal_env) -> None:
+@pytest.mark.asyncio
+async def test_temporal_env_starts() -> None:
     """The time-skipping Temporal WorkflowEnvironment must start and provide a client."""
     pytest.importorskip("temporalio")
-    assert temporal_env is not None, "temporal_env fixture returned None"
-    assert temporal_env.client is not None, (
-        "temporal_env.client is None — environment did not start correctly"
-    )
+    from temporalio.testing import WorkflowEnvironment
+
+    env = await WorkflowEnvironment.start_time_skipping()
+    try:
+        assert env is not None, "temporal_env fixture returned None"
+        assert env.client is not None, (
+            "temporal_env.client is None — environment did not start correctly"
+        )
+    finally:
+        await env.shutdown()
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +85,13 @@ def test_temporal_env_starts(temporal_env) -> None:
 
 
 @pytest.mark.integration
-async def test_time_skipping_advances_clock(temporal_env) -> None:
+async def test_time_skipping_advances_clock() -> None:
     """temporal_env.sleep(3600) must advance the virtual clock by 1 hour without error."""
     pytest.importorskip("temporalio")
-    await temporal_env.sleep(3600)
+    from temporalio.testing import WorkflowEnvironment
+
+    env = await WorkflowEnvironment.start_time_skipping()
+    try:
+        await env.sleep(3600)
+    finally:
+        await env.shutdown()

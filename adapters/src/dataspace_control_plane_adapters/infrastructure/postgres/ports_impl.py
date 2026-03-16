@@ -32,6 +32,15 @@ from dataspace_control_plane_adapters.infrastructure.postgres.repositories.negot
 from dataspace_control_plane_adapters.infrastructure.postgres.read_models.operator_grants import (
     PostgresGrantRepository,
 )
+from dataspace_control_plane_adapters.infrastructure.postgres.repositories.idempotency_repository import (
+    PostgresIdempotencyRepository,
+)
+from dataspace_control_plane_adapters.infrastructure.postgres.repositories.procedure_runtime_repository import (
+    PostgresProcedureRuntimeRepository,
+)
+from dataspace_control_plane_adapters.infrastructure.postgres.schema import (
+    PostgresSchemaChecker,
+)
 
 
 def make_postgres_ports(pool: AsyncPgPool) -> dict[str, Any]:
@@ -50,6 +59,9 @@ def make_postgres_ports(pool: AsyncPgPool) -> dict[str, Any]:
         ``negotiation_repo``  → ``PostgresNegotiationRepository`` (NegotiationRepository)
         ``entitlement_repo``  → ``PostgresEntitlementRepository`` (EntitlementRepository)
         ``grant_repo``        → ``PostgresGrantRepository``  (GrantRepository)
+        ``idempotency_repo``  → ``PostgresIdempotencyRepository``
+        ``procedure_runtime_repo`` → ``PostgresProcedureRuntimeRepository``
+        ``schema_checker``    → ``PostgresSchemaChecker``
     """
     return {
         "audit_sink": PostgresAuditSink(pool),
@@ -57,4 +69,7 @@ def make_postgres_ports(pool: AsyncPgPool) -> dict[str, Any]:
         "negotiation_repo": PostgresNegotiationRepository(pool),
         "entitlement_repo": PostgresEntitlementRepository(pool),
         "grant_repo": PostgresGrantRepository(pool),
+        "idempotency_repo": PostgresIdempotencyRepository(pool),
+        "procedure_runtime_repo": PostgresProcedureRuntimeRepository(pool),
+        "schema_checker": PostgresSchemaChecker(pool),
     }

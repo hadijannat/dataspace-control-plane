@@ -2,7 +2,7 @@
 title: "Schema Migration"
 summary: "Procedure for classifying, versioning, and safely migrating JSON Schema 2020-12 changes with CI gates and downstream consumer notification."
 owner: schemas-lead
-last_reviewed: "2026-03-14"
+last_reviewed: "2026-03-16"
 severity: "P3"
 affected_services:
   - schemas
@@ -156,12 +156,45 @@ The CI gate:
 4. Runs `test_provenance_present.py` to verify all vendor files have `provenance.json`
 5. Runs `redocly lint` on the OpenAPI spec if it was modified
 
+## Startup Readiness Gate
+
+The hardened control-api startup path now checks both required tables and the
+applied migration level before it marks the database dependency healthy.
+
+Required tables for procedure start/status behavior:
+
+- `audit_records`
+- `http_idempotency_keys`
+- `procedures`
+- `schema_migrations`
+
+Required migration level: `3`
+
+Quick check:
+
+```sql
+SELECT version, description, applied_at
+FROM schema_migrations
+ORDER BY version;
+```
+
+Expected rows include:
+
+- `1 | initial_schema`
+- `2 | procedure_runtime_tables`
+- `3 | schema_migrations`
+
+If the latest version is missing, the control-api starts in degraded mode and
+procedure routes that need Postgres-backed durability return `503` until the
+migration is applied.
+
 ## Evidence Capture
 
 - [ ] `diff_schema.py` output (additive / breaking classification)
 - [ ] If breaking: new versioned file path and updated registry.yaml
 - [ ] Test suite output (`make test-schemas`)
 - [ ] List of downstream consumers notified
+- [ ] `schema_migrations` shows the expected latest version after rollout
 
 ## Related Runbooks
 

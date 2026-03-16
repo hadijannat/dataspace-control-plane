@@ -1,19 +1,19 @@
 """
 Workflow and activity registry for all temporal worker groups.
 
-Delegates to the canonical procedures/ package registry at module load time.
+Delegates to the canonical procedures package definitions at module load time.
 Worker groups import the module-level list objects here and see the fully
 populated registries when this module is first imported.
-
-If the procedures package is not installed, workers start with empty registries
-and log a warning — the Temporal namespace will start but cannot execute tasks.
 """
 from __future__ import annotations
 
 from typing import Any
 
 import structlog
-from src.bootstrap.procedure_catalog import import_procedures_package, load_procedure_manifests
+from dataspace_control_plane_procedures import discover_definitions
+from dataspace_control_plane_temporal_workers.bootstrap.procedure_catalog import (
+    load_procedure_manifests,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -41,53 +41,49 @@ MAINTENANCE_ACTIVITIES: list[Any] = []
 
 
 def _populate_from_procedures() -> bool:
-    """Delegate to procedures.registry.populate_from_procedures().
+    """Populate queue-local registry lists from explicit procedure definitions."""
+    definitions = discover_definitions()
+    if not definitions:
+        raise RuntimeError("Temporal worker startup aborted: zero procedure definitions discovered")
 
-    Extends each queue's list with the workflow/activity objects declared in
-    the procedures package. Called once at module load — subsequent imports
-    of this module see the already-populated lists.
-
-    Returns True if procedures package was available, False otherwise.
-    """
-    try:
-        procedures_pkg = import_procedures_package()
-        from dataspace_control_plane_procedures.registry import (
-            ACTIVITY_REGISTRY,
-            WORKFLOW_REGISTRY,
-            populate_from_procedures,
+    by_queue: dict[str, tuple[list[Any], list[Any]]] = {}
+    for definition in definitions:
+        workflows: list[Any]
+        activities: list[Any]
+        workflows, activities = by_queue.setdefault(
+            definition.task_queue,
+            ([], []),
         )
-    except ImportError:
-        logger.warning(
-            "registry.procedures_not_installed",
-            message=(
-                "dataspace-control-plane-procedures not installed — "
-                "workers will start with empty task queues. "
-                "Add it to pyproject.toml dependencies."
-            ),
-        )
-        return False
-
-    populate_from_procedures()
+        workflows.extend(definition.workflow_types)
+        activities.extend(definition.activity_functions)
 
     # Extend (not assign) to preserve the list identity already imported by
     # worker group modules that reference ONBOARDING_WORKFLOWS etc. directly.
-    ONBOARDING_WORKFLOWS.extend(WORKFLOW_REGISTRY.get("onboarding", []))
-    ONBOARDING_ACTIVITIES.extend(ACTIVITY_REGISTRY.get("onboarding", []))
+    onboarding_workflows, onboarding_activities = by_queue.get("onboarding", ([], []))
+    ONBOARDING_WORKFLOWS.extend(onboarding_workflows)
+    ONBOARDING_ACTIVITIES.extend(onboarding_activities)
 
-    MACHINE_TRUST_WORKFLOWS.extend(WORKFLOW_REGISTRY.get("machine-trust", []))
-    MACHINE_TRUST_ACTIVITIES.extend(ACTIVITY_REGISTRY.get("machine-trust", []))
+    trust_workflows, trust_activities = by_queue.get("machine-trust", ([], []))
+    MACHINE_TRUST_WORKFLOWS.extend(trust_workflows)
+    MACHINE_TRUST_ACTIVITIES.extend(trust_activities)
 
-    TWINS_WORKFLOWS.extend(WORKFLOW_REGISTRY.get("twins-publication", []))
-    TWINS_ACTIVITIES.extend(ACTIVITY_REGISTRY.get("twins-publication", []))
+    twins_workflows, twins_activities = by_queue.get("twins-publication", ([], []))
+    TWINS_WORKFLOWS.extend(twins_workflows)
+    TWINS_ACTIVITIES.extend(twins_activities)
 
-    CONTRACTS_WORKFLOWS.extend(WORKFLOW_REGISTRY.get("contracts-negotiation", []))
-    CONTRACTS_ACTIVITIES.extend(ACTIVITY_REGISTRY.get("contracts-negotiation", []))
+    contracts_workflows, contracts_activities = by_queue.get(
+        "contracts-negotiation", ([], [])
+    )
+    CONTRACTS_WORKFLOWS.extend(contracts_workflows)
+    CONTRACTS_ACTIVITIES.extend(contracts_activities)
 
-    COMPLIANCE_WORKFLOWS.extend(WORKFLOW_REGISTRY.get("compliance", []))
-    COMPLIANCE_ACTIVITIES.extend(ACTIVITY_REGISTRY.get("compliance", []))
+    compliance_workflows, compliance_activities = by_queue.get("compliance", ([], []))
+    COMPLIANCE_WORKFLOWS.extend(compliance_workflows)
+    COMPLIANCE_ACTIVITIES.extend(compliance_activities)
 
-    MAINTENANCE_WORKFLOWS.extend(WORKFLOW_REGISTRY.get("maintenance", []))
-    MAINTENANCE_ACTIVITIES.extend(ACTIVITY_REGISTRY.get("maintenance", []))
+    maintenance_workflows, maintenance_activities = by_queue.get("maintenance", ([], []))
+    MAINTENANCE_WORKFLOWS.extend(maintenance_workflows)
+    MAINTENANCE_ACTIVITIES.extend(maintenance_activities)
 
     total_workflows = sum(
         len(lst)

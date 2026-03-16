@@ -9,3 +9,7 @@ because pytest processes it first.
 import os
 
 os.environ.setdefault("CONTROL_API_DEBUG", "true")
+os.environ.setdefault(
+    "CONTROL_API_STREAM_TICKET_SECRET",
+    "test-stream-ticket-secret-0123456789012345",
+)

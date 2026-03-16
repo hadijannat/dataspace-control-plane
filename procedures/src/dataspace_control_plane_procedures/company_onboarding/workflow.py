@@ -55,7 +55,6 @@ from .activities import (
     bootstrap_connector,
     run_compliance_baseline,
     bind_hierarchy,
-    emit_onboarding_evidence,
     PreflightInput,
     RegistrationInput,
     ApprovalRequestInput,
@@ -63,7 +62,6 @@ from .activities import (
     ConnectorBootstrapInput,
     ComplianceInput,
     HierarchyInput,
-    EvidenceInput,
 )
 from .compensation import run_compensation
 from .errors import PreflightValidationError, RegistrationRejectedError
@@ -139,9 +137,9 @@ class CompanyOnboardingWorkflow:
                     await self._bind_hierarchy(start_input)
                     await self._checkpoint(start_input)
             elif self._state.phase == "technical_integration_completed":
-                self._state.phase = "hierarchy_bound"
+                self._state.phase = "hierarchy_skipped"
 
-            if self._state.phase == "hierarchy_bound":
+            if self._state.phase in {"hierarchy_bound", "hierarchy_skipped"}:
                 await self._compliance_baseline(start_input)
                 await self._checkpoint(start_input)
 
@@ -169,7 +167,7 @@ class CompanyOnboardingWorkflow:
             status="completed",
             registration_ref=self._state.registration_ref,
             bpnl=self._state.bpnl,
-            wallet_did=self._state.wallet_ref,
+            wallet_did=self._state.wallet_did,
             connector_binding_id=self._state.connector_ref,
             compliance_baseline_ref=self._state.compliance_ref,
         )
@@ -277,16 +275,19 @@ class CompanyOnboardingWorkflow:
         from .input import OnboardingStatusQuery
 
         return OnboardingStatusQuery(
+            status="cancelled" if self._state.is_cancelled else ("completed" if self._state.phase == "completed" else "running"),
             phase=self._state.phase,
             blocking_reason=self._state.manual_review.blocking_reason,
             external_refs={
                 "registration_ref": self._state.registration_ref,
                 "approval_ref": self._state.approval_ref,
                 "wallet_ref": self._state.wallet_ref,
+                "wallet_did": self._state.wallet_did,
                 "connector_ref": self._state.connector_ref,
             },
             next_required_action="approve" if self._state.manual_review.is_pending else "",
             is_complete=self._state.phase == "completed",
+            progress_percent=_phase_progress_percent(self._state.phase),
         )
 
     # ------------------------------------------------------------------
@@ -299,6 +300,7 @@ class CompanyOnboardingWorkflow:
         self._state.approval_ref = carry.approval_ref
         self._state.bpnl = carry.bpnl
         self._state.wallet_ref = carry.wallet_ref
+        self._state.wallet_did = carry.wallet_did
         self._state.connector_ref = carry.connector_ref
         self._state.compliance_ref = carry.compliance_ref
         self._state.manual_review = self._state.manual_review.from_snapshot(carry.manual_review)
@@ -325,6 +327,7 @@ class CompanyOnboardingWorkflow:
                 approval_ref=self._state.approval_ref,
                 bpnl=self._state.bpnl,
                 wallet_ref=self._state.wallet_ref,
+                wallet_did=self._state.wallet_did,
                 connector_ref=self._state.connector_ref,
                 compliance_ref=self._state.compliance_ref,
                 dedupe_ids=self._state.dedupe.snapshot(),
@@ -408,6 +411,8 @@ class CompanyOnboardingWorkflow:
             **PROVISIONING_OPTIONS,
         )
         self._state.wallet_ref = wallet_result.wallet_ref
+        self._state.wallet_did = wallet_result.did
+        self._state.compensation.record("bootstrap_wallet", wallet_result.wallet_ref)
         self._state.phase = "trust_bootstrap_completed"
 
     async def _technical_integration(self, inp: OnboardingStartInput) -> None:
@@ -423,20 +428,25 @@ class CompanyOnboardingWorkflow:
             **PROVISIONING_OPTIONS,
         )
         self._state.connector_ref = connector_result.connector_binding_id
+        self._state.compensation.record("bootstrap_connector", connector_result.connector_binding_id)
         self._state.phase = "technical_integration_completed"
 
     async def _bind_hierarchy(self, inp: OnboardingStartInput) -> None:
         """v2 patch: bind entity into the parent/child BPNL topology."""
+        if not inp.parent_bpnl:
+            self._state.phase = "hierarchy_skipped"
+            return
         self._state.phase = "hierarchy_binding"
-        await workflow.execute_activity(
+        result = await workflow.execute_activity(
             bind_hierarchy,
             HierarchyInput(
                 tenant_id=inp.tenant_id,
                 legal_entity_id=inp.legal_entity_id,
+                parent_bpnl=inp.parent_bpnl or "",
             ),
             **RPC_OPTIONS,
         )
-        self._state.phase = "hierarchy_bound"
+        self._state.phase = "hierarchy_bound" if result.bound else "hierarchy_skipped"
 
     async def _compliance_baseline(self, inp: OnboardingStartInput) -> None:
         self._state.phase = "compliance_baseline"
@@ -452,15 +462,26 @@ class CompanyOnboardingWorkflow:
         self._state.phase = "compliance_baseline_completed"
 
     async def _emit_evidence(self, inp: OnboardingStartInput) -> None:
-        await workflow.execute_activity(
-            emit_onboarding_evidence,
-            EvidenceInput(
-                tenant_id=inp.tenant_id,
-                legal_entity_id=inp.legal_entity_id,
-                registration_ref=self._state.registration_ref,
-                bpnl=self._state.bpnl,
-                workflow_id=workflow.info().workflow_id,
-            ),
-            **RPC_OPTIONS,
-        )
         self._state.phase = "completed"
+
+
+def _phase_progress_percent(phase: str) -> int:
+    phase_order = {
+        "pending": 0,
+        "preflight": 10,
+        "preflight_completed": 20,
+        "registration": 30,
+        "awaiting_approval": 40,
+        "approval_completed": 50,
+        "trust_bootstrap": 60,
+        "trust_bootstrap_completed": 70,
+        "technical_integration": 75,
+        "technical_integration_completed": 80,
+        "hierarchy_binding": 85,
+        "hierarchy_bound": 90,
+        "hierarchy_skipped": 90,
+        "compliance_baseline": 95,
+        "compliance_baseline_completed": 98,
+        "completed": 100,
+    }
+    return phase_order.get(phase, 0)

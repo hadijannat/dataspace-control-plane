@@ -80,7 +80,7 @@ test-schemas:  ## Verify schemas/ artifact layer (unit + offline schema validati
 .PHONY: test-procedures
 test-procedures:  ## Verify procedures/ orchestration layer (unit + replay)
 	pytest tests/unit -k procedures
-	pytest tests/unit -k replay
+	pytest tests/integration/replay
 
 .PHONY: test-adapters
 test-adapters:  ## Verify adapters/ integration layer (pure-Python adapter tests)

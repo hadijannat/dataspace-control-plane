@@ -89,7 +89,7 @@ def pytest_configure(config: pytest.Config) -> None:
 # Autouse enforcement fixture
 # ---------------------------------------------------------------------------
 
-_GUARDED_MARKS = {"integration", "chaos", "tenancy", "crypto", "e2e"}
+_GUARDED_MARKS = {"integration", "chaos", "tenancy", "crypto", "e2e", "compatibility"}
 
 
 @pytest.fixture(autouse=True)

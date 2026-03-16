@@ -1,0 +1,53 @@
+# env/staging.yaml — Staging environment endpoint overrides
+#
+# TLS enabled. Auth tokens sourced from environment variables.
+# Tokens injected at runtime via Vault Agent Injector or External Secrets Operator.
+#
+# Required env vars (set in K8s Secret, injected by Vault Agent):
+#   TEMPO_ENDPOINT                — Grafana Tempo endpoint
+#   TEMPO_TOKEN                   — Bearer token for Tempo
+#   PROMETHEUS_REMOTE_WRITE_URL   — Prometheus remote write URL
+#   PROMETHEUS_TOKEN              — Bearer token for Prometheus
+#   LOKI_ENDPOINT                 — Grafana Loki endpoint
+#   LOKI_TOKEN                    — Bearer token for Loki
+
+# The base processors.yaml sets redaction.summary: debug which emits matched
+# attribute values into telemetry — a data-leak risk outside dev.
+# Override to silent in all non-dev environments.
+processors:
+  redaction:
+    summary: silent
+
+exporters:
+  otlp/tempo:
+    endpoint: ${TEMPO_ENDPOINT}
+    tls:
+      insecure: false
+      # ca_file: /run/secrets/tempo-ca.crt  # mount Vault PKI CA if needed
+    headers:
+      authorization: Bearer ${TEMPO_TOKEN}
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+
+  prometheusremotewrite:
+    endpoint: ${PROMETHEUS_REMOTE_WRITE_URL}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${PROMETHEUS_TOKEN}
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  loki:
+    endpoint: ${LOKI_ENDPOINT}
+    tls:
+      insecure: false
+    headers:
+      authorization: Bearer ${LOKI_TOKEN}
+    default_labels_enabled:
+      exporter: false
+      job: true
+      instance: true
+      level: true

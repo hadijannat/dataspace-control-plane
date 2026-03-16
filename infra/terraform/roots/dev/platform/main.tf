@@ -11,6 +11,7 @@ locals {
 module "postgres" {
   source = "../../../modules/postgres"
 
+  mode          = "dev-scaffold"
   instance_name = "dataspace"
   namespace     = var.namespace
   database_name = "dataspace"
@@ -24,6 +25,7 @@ module "postgres" {
 module "keycloak" {
   source = "../../../modules/keycloak"
 
+  mode              = "dev-scaffold"
   namespace         = var.namespace
   realm_name        = "dataspace"
   admin_secret_name = "keycloak-admin-credentials"
@@ -34,6 +36,7 @@ module "keycloak" {
 module "vault" {
   source = "../../../modules/vault"
 
+  mode            = "dev-scaffold"
   namespace       = var.namespace
   storage_size    = var.vault_storage_size
   ha_enabled      = false

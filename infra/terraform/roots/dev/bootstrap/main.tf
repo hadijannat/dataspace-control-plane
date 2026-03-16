@@ -30,6 +30,7 @@ module "terraform_state_namespace" {
 module "dev_registry" {
   source = "../../../modules/registry"
 
+  mode             = "dev-scaffold"
   name             = "dataspace-dev"
   namespace        = module.dataspace_namespace.name
   storage_limit_gb = var.registry_storage_gb

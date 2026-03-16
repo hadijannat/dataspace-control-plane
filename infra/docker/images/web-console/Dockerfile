@@ -8,8 +8,10 @@
 #   builder — build Next.js application (standalone output mode)
 #   runtime — minimal runtime image with non-root nextjs user
 
+ARG NODE_BASE_IMAGE=node:20-alpine
+
 # Stage 1: install production dependencies
-FROM node:20-alpine AS deps
+FROM ${NODE_BASE_IMAGE} AS deps
 
 WORKDIR /build
 
@@ -20,7 +22,7 @@ COPY apps/web-console/package.json apps/web-console/package-lock.json* ./
 RUN npm ci --omit=dev
 
 # Stage 2: build
-FROM node:20-alpine AS builder
+FROM ${NODE_BASE_IMAGE} AS builder
 
 WORKDIR /build
 
@@ -35,7 +37,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Stage 3: minimal runtime
-FROM node:20-alpine AS runtime
+FROM ${NODE_BASE_IMAGE} AS runtime
 
 # Create dedicated non-root user
 RUN addgroup -g 1001 -S nodejs && \

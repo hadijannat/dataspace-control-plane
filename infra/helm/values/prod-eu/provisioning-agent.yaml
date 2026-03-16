@@ -1,0 +1,16 @@
+# Production EU environment overlay for provisioning-agent
+# Applied over charts/provisioning-agent/values.yaml
+#
+# REQUIRED: Replace image.digest with the real sha256 digest from CI.
+
+replicaCount: 1
+
+image:
+  digest: "sha256:REPLACE_WITH_REAL_DIGEST"
+  pullPolicy: IfNotPresent
+
+config:
+  logLevel: WARNING
+
+autoscaling:
+  enabled: false

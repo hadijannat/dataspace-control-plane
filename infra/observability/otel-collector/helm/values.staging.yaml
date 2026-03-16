@@ -1,107 +1,15 @@
-# Values for the official OpenTelemetry Collector Helm chart — staging
-# Uses gateway profile: full pipeline with K8s enrichment, TLS exporters.
-
+# Generated from helm/source/staging.yaml + base + gateway profile + staging env. Do not edit directly.
 mode: deployment
 replicaCount: 2
-
 image:
   repository: otel/opentelemetry-collector-contrib
-  tag: "0.104.0"
+  tag: 0.104.0
   pullPolicy: IfNotPresent
-
-config:
-  receivers:
-    otlp:
-      protocols:
-        grpc:
-          endpoint: 0.0.0.0:4317
-        http:
-          endpoint: 0.0.0.0:4318
-    prometheus:
-      config:
-        scrape_configs:
-          - job_name: otel-collector-staging
-            scrape_interval: 30s
-            static_configs:
-              - targets: [localhost:8888]
-
-  processors:
-    batch:
-      timeout: 10s
-      send_batch_size: 1024
-    memory_limiter:
-      limit_mib: 512
-      spike_limit_mib: 128
-      check_interval: 5s
-    resource:
-      attributes:
-        - key: deployment.environment
-          value: staging
-          action: upsert
-    k8sattributes:
-      auth_type: serviceAccount
-      passthrough: false
-      extract:
-        metadata:
-          - k8s.pod.name
-          - k8s.namespace.name
-          - k8s.deployment.name
-    redaction:
-      allow_all_keys: true
-      blocked_values:
-        - "(?i)password"
-        - "(?i)token"
-        - "(?i)secret"
-
-  exporters:
-    otlp/tempo:
-      endpoint: ${TEMPO_ENDPOINT}
-      tls:
-        insecure: false
-      headers:
-        authorization: Bearer ${TEMPO_TOKEN}
-    prometheusremotewrite:
-      endpoint: ${PROMETHEUS_REMOTE_WRITE_URL}
-      tls:
-        insecure: false
-      headers:
-        authorization: Bearer ${PROMETHEUS_TOKEN}
-      resource_to_telemetry_conversion:
-        enabled: true
-    loki:
-      endpoint: ${LOKI_ENDPOINT}
-      tls:
-        insecure: false
-      headers:
-        authorization: Bearer ${LOKI_TOKEN}
-
-  extensions:
-    health_check:
-      endpoint: 0.0.0.0:13133
-    memory_ballast:
-      size_mib: 128
-
-  service:
-    extensions: [health_check, memory_ballast]
-    pipelines:
-      traces:
-        receivers: [otlp]
-        processors: [memory_limiter, resource, k8sattributes, redaction, batch]
-        exporters: [otlp/tempo]
-      metrics:
-        receivers: [otlp, prometheus]
-        processors: [memory_limiter, resource, k8sattributes, batch]
-        exporters: [prometheusremotewrite]
-      logs:
-        receivers: [otlp]
-        processors: [memory_limiter, resource, k8sattributes, redaction, batch]
-        exporters: [loki]
-    telemetry:
-      logs:
-        level: info
-      metrics:
-        address: 0.0.0.0:8888
-
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
 ports:
   otlp:
     enabled: true
@@ -118,28 +26,212 @@ ports:
     containerPort: 8888
     servicePort: 8888
     protocol: TCP
-
 resources:
   limits:
-    cpu: 500m
-    memory: 512Mi
+    cpu: 1000m
+    memory: 1Gi
   requests:
-    cpu: 100m
+    cpu: 200m
     memory: 256Mi
-
 serviceAccount:
   create: true
-  annotations:
-    # Add IRSA/Workload Identity annotations here if applicable
-
+  annotations: {}
 clusterRole:
   create: true
   rules:
-    - apiGroups: [""]
-      resources: ["pods", "namespaces", "nodes"]
-      verbs: ["get", "watch", "list"]
-
+  - apiGroups:
+    - ''
+    resources:
+    - pods
+    - namespaces
+    - nodes
+    verbs:
+    - get
+    - watch
+    - list
 podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "8888"
-  prometheus.io/path: "/metrics"
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '8888'
+  prometheus.io/path: /metrics
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+          max_recv_msg_size_mib: 16
+        http:
+          endpoint: 0.0.0.0:4318
+    prometheus:
+      config:
+        scrape_configs:
+        - job_name: otel-collector
+          scrape_interval: 30s
+          static_configs:
+          - targets:
+            - localhost:8888
+    hostmetrics:
+      collection_interval: 30s
+      scrapers:
+        cpu:
+          metrics:
+            system.cpu.utilization:
+              enabled: true
+        disk: {}
+        filesystem:
+          exclude_mount_points:
+            mount_points:
+            - /dev
+            - /proc
+            - /sys
+            - /run/k8s-pods
+            match_type: strict
+        memory:
+          metrics:
+            system.memory.utilization:
+              enabled: true
+        network: {}
+        load: {}
+        processes: {}
+  processors:
+    batch:
+      timeout: 10s
+      send_batch_size: 1024
+      send_batch_max_size: 2048
+    memory_limiter:
+      limit_mib: 512
+      spike_limit_mib: 128
+      check_interval: 5s
+    resource:
+      attributes:
+      - key: deployment.environment
+        from_attribute: DEPLOYMENT_ENVIRONMENT
+        action: upsert
+    redaction:
+      allow_all_keys: true
+      blocked_values:
+      - (?i)password
+      - (?i)token
+      - (?i)secret
+      - (?i)private.key
+      - (?i)authorization
+      - (?i)api.key
+      - (?i)client.secret
+      summary: silent
+    k8sattributes:
+      auth_type: serviceAccount
+      passthrough: false
+      extract:
+        metadata:
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.pod.start_time
+        - k8s.namespace.name
+        - k8s.node.name
+        - k8s.deployment.name
+        - k8s.replicaset.name
+        labels:
+        - tag_name: app
+          key: app.kubernetes.io/name
+          from: pod
+        - tag_name: version
+          key: app.kubernetes.io/version
+          from: pod
+        - tag_name: component
+          key: app.kubernetes.io/component
+          from: pod
+      pod_association:
+      - sources:
+        - from: resource_attribute
+          name: k8s.pod.ip
+      - sources:
+        - from: connection
+  exporters:
+    otlp/tempo:
+      endpoint: ${TEMPO_ENDPOINT}
+      tls:
+        insecure: false
+      headers:
+        authorization: Bearer ${TEMPO_TOKEN}
+      retry_on_failure:
+        enabled: true
+        initial_interval: 5s
+        max_interval: 30s
+        max_elapsed_time: 300s
+      sending_queue:
+        enabled: true
+        num_consumers: 10
+        queue_size: 1000
+    prometheusremotewrite:
+      endpoint: ${PROMETHEUS_REMOTE_WRITE_URL}
+      tls:
+        insecure: false
+      headers:
+        authorization: Bearer ${PROMETHEUS_TOKEN}
+      resource_to_telemetry_conversion:
+        enabled: true
+      retry_on_failure:
+        enabled: true
+        initial_interval: 5s
+        max_interval: 30s
+    loki:
+      endpoint: ${LOKI_ENDPOINT}
+      tls:
+        insecure: false
+      headers:
+        authorization: Bearer ${LOKI_TOKEN}
+      default_labels_enabled:
+        exporter: false
+        job: true
+        instance: true
+        level: true
+      retry_on_failure:
+        enabled: true
+  extensions:
+    health_check:
+      endpoint: 0.0.0.0:13133
+    memory_ballast:
+      size_mib: 128
+  service:
+    extensions:
+    - health_check
+    - memory_ballast
+    telemetry:
+      logs:
+        level: info
+      metrics:
+        address: 0.0.0.0:8888
+    pipelines:
+      traces:
+        receivers:
+        - otlp
+        processors:
+        - memory_limiter
+        - resource
+        - k8sattributes
+        - redaction
+        - batch
+        exporters:
+        - otlp/tempo
+      metrics:
+        receivers:
+        - otlp
+        - prometheus
+        processors:
+        - memory_limiter
+        - resource
+        - k8sattributes
+        - batch
+        exporters:
+        - prometheusremotewrite
+      logs:
+        receivers:
+        - otlp
+        processors:
+        - memory_limiter
+        - resource
+        - k8sattributes
+        - redaction
+        - batch
+        exporters:
+        - loki

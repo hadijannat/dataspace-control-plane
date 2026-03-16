@@ -9,6 +9,10 @@ module "dataspace_namespace" {
     "app.kubernetes.io/part-of" = "dataspace-control-plane"
     "cluster"                   = var.cluster_name
   }
+  annotations = {
+    "infra.dataspace.io/managed-by" = "terraform"
+    "infra.dataspace.io/env"        = "staging"
+  }
 }
 
 module "terraform_state_namespace" {
@@ -20,8 +24,10 @@ module "terraform_state_namespace" {
 module "staging_registry" {
   source = "../../../modules/registry"
 
+  mode                 = "external"
   name             = "dataspace-staging"
   namespace        = module.dataspace_namespace.name
   storage_limit_gb = var.registry_storage_gb
+  external_registry_url = var.external_registry_url
   labels           = { "environment" = "staging" }
 }

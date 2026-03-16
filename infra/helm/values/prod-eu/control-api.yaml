@@ -1,14 +1,14 @@
 # Production EU environment overlay for control-api
 # Applied over charts/control-api/values.yaml
 #
-# REQUIRED: Replace image.tag with the real sha256 digest from CI before deploying.
+# REQUIRED: Replace image.digest with the real sha256 digest from CI before deploying.
 # NEVER deploy with a mutable semver tag in production.
 
 replicaCount: 3
 
 image:
   # Must be a sha256 digest — CI records the digest after docker buildx bake release
-  tag: "sha256:REPLACE_WITH_REAL_DIGEST"
+  digest: "sha256:REPLACE_WITH_REAL_DIGEST"
   pullPolicy: IfNotPresent
 
 ingress:

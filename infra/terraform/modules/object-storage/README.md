@@ -1,23 +1,28 @@
 # Module: object-storage
 
-Provider-agnostic object storage bucket module. Replace the placeholder `local_file` resource with your cloud provider's bucket resource.
+Provider-neutral object storage contract.
 
-## Policy Enforcement
+This module currently models a shared durable dependency by reference. It does not create buckets or storage accounts until a concrete provider choice is made.
 
-OPA policy `infra/terraform/policy/no_public_s3.rego` denies any S3 bucket with `acl = "public-read"`. Apply this policy in CI using `conftest` before applying plans.
+## Notes
 
-## Inputs
+- Use `mode = "external"` for shared environments.
+- Keep bucket URLs, names, and regions in Terraform; keep credentials in external secret systems.
+- When a provider is selected, replace this contract with a real implementation rather than hiding a placeholder resource behind the same interface.
 
-| Name | Type | Default | Required | Description |
-|------|------|---------|----------|-------------|
-| `bucket_name` | string | — | yes | Bucket name (DNS-safe) |
-| `region` | string | — | yes | Cloud region |
-| `versioning_enabled` | bool | `true` | no | Enable object versioning |
-| `labels` | map(string) | `{}` | no | Resource tags |
+## Key Inputs
+
+| Name | Description |
+|------|-------------|
+| `mode` | Expected to be `external` in current roots |
+| `bucket_name` | Logical bucket name |
+| `region` | Region or location |
+| `versioning_enabled` | Desired versioning policy |
+| `external_bucket_url` | Shared object-store URL |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
 | `bucket_name` | Bucket name |
-| `bucket_url` | Bucket URL (update after provider substitution) |
+| `bucket_url` | Shared bucket URL |

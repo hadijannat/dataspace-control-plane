@@ -9,6 +9,8 @@
 # managed identity platform.
 
 locals {
+  scaffold_enabled = var.mode == "dev-scaffold"
+
   common_labels = merge(
     {
       "app.kubernetes.io/name"       = "keycloak"
@@ -21,6 +23,8 @@ locals {
 }
 
 resource "kubernetes_persistent_volume_claim" "keycloak_data" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "keycloak-data"
     namespace = var.namespace
@@ -38,6 +42,8 @@ resource "kubernetes_persistent_volume_claim" "keycloak_data" {
 }
 
 resource "kubernetes_deployment" "keycloak" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "keycloak"
     namespace = var.namespace
@@ -140,7 +146,7 @@ resource "kubernetes_deployment" "keycloak" {
         volume {
           name = "keycloak-data"
           persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim.keycloak_data.metadata[0].name
+            claim_name = kubernetes_persistent_volume_claim.keycloak_data[0].metadata[0].name
           }
         }
       }
@@ -149,6 +155,8 @@ resource "kubernetes_deployment" "keycloak" {
 }
 
 resource "kubernetes_service" "keycloak" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "keycloak"
     namespace = var.namespace

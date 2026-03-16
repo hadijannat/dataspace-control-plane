@@ -16,6 +16,8 @@
 # NEVER run dev mode in production. See root module README for production setup.
 
 locals {
+  scaffold_enabled = var.mode == "dev-scaffold"
+
   common_labels = merge(
     {
       "app.kubernetes.io/name"       = "vault"
@@ -29,6 +31,8 @@ locals {
 }
 
 resource "kubernetes_persistent_volume_claim" "vault_data" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "vault-data"
     namespace = var.namespace
@@ -46,6 +50,8 @@ resource "kubernetes_persistent_volume_claim" "vault_data" {
 }
 
 resource "kubernetes_deployment" "vault" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "vault"
     namespace = var.namespace
@@ -156,7 +162,7 @@ resource "kubernetes_deployment" "vault" {
         volume {
           name = "vault-data"
           persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim.vault_data.metadata[0].name
+            claim_name = kubernetes_persistent_volume_claim.vault_data[0].metadata[0].name
           }
         }
       }
@@ -165,6 +171,8 @@ resource "kubernetes_deployment" "vault" {
 }
 
 resource "kubernetes_service" "vault" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "vault"
     namespace = var.namespace
@@ -203,14 +211,14 @@ resource "kubernetes_service" "vault" {
 # This requires the vault CLI to be available in the Terraform execution environment.
 
 resource "null_resource" "vault_engine_init" {
-  count = (var.transit_enabled || var.pki_enabled) ? 1 : 0
+  count = local.scaffold_enabled && (var.transit_enabled || var.pki_enabled) ? 1 : 0
 
   depends_on = [kubernetes_deployment.vault]
 
   # IMPORTANT: This triggers on Vault deployment changes only.
   # Do NOT re-run engine initialization on every plan (it is idempotent but noisy).
   triggers = {
-    vault_deployment_generation = kubernetes_deployment.vault.metadata[0].resource_version
+    vault_deployment_generation = kubernetes_deployment.vault[0].metadata[0].resource_version
   }
 
   provisioner "local-exec" {

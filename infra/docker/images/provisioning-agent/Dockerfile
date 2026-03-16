@@ -3,8 +3,10 @@
 # provisioning-agent — Multi-stage Dockerfile for the provisioning agent.
 # Build context: repository root (docker buildx bake sets context = ".")
 
+ARG PYTHON_BASE_IMAGE=python:3.12-slim
+
 # Stage 1: dependency installation
-FROM python:3.12-slim AS deps
+FROM ${PYTHON_BASE_IMAGE} AS deps
 
 WORKDIR /build
 
@@ -15,7 +17,7 @@ RUN pip install --no-cache-dir uv==0.4.18 && \
     uv pip install --system --no-cache -r pyproject.toml
 
 # Stage 2: runtime image
-FROM python:3.12-slim AS runtime
+FROM ${PYTHON_BASE_IMAGE} AS runtime
 
 RUN groupadd -r appuser && \
     useradd --no-log-init -r -g appuser -s /sbin/nologin appuser && \

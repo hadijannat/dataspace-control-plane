@@ -13,6 +13,8 @@
 # Never store passwords in Terraform state for production workloads.
 
 locals {
+  scaffold_enabled = var.mode == "dev-scaffold"
+
   common_labels = merge(
     {
       "app.kubernetes.io/name"       = "postgres"
@@ -25,6 +27,8 @@ locals {
 }
 
 resource "kubernetes_persistent_volume_claim" "postgres_data" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "${var.instance_name}-postgres-data"
     namespace = var.namespace
@@ -45,6 +49,8 @@ resource "kubernetes_persistent_volume_claim" "postgres_data" {
 # This secret is a placeholder for dev environments. Sensitive values are NOT
 # committed here — they must be injected via environment variables or CI secrets.
 resource "kubernetes_secret" "postgres_credentials" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "${var.instance_name}-postgres-credentials"
     namespace = var.namespace
@@ -61,8 +67,8 @@ resource "kubernetes_secret" "postgres_credentials" {
   # Never commit actual passwords here.
   data = {
     username    = base64encode(var.username)
+    password    = base64encode("REPLACE_WITH_PASSWORD")
     database    = base64encode(var.database_name)
-    # DATABASE_URL must be set by external secret injection in production.
     DATABASE_URL = base64encode("postgresql://${var.username}:REPLACE_WITH_PASSWORD@${var.instance_name}-postgres:5432/${var.database_name}")
   }
 
@@ -73,6 +79,8 @@ resource "kubernetes_secret" "postgres_credentials" {
 }
 
 resource "kubernetes_deployment" "postgres" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "${var.instance_name}-postgres"
     namespace = var.namespace
@@ -124,9 +132,8 @@ resource "kubernetes_deployment" "postgres" {
             name = "POSTGRES_PASSWORD"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.postgres_credentials.metadata[0].name
-                key  = "DATABASE_URL"
-                # NOTE: point at a dedicated password key in production
+                name = kubernetes_secret.postgres_credentials[0].metadata[0].name
+                key  = "password"
               }
             }
           }
@@ -174,7 +181,7 @@ resource "kubernetes_deployment" "postgres" {
         volume {
           name = "postgres-data"
           persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim.postgres_data.metadata[0].name
+            claim_name = kubernetes_persistent_volume_claim.postgres_data[0].metadata[0].name
           }
         }
       }
@@ -183,6 +190,8 @@ resource "kubernetes_deployment" "postgres" {
 }
 
 resource "kubernetes_service" "postgres" {
+  count = local.scaffold_enabled ? 1 : 0
+
   metadata {
     name      = "${var.instance_name}-postgres"
     namespace = var.namespace

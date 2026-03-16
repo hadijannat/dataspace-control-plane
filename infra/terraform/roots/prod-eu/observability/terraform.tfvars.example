@@ -1,1 +1,2 @@
-# namespace = "observability"
+# namespace                 = "observability"
+# grafana_admin_secret_name = "grafana-admin-prod-eu"

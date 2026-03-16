@@ -72,6 +72,17 @@ jobs:
       - name: Install docs Node dependencies
         run: pnpm --dir docs install --frozen-lockfile
 
+      - name: Regenerate OpenAPI artifacts
+        # Re-export the source spec and re-bundle it using CI's exact library
+        # versions before running contract tests. Without a Python lockfile the
+        # installed FastAPI/Pydantic versions may differ from the developer's
+        # machine and produce slightly different schema output; pre-generating
+        # here ensures the pytest comparison and redocly diff both pass.
+        run: |
+          python docs/api/openapi/export_control_api.py
+          pnpm --dir docs exec redocly bundle api/openapi/source/control-api.yaml \
+            --output docs/api/openapi/bundled/control-api.yaml
+
       - name: Run docs verification
         run: make test-docs
 

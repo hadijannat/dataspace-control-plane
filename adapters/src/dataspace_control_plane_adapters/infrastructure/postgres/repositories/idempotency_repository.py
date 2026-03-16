@@ -100,7 +100,11 @@ class PostgresIdempotencyRepository:
                         procedure_type,
                         idempotency_key,
                     )
-                    assert row is not None
+                    if row is None:
+                        raise RuntimeError(
+                            f"Idempotency key {idempotency_key!r} vanished between "
+                            "INSERT conflict and SELECT — concurrent delete or RLS issue"
+                        )
                     record = _row_to_record(dict(row))
                     if record.request_fingerprint != request_fingerprint:
                         return IdempotencyAcquireResult(outcome="conflict", record=record)

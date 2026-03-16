@@ -40,6 +40,7 @@ The current API surface is organized by audience:
 | `GET` | `/api/v1/public/procedures/{workflow_id}` | public workflow status lookup |
 | `POST` | `/api/v1/streams/tickets` | mint an SSE stream ticket |
 | `GET` | `/api/v1/streams/workflows/{workflow_id}` | SSE workflow status stream |
+
 ## Guides
 
 - [Authentication](guides/auth.md)

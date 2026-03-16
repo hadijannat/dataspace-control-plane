@@ -43,11 +43,12 @@ USER appuser
 # the Helm chart headless service targets this port for scraping.
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app/src
 
 # Health check via process existence — workers don't have an HTTP health endpoint.
 # Kubernetes exec probe checks that pid 1 is alive.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD python -c "import os; os.kill(1, 0)"
 
-ENTRYPOINT ["python", "-m", "src.main"]
+ENTRYPOINT ["python", "-m", "dataspace_control_plane_temporal_workers.main"]

@@ -22,7 +22,7 @@ from ..._shared.auth import StaticTokenProvider
 from ..._shared.http import AsyncAdapterClient
 from .config import DspSettings
 from .errors import DspNegotiationError
-from .messages import _DSP_CONTEXT, _DSP_VOCAB
+from .messages import _DSP_CONTEXT
 
 logger = logging.getLogger(__name__)
 

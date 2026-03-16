@@ -22,3 +22,7 @@ class ProcedureRuntimeState:
     search_attributes: dict[str, Any] = field(default_factory=dict, hash=False)
     links: dict[str, str] = field(default_factory=dict, hash=False)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.status, ProcedureStatus):
+            object.__setattr__(self, "status", ProcedureStatus(self.status))
+

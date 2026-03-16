@@ -40,7 +40,10 @@
 # by default; listed here to prevent accidental commits if someone creates one).
 .claude/settings.local.json
 
-# NOTE — .agents/ (repo-local reusable skills) remains committed.
+# Agent skills and routing files — generated per-session, not for review.
+.agents/
+AGENTS.md
+**/AGENTS.md
 
 
 # =============================================================================

@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Mitigations: Data Integrity
-
 Data integrity threats target the platform's regulatory audit trail, workflow history, schema contracts, and tenant data boundaries. For key management threats, see [key-management.md](key-management.md). For authentication threats, see [auth-identity.md](auth-identity.md).
 
 ## Threat Table

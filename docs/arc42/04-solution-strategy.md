@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 4. Solution Strategy
-
 The solution strategy documents the fundamental architectural bets — the choices that shape the entire design and that would be expensive to reverse. Each decision is stated plainly with its rationale and the constraint or quality goal it addresses.
 
 ## Architectural Bets

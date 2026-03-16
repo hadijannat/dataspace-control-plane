@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 5. Building Block View
-
 ## Level 1 — Repository Layers
 
 The repository is divided into 9 strictly-owned layers. The dependency flow is strictly downward: `schemas/` and `docs/` feed `core/`; `core/` feeds `procedures/`, `adapters/`, and `packs/`; those feed `apps/`; everything feeds `tests/`.

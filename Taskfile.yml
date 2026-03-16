@@ -39,8 +39,9 @@ tasks:
   install:python:
     desc: Install all Python packages in editable mode (uv)
     cmds:
+      - "{{.UV}} pip install --system -r docs/requirements.txt"
       - >
-        {{.UV}} pip install
+        {{.UV}} pip install --system
         -e core
         -e adapters
         -e procedures
@@ -50,9 +51,18 @@ tasks:
         -e apps/provisioning-agent
 
   install:node:
+    desc: Install Node dependencies (pnpm)
+    deps: [install:node:web, install:node:docs]
+
+  install:node:web:
     desc: Install web-console Node dependencies (pnpm)
     cmds:
       - "{{.PNPM}} --dir apps/web-console install"
+
+  install:node:docs:
+    desc: Install docs Node dependencies (pnpm)
+    cmds:
+      - "{{.PNPM}} --dir docs install"
 
   # ─── Unit / no-live-services tests ──────────────────────────────────────────
 
@@ -108,10 +118,14 @@ tasks:
         cmd: terraform -chdir={{.ITEM}} validate
 
   test:docs:
-    desc: Verify docs/ explanation layer (markdownlint + link check)
+    desc: Verify docs/ explanation layer
     cmds:
-      - markdownlint docs
-      - pytest tests/unit -k docs_links
+      - "{{.PNPM}} --dir docs exec markdownlint-cli2 \"**/*.md\""
+      - "{{.PYTEST}} tests/unit/docs -q"
+      - "{{.PNPM}} --dir docs exec redocly lint api/openapi/source/control-api.yaml"
+      - "{{.PNPM}} --dir docs exec redocly bundle api/openapi/source/control-api.yaml --output /tmp/control-api.bundled.yaml"
+      - diff -u /tmp/control-api.bundled.yaml docs/api/openapi/bundled/control-api.yaml
+      - mkdocs build --strict
 
   # ─── Release gate suites (live services required) ───────────────────────────
 
@@ -146,9 +160,9 @@ tasks:
       - "{{.PNPM}} --dir apps/web-console run lint"
 
   lint:docs:
-    desc: Lint Markdown documentation with markdownlint
+    desc: Lint Markdown documentation with markdownlint-cli2
     cmds:
-      - markdownlint docs
+      - "{{.PNPM}} --dir docs exec markdownlint-cli2 \"**/*.md\""
 
   lint:infra:
     desc: Lint Helm charts

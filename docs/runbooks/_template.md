@@ -10,8 +10,6 @@ affected_services:
 status: draft
 ---
 
-# [Runbook Title]
-
 ## Trigger / Alert Source
 
 - **Alert name**: `[AlertManager alert name or Grafana alert rule name]`
@@ -164,5 +162,5 @@ Before completing the incident, capture the following evidence for the post-inci
 
 ## Related Runbooks
 
-- [Runbook A](../category/runbook-a.md) — related scenario
-- [Runbook B](../category/runbook-b.md) — upstream dependency issue
+- [Postgres Unavailable](incidents/postgres-unavailable.md) — example of an infrastructure dependency incident
+- [Vault Transit Failures](incidents/vault-transit-failures.md) — example of a signing-boundary incident

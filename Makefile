@@ -39,7 +39,8 @@ install: install-python install-node  ## Install all package dependencies
 
 .PHONY: install-python
 install-python:  ## Install all Python packages in editable mode (uv)
-	$(UV) pip install -e core \
+	$(UV) pip install --system -r docs/requirements.txt
+	$(UV) pip install --system -e core \
 	  -e adapters \
 	  -e procedures \
 	  -e packs \
@@ -48,8 +49,15 @@ install-python:  ## Install all Python packages in editable mode (uv)
 	  -e apps/provisioning-agent
 
 .PHONY: install-node
-install-node:  ## Install web-console Node dependencies (pnpm)
+install-node: install-node-web install-node-docs  ## Install Node dependencies (pnpm)
+
+.PHONY: install-node-web
+install-node-web:  ## Install web-console Node dependencies (pnpm)
 	$(PNPM) --dir apps/web-console install
+
+.PHONY: install-node-docs
+install-node-docs:  ## Install docs Node dependencies (pnpm)
+	$(PNPM) --dir docs install
 
 # ─── Unit / no-live-services tests ────────────────────────────────────────────
 
@@ -98,9 +106,13 @@ test-infra:  ## Verify infra/ delivery substrate (helm lint + terraform validate
 	done
 
 .PHONY: test-docs
-test-docs:  ## Verify docs/ explanation layer (markdownlint + link check)
-	markdownlint docs
-	pytest tests/unit -k docs_links
+test-docs:  ## Verify docs/ explanation layer
+	$(PNPM) --dir docs exec markdownlint-cli2 "**/*.md"
+	$(PYTEST) tests/unit/docs -q
+	$(PNPM) --dir docs exec redocly lint api/openapi/source/control-api.yaml
+	$(PNPM) --dir docs exec redocly bundle api/openapi/source/control-api.yaml --output /tmp/control-api.bundled.yaml
+	diff -u /tmp/control-api.bundled.yaml docs/api/openapi/bundled/control-api.yaml
+	mkdocs build --strict
 
 # ─── Release gate suites (live services required) ─────────────────────────────
 
@@ -130,7 +142,7 @@ lint-node:  ## Lint web-console TypeScript/React with ESLint (via pnpm)
 
 .PHONY: lint-docs
 lint-docs:  ## Lint Markdown documentation with markdownlint
-	markdownlint docs
+	$(PNPM) --dir docs exec markdownlint-cli2 "**/*.md"
 
 .PHONY: lint-infra
 lint-infra:  ## Lint Helm charts

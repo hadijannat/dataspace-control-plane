@@ -12,8 +12,6 @@ affected_services:
 status: approved
 ---
 
-# Schema Migration
-
 ## When to Run This Procedure
 
 Any time a file in `schemas/*/source/` is modified — whether for a field addition, field removal, constraint change, or editorial update. Schema changes have downstream consumers in adapters, procedures, packs, and the API spec; all must be notified of breaking changes.
@@ -151,6 +149,7 @@ make test-schemas
 ```
 
 The CI gate:
+
 1. Runs `diff_schema.py` against the base branch (not a tag) for all changed schema files
 2. Fails if any change is classified as `breaking` without a corresponding new versioned file
 3. Runs `test_schema_meta_compliance.py` to verify all local schemas declare `$schema: 2020-12`

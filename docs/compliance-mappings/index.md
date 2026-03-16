@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Compliance Mappings
-
 The platform operates under three regulatory regimes simultaneously. This section documents how platform components satisfy the obligations from each regime, in both human-readable narrative form and machine-readable OSCAL format.
 
 ## Regulatory Scope
@@ -51,6 +49,7 @@ See [evidence-matrix/index.md](evidence-matrix/index.md) for the full obligation
 | File | Type | Content |
 |------|------|---------|
 | [oscal/profiles/catena-x-profile.yaml](oscal/profiles/catena-x-profile.yaml) | OSCAL Profile | Catena-X participation control selection |
+| [oscal/profiles/battery-passport-profile.yaml](oscal/profiles/battery-passport-profile.yaml) | OSCAL Profile | Battery Passport Annex XIII control selection |
 | [oscal/component-definitions/platform-component.yaml](oscal/component-definitions/platform-component.yaml) | OSCAL Component Definition | Platform components and their implemented control requirements |
 | [oscal/mappings/battery-passport-mapping.yaml](oscal/mappings/battery-passport-mapping.yaml) | OSCAL Mapping | Battery Regulation Annex XIII → ESPR framework control mapping |
 

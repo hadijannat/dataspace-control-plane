@@ -1,5 +1,8 @@
 ---
 title: "[short noun phrase describing the decision]"
+summary: "Template for new MADR-style architecture decision records."
+owner: docs-lead
+last_reviewed: "2026-03-16"
 status: proposed
 date: YYYY-MM-DD
 decision-makers:
@@ -9,8 +12,6 @@ consulted:
 informed:
   - "[name or role of stakeholder informed after decision]"
 ---
-
-# [Short noun phrase describing the decision]
 
 ## Context and Problem Statement
 
@@ -53,9 +54,10 @@ informed:
 [Optional but recommended: How can we verify that this decision was implemented correctly? Name a specific test file, CI gate, or observable behavior that confirms the decision is in effect.]
 
 Examples:
-- `tests/crypto-boundaries/vault_transit/test_no_key_export.py` must pass
-- `mkdocs build --strict` must succeed with no warnings
-- `tests/compatibility/dsp-tck` suite must pass in staging
+
+* `tests/crypto-boundaries/vault_transit/test_no_key_export.py` must pass
+* `mkdocs build --strict` must succeed with no warnings
+* `tests/compatibility/dsp-tck` suite must pass in staging
 
 ## Pros and Cons of the Options
 

@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Glossary
-
 All terms used across architecture documentation, runbooks, ADRs, and compliance mappings are defined here. For architecture-specific terms (Blast Radius, Evidence Envelope, etc.) see also [arc42/12-glossary.md](arc42/12-glossary.md).
 
 ## AAS (Asset Administration Shell)

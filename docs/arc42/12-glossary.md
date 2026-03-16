@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 12. Glossary (Architecture-Specific)
-
 For general domain terms, protocol acronyms, and regulatory references, see the [repo-wide glossary](../glossary.md). This section defines terms that are specific to the arc42 architecture documentation and the platform's internal structure.
 
 ## Blast Radius

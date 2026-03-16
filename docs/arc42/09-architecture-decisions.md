@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 9. Architecture Decisions
-
 Architecture decisions are recorded as MADR (Markdown Architectural Decision Records) in `docs/adr/`. This section provides the index and prose context for the most load-bearing decisions.
 
 ## ADR Index

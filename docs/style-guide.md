@@ -6,13 +6,17 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Documentation Style Guide
+This guide defines the authoring rules that every contributor must follow when
+adding or modifying pages in `docs/`. The rules exist to keep the MkDocs +
+Material site buildable without warnings (`mkdocs build --strict`), keep
+diagrams machine-renderable, and keep compliance-relevant pages auditable.
 
-This guide defines the authoring rules that every contributor must follow when adding or modifying pages in `docs/`. The rules exist to keep the MkDocs + Material site buildable without warnings (`mkdocs build --strict`), keep diagrams machine-renderable, and keep compliance-relevant pages auditable.
+The canonical site configuration lives at the repository root in `mkdocs.yml`.
 
 ## Required Front Matter
 
-Every Markdown file published through MkDocs must begin with a YAML front matter block containing these fields:
+Every Markdown file published through MkDocs must begin with a YAML front
+matter block containing these fields:
 
 ```yaml
 ---
@@ -33,11 +37,19 @@ status: draft | review | approved | deprecated
 | `approved` | Reviewed and authoritative |
 | `deprecated` | Superseded by another page; kept for historical reference only |
 
-Pages with `status: draft` render a warning admonition automatically via the MkDocs Material tags plugin. Runbooks must be `status: approved` before they are referenced in on-call documentation.
+For general narrative pages, `status` is the publishing state of the page. For
+ADRs, `status` remains the MADR decision state (`proposed`, `accepted`,
+`deprecated`, `superseded`). Runbooks must be `status: approved` before they
+are referenced in on-call documentation.
 
 ## Link Rules
 
-Use **relative Markdown links only**. MkDocs rewrites relative `.md` links to the correct HTML paths during build. Absolute paths (starting with `/` or `https://`) break after deployment if the `site_url` changes or if the site is served from a sub-path.
+Use **relative Markdown links for internal site content**. MkDocs rewrites
+relative `.md` links to the correct HTML paths during build.
+
+External links are allowed only when they point to an authoritative outside
+reference such as a regulation, standards body, or framework documentation.
+Absolute paths starting with `/` should not be used for internal site links.
 
 **Correct:**
 
@@ -49,11 +61,12 @@ See [ADR 0002](../adr/0002-adopt-temporal-as-workflow-engine.md) for the Tempora
 **Incorrect:**
 
 ```markdown
-See the [Glossary](/docs/glossary.md).       <!-- breaks after deploy -->
-See the [Glossary](https://docs.internal/...). <!-- breaks in offline builds -->
+See the [Glossary](/docs/glossary.md). <!-- breaks after deploy -->
+See the [Glossary](https://docs.internal/...). <!-- wrong for internal site content -->
 ```
 
-For links to sections within a page, use the MkDocs-generated anchor format: `[section title](page.md#section-slug)`.
+For links to sections within a page, use the MkDocs-generated anchor format:
+`[section title](page.md#section-slug)`.
 
 ## Diagram Rules
 
@@ -85,7 +98,9 @@ Supported diagram types: `sequenceDiagram`, `graph`, `flowchart`, `classDiagram`
 
 ## ADR Rules
 
-Architecture Decision Records follow the [MADR (Markdown Architectural Decision Records)](https://adr.github.io/madr/) format. Rules:
+Architecture Decision Records follow the
+[MADR (Markdown Architectural Decision Records)](https://adr.github.io/madr/)
+format. Rules:
 
 - One decision per file.
 - Use `docs/adr/_template.md` as the starting point.
@@ -138,6 +153,22 @@ Always specify the language identifier for syntax highlighting. MkDocs Material 
 | HTTP request/response | `http` |
 | OpenAPI / YAML config | `yaml` |
 | Mermaid diagram | `mermaid` |
+
+## Verification
+
+Run the docs gate from the repository root before finishing a docs change:
+
+```bash
+make test-docs
+```
+
+That command runs:
+
+- `pnpm --dir docs exec markdownlint-cli2 "**/*.md"`
+- `pytest tests/unit/docs -q`
+- `pnpm --dir docs exec redocly lint api/openapi/source/control-api.yaml`
+- `pnpm --dir docs exec redocly bundle ...`
+- `mkdocs build --strict`
 | Kubernetes manifest | `yaml` |
 
 Do not use bare ` ``` ` fences without a language — they render as plain text and defeat syntax highlighting.

@@ -1,5 +1,8 @@
 ---
 title: "Adopt Temporal as the workflow engine for all durable business processes"
+summary: "Architecture decision record establishing Temporal as the durable workflow engine."
+owner: docs-lead
+last_reviewed: "2026-03-16"
 status: accepted
 date: 2026-03-14
 decision-makers:
@@ -13,8 +16,6 @@ consulted:
 informed:
   - all-leads
 ---
-
-# Adopt Temporal as the workflow engine for all durable business processes
 
 ## Context and Problem Statement
 

@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Mitigations: Authentication & Identity
-
 All threats in this file are classified against the Authentication & Identity domain. For key management threats, see [key-management.md](key-management.md). For data integrity threats, see [data-integrity.md](data-integrity.md).
 
 ## Threat Table

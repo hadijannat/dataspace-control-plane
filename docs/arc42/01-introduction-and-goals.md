@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 1. Introduction and Goals
-
 ## Requirements Overview
 
 The Dataspace Control Plane enables industrial organizations to participate in multiple regulated dataspaces simultaneously. It provides a unified, tenant-isolated control surface for:

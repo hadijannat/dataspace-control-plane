@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Evidence Matrix
-
 The evidence matrix maps each regulatory obligation to the evidence artifact the platform produces when satisfying it, the JSON Schema 2020-12 schema the artifact must conform to, and where the artifact is stored. This matrix is the primary reference for auditors verifying platform compliance.
 
 ## Evidence Matrix Table
@@ -42,6 +40,7 @@ The `verificationMethod` field references the Vault Transit key version used for
 ## Evidence Immutability
 
 Evidence records in Postgres are stored in the `evidence_records` table with the following constraints:
+
 - The `dataspace_app` Postgres role has `INSERT` and `SELECT` grants only — no `UPDATE` or `DELETE`
 - The table has a `CHECK` constraint preventing `updated_at` from being set (records have no update lifecycle)
 - Periodic integrity checks in `tests/crypto-boundaries/test_no_evidence_update.py` verify that no UPDATE grants have been granted

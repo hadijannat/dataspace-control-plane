@@ -11,8 +11,6 @@ affected_services:
 status: approved
 ---
 
-# Postgres Unavailable
-
 ## Trigger / Alert Source
 
 - **Alert names**: `ControlApiDown`, `PostgresPodNotReady`, `PostgresConnectionRefused`
@@ -80,6 +78,7 @@ kubectl describe pod postgres-0 -n dataspace-infra
 ```
 
 Look for:
+
 - `OOMKilled` in `Last State.Reason` → memory limit too low; see Scenario A
 - `Error` exit code in `Last State` → Postgres FATAL error; check logs
 - `Evicted` → node pressure; check node resources: `kubectl describe node <node-name>`
@@ -91,6 +90,7 @@ kubectl logs postgres-0 -n dataspace-infra --tail=100 | grep -E "FATAL|ERROR|PAN
 ```
 
 Common FATALs:
+
 - `FATAL: could not open file "pg_wal/..."` → WAL corruption; see Scenario C
 - `FATAL: the database system identifier differs` → PVC was swapped; contact DBA immediately
 - `FATAL: out of memory` → shared_buffers or work_mem too high; see Scenario A
@@ -209,7 +209,7 @@ Before closing the incident:
 | Grafana — Postgres Dashboard | `https://grafana.your-org.internal/d/postgres-overview` |
 | Grafana — Platform Overview | `https://grafana.your-org.internal/d/platform-overview` |
 | Loki — Postgres logs | `{namespace="dataspace-infra", app="postgres"}` |
-| Loki — control-api DB errors | `{namespace="dataspace-platform", app="control-api"} |= "db" |= "error"` |
+| Loki — control-api DB errors | `{namespace="dataspace-platform", app="control-api"} \|= "db" \|= "error"` |
 
 ## Escalation Contacts
 

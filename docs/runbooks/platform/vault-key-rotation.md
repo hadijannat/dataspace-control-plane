@@ -10,8 +10,6 @@ affected_services:
 status: approved
 ---
 
-# Vault Key Rotation
-
 ## When to Run This Procedure
 
 - **Scheduled rotation**: Quarterly key rotation per security policy.

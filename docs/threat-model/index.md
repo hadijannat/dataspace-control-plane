@@ -6,13 +6,12 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Threat Model
-
 ## Methodology
 
 The platform threat model uses the [OWASP threat modeling process](https://owasp.org/www-community/Threat_Modeling) with STRIDE classification for individual threats. STRIDE classifies threats as: **S**poofing, **T**ampering, **R**epudiation, **I**nformation Disclosure, **D**enial of Service, **E**levation of Privilege.
 
 The threat model is maintained in two formats:
+
 1. **Narrative mitigations** (this section): human-readable threat tables with mitigation descriptions and evidence links.
 2. **OWASP Threat Dragon JSON source models** (`threat-dragon/*.json`): machine-readable Data Flow Diagrams for visual review using the Threat Dragon desktop app.
 
@@ -23,6 +22,8 @@ The threat model is maintained in two formats:
 | Platform (full DFD) | [threat-dragon/platform.json](threat-dragon/platform.json) | All platform components and trust boundaries: control-api, temporal-workers, Vault, Keycloak, Postgres, external connectors |
 | Onboarding flow | [threat-dragon/onboarding.json](threat-dragon/onboarding.json) | Company onboarding workflow: Operator → web-console → control-api → Temporal → Keycloak → Vault → Postgres |
 | Contract negotiation | [threat-dragon/negotiation.json](threat-dragon/negotiation.json) | DSP negotiation flow: control-api → EDC connector → Catena-X partner → ODRL evaluation → DCP credential exchange |
+| DPP provisioning | [threat-dragon/dpp-provisioning.json](threat-dragon/dpp-provisioning.json) | DPP export workflow: Temporal workers → AAS serialization → EU DPP registry submission |
+| Machine trust | [threat-dragon/machine-trust.json](threat-dragon/machine-trust.json) | JWT validation, stream-ticket issuance, and inbound webhook authenticity |
 
 ## Review Cadence
 
@@ -30,6 +31,9 @@ The threat model is maintained in two formats:
 - **Mandatory review**: Before each production release
 - **Scheduled review**: Quarterly, aligned with the wave review sessions
 - **Event-triggered review**: After any security incident that reveals a new threat class
+
+Review notes are stored under `threat-model/reviews/`. The current baseline is
+[2026-03-16-baseline-review.md](reviews/2026-03-16-baseline-review.md).
 
 ## Trust Boundary Assumptions
 
@@ -68,3 +72,5 @@ When a new threat is identified (through security review, incident analysis, or 
 - **OWASP Threat Dragon** (v2.2.0): Desktop app for editing and rendering the DFD JSON models. Download from [owasp.org/www-project-threat-dragon](https://owasp.org/www-project-threat-dragon/).
 - **STRIDE classification**: Used for all threats in this model. See [Glossary: STRIDE](../glossary.md).
 - **Evidence links**: Point to test files in `tests/crypto-boundaries/`, `tests/tenancy/`, or infrastructure configuration in `infra/`.
+- **Rendered diagrams**: committed placeholders live under `threat-model/rendered/`;
+  CI and local review flows may refresh them from the Threat Dragon source.

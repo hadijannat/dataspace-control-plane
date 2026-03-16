@@ -12,8 +12,6 @@ affected_services:
 status: approved
 ---
 
-# Certificate Renewal
-
 ## When to Run This Procedure
 
 Normally, cert-manager handles certificate renewal automatically (renews 30 days before expiry). Run this manual procedure when:
@@ -134,6 +132,7 @@ kubectl exec -it vault-0 -n dataspace-infra -- \
 ## Root CA Renewal (High-Impact — Requires Coordination)
 
 Root CA renewal affects all certificates in the PKI chain and requires coordination with all service owners. Do not proceed without:
+
 - infra-lead approval
 - Scheduled maintenance window
 - Rollback plan (keep old CA certificate in trust bundle during transition)

@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Threat Model: Security Assumptions
-
 The following assumptions must hold for the threat model mitigations documented in this section to be valid. If any assumption is violated, the associated mitigations may not hold and the threat must be re-evaluated.
 
 **Any assumption violation must be treated as a P1 security incident and escalated to infra-lead immediately.**

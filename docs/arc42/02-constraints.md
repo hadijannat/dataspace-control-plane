@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 2. Constraints
-
 Constraints are non-negotiable decisions imposed on the architecture from outside the development team. They differ from architectural decisions (which are choices) in that they cannot be changed without external approval or compliance risk.
 
 ## Technical Constraints

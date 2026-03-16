@@ -1,0 +1,44 @@
+profile:
+  uuid: "d4e5f6a7-b8c9-0123-def0-234567890123"
+  metadata:
+    title: "Battery Passport Regulatory Profile"
+    last-modified: "2026-03-16T00:00:00Z"
+    version: "0.1.0"
+    oscal-version: "1.1.2"
+    remarks: |
+      This OSCAL profile captures the Battery Regulation Annex XIII control set
+      used by the dataspace control plane's battery passport overlay.
+    props:
+      - name: source-standard
+        value: "EU Regulation 2023/1542 Annex XIII"
+      - name: source-version
+        value: "Delegated Regulation (EU) 2024/1328"
+      - name: effective-date
+        value: "2024-02-18"
+      - name: pack-reference
+        value: "packs/battery_passport/"
+    parties:
+      - uuid: "party-platform-team"
+        type: organization
+        name: Dataspace Platform Team
+  imports:
+    - href: "#"
+      include-controls:
+        - with-ids:
+            - battery-annex-xiii-public
+            - battery-annex-xiii-authority
+            - battery-annex-xiii-legitimate-interest
+            - battery-battid-01
+            - battery-carbon-footprint-01
+  back-matter:
+    resources:
+      - uuid: "res-battery-regulation"
+        title: "EU Regulation 2023/1542"
+        rlinks:
+          - href: "https://eur-lex.europa.eu/eli/reg/2023/1542/oj"
+            media-type: "text/html"
+      - uuid: "res-battery-delegated-regulation"
+        title: "Delegated Regulation (EU) 2024/1328"
+        rlinks:
+          - href: "https://eur-lex.europa.eu/eli/reg_del/2024/1328/oj"
+            media-type: "text/html"

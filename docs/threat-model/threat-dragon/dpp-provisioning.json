@@ -1,0 +1,102 @@
+{
+  "version": "2.2.0",
+  "summary": {
+    "title": "Dataspace Control Plane — DPP Provisioning Threat Model",
+    "owner": "docs-lead, infra-lead",
+    "description": "Focused STRIDE model for DPP provisioning, AAS serialization, registry submission, and evidence emission.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "DPP Provisioning Flow",
+        "diagramType": "STRIDE",
+        "placeholder": "DPP provisioning diagram",
+        "thumbnail": "./public/content/images/thumbnail.jpg",
+        "version": "2.2.0",
+        "cells": [
+          {
+            "position": {
+              "x": 140,
+              "y": 120
+            },
+            "size": {
+              "width": 128,
+              "height": 64
+            },
+            "attrs": {
+              "text": {
+                "text": "Temporal Workers"
+              }
+            },
+            "shape": "process",
+            "id": "process-temporal-workers",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "Temporal Workers",
+              "description": "Runs DPP export and provisioning workflows.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 380,
+              "y": 120
+            },
+            "size": {
+              "width": 128,
+              "height": 64
+            },
+            "attrs": {
+              "text": {
+                "text": "BaSyx AAS"
+              }
+            },
+            "shape": "process",
+            "id": "process-basyx",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.Process",
+              "name": "BaSyx AAS Server",
+              "description": "Stores serialized AAS shell and submodels.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 620,
+              "y": 120
+            },
+            "size": {
+              "width": 128,
+              "height": 64
+            },
+            "attrs": {
+              "text": {
+                "text": "EU DPP Registry"
+              }
+            },
+            "shape": "external",
+            "id": "external-dpp-registry",
+            "zIndex": 10,
+            "data": {
+              "type": "tm.ExternalEntity",
+              "name": "EU DPP Registry",
+              "description": "Authoritative external DPP submission endpoint.",
+              "outOfScope": false,
+              "hasOpenThreats": false,
+              "threats": []
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

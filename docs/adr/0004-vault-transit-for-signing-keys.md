@@ -1,5 +1,8 @@
 ---
 title: "Vault Transit for all signing operations — no raw private key material in application state"
+summary: "Architecture decision record establishing Vault Transit as the signing-key boundary."
+owner: docs-lead
+last_reviewed: "2026-03-16"
 status: accepted
 date: 2026-03-14
 decision-makers:
@@ -13,8 +16,6 @@ consulted:
 informed:
   - all-leads
 ---
-
-# Vault Transit for all signing operations
 
 ## Context and Problem Statement
 

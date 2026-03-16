@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 6. Runtime View
-
 The runtime view documents the most important dynamic behaviors of the platform as sequence diagrams. Each scenario corresponds to a Temporal workflow in `procedures/`.
 
 ## Scenario 1: Company Onboarding
@@ -60,6 +58,7 @@ sequenceDiagram
 ```
 
 **Key invariants:**
+
 - `client_secret` is written to Vault immediately after Keycloak creates it; it is never logged or stored in Postgres.
 - The DID document is signed before the tenant record is written; if signing fails, the tenant record is never created.
 - The workflow is idempotent: if restarted after Postgres write, the existing record is returned.
@@ -168,6 +167,7 @@ sequenceDiagram
 ```
 
 **Key invariants:**
+
 - Evidence is signed before registry submission; if signing fails, the workflow retries the sign activity (idempotent via Vault key_id + payload hash).
 - The metering event is published after Postgres commit; if Kafka publish fails, the activity retries — the usage-record schema includes an idempotency key.
 - Evidence records are append-only; no UPDATE on the evidence table is permitted.

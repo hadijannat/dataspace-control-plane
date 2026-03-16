@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Runbooks
-
 Runbooks provide step-by-step guidance for operating, diagnosing, and recovering the Dataspace Control Plane. Each runbook corresponds to a specific operational scenario: a type of incident, a platform maintenance procedure, a procedure-layer workflow failure, or an external dependency misconfiguration.
 
 ## Categories

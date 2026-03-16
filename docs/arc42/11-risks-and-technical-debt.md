@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# 11. Risks and Technical Debt
-
 ## Current Risk Register
 
 Risks are tracked here until mitigated. Each risk has a probability (High/Medium/Low), impact (High/Medium/Low), current mitigation status, and an owning lead. Risks marked `probability: High` are escalated in the next wave planning session.

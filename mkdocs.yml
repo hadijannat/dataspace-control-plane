@@ -8,6 +8,8 @@ edit_uri: edit/main/docs/
 
 docs_dir: docs
 site_dir: site
+exclude_docs: |
+  node_modules/**
 
 theme:
   name: material
@@ -138,6 +140,7 @@ nav:
     - Guides:
       - Authentication: api/guides/auth.md
       - Idempotency: api/guides/idempotency.md
+      - Pagination and Filtering: api/guides/pagination-filtering.md
       - Workflow Handles: api/guides/workflows.md
       - Server-Sent Events: api/guides/sse.md
       - Error Model: api/guides/error-model.md
@@ -168,6 +171,8 @@ nav:
       - Auth & Identity: threat-model/mitigations/auth-identity.md
       - Data Integrity: threat-model/mitigations/data-integrity.md
       - Key Management: threat-model/mitigations/key-management.md
+    - Reviews:
+      - Baseline Review 2026-03-16: threat-model/reviews/2026-03-16-baseline-review.md
   - Compliance:
     - compliance-mappings/index.md
     - Narratives:
@@ -175,5 +180,22 @@ nav:
       - ESPR DPP: compliance-mappings/narratives/espr-dpp.md
       - Battery Passport: compliance-mappings/narratives/battery-passport.md
     - Evidence Matrix: compliance-mappings/evidence-matrix/index.md
+  - Governance:
+    - Docs Working Model: AGENTS.md
+    - Docs Teammate Guide: CLAUDE.md
+    - Guidebooks:
+      - agents/index.md
+      - Ownership Map: agents/ownership-map.md
+      - Orchestration Guide: agents/orchestration-guide.md
+      - Docs Agent: agents/docs-agent.md
+      - Apps Agent: agents/apps-agent.md
+      - Core Agent: agents/core-agent.md
+      - Procedures Agent: agents/procedures-agent.md
+      - Adapters Agent: agents/adapters-agent.md
+      - Packs Agent: agents/packs-agent.md
+      - Schemas Agent: agents/schemas-agent.md
+      - Tests Agent: agents/tests-agent.md
+      - Infra Agent: agents/infra-agent.md
+      - Guidebook Template: agents/_template.md
   - Style Guide: style-guide.md
   - Glossary: glossary.md

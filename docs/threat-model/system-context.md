@@ -6,8 +6,6 @@ last_reviewed: "2026-03-14"
 status: approved
 ---
 
-# Threat Model: System Context
-
 ## Trust Boundaries
 
 The platform has four distinct trust zones. Each trust boundary crossing is a potential attack surface and requires explicit authentication, authorization, and integrity checks.
@@ -95,11 +93,13 @@ The following assets are the primary targets for attackers and the primary focus
 ## Threat Surface: External EDC Connector (DSP/DCP)
 
 The EDC connector interface is the highest-risk external surface because:
+
 1. It receives structured messages from untrusted external parties
 2. ODRL policy payloads contain executable policy expressions that are parsed and evaluated
 3. DCP credential presentations from counterparties must be verified against DIDs that are fetched from external registries (DID document fetch is an SSRF risk)
 
 Mitigations for DSP/DCP surface:
+
 - ODRL policy payloads validated against `schemas/odrl/` before parsing (see T-DI-02 threat in data-integrity)
 - DCP credential verification includes issuer DID resolution — DID resolver is sandboxed and rate-limited
 - DSP message rate limiting per counterparty BPN

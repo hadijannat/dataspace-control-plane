@@ -12,8 +12,6 @@ affected_services:
 status: approved
 ---
 
-# Keycloak Realm Misconfigured
-
 ## Trigger / Alert Source
 
 - **Alert names**: `KeycloakAuthFailureRateHigh`, `OperatorLoginFailure`
@@ -153,6 +151,7 @@ Or manually in the Keycloak admin console:
 In Keycloak admin console: Clients → `provisioning-agent` → Settings → `Service Accounts Enabled: ON`
 
 Or via Terraform:
+
 ```bash
 terraform plan -target=keycloak_openid_client.provisioning_agent
 terraform apply -target=keycloak_openid_client.provisioning_agent

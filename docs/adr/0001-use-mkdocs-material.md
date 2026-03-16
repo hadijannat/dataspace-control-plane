@@ -1,5 +1,8 @@
 ---
 title: "Use MkDocs + Material for docs-as-code publishing"
+summary: "Architecture decision record establishing MkDocs Material as the docs-as-code publishing stack."
+owner: docs-lead
+last_reviewed: "2026-03-16"
 status: accepted
 date: 2026-03-14
 decision-makers:
@@ -11,8 +14,6 @@ consulted:
 informed:
   - all-leads
 ---
-
-# Use MkDocs + Material for docs-as-code publishing
 
 ## Context and Problem Statement
 

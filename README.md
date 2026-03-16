@@ -128,7 +128,16 @@ Architecture docs (arc42, ADRs, API contracts, runbooks, threat model) are built
 ```bash
 make docs-serve       # live preview at http://127.0.0.1:8000
 make docs-build       # build to site/ (strict mode)
+make test-docs        # markdownlint-cli2 + docs pytest + Redocly + MkDocs strict build
 ```
+
+The docs toolchain is split by runtime:
+
+- `docs/requirements.txt` provisions MkDocs, Material, Mermaid-capable Markdown extensions, and the strict site build plugins.
+- `docs/package.json` provisions repo-local docs linters and OpenAPI tooling (`markdownlint-cli2`, `@redocly/cli`).
+
+Only source Markdown/YAML is versioned. `site/` stays out of version control, and rendered
+OpenAPI HTML is generated in CI only.
 
 ---
 

@@ -1,5 +1,8 @@
 ---
 title: "JSON Schema 2020-12 as the house validation dialect for all local schemas"
+summary: "Architecture decision record establishing JSON Schema 2020-12 as the repository validation dialect."
+owner: docs-lead
+last_reviewed: "2026-03-16"
 status: accepted
 date: 2026-03-14
 decision-makers:
@@ -12,8 +15,6 @@ consulted:
 informed:
   - all-leads
 ---
-
-# JSON Schema 2020-12 as the house validation dialect for all local schemas
 
 ## Context and Problem Statement
 

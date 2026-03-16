@@ -2,12 +2,12 @@
 
 A multi-ecosystem control plane for sovereign data exchange between organizations. Manages credential issuance, policy negotiation, Digital Product Passport lifecycle, connector registration, and durable workflow orchestration — under strict tenant isolation and cryptographic audit.
 
-Implements the [Eclipse Dataspace Protocol (DSP)](https://docs.internationaldataspaces.org/ids-knowledgebase/dataspace-protocol), the [Dataspace Connect Protocol (DCP)](https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-connect-protocol), and ecosystem overlays for Catena-X, Gaia-X, Manufacturing-X, ESPR Digital Product Passports, and Battery Passports on a [Temporal](https://temporal.io)-based durable workflow engine.
+Implements the [Dataspace Protocol (DSP)](https://docs.internationaldataspaces.org/ids-knowledgebase/dataspace-protocol), the [Dataspace Connect Protocol (DCP)](https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-connect-protocol), and ecosystem overlays for Catena-X, Gaia-X, Manufacturing-X, ESPR (Ecodesign for Sustainable Products Regulation) Digital Product Passports, and Battery Passports on a [Temporal](https://temporal.io)-based durable workflow engine.
 
 ## Key Capabilities
 
-- **Multi-ecosystem dataspace participation** — Catena-X DSP/DCP protocol compliance, Gaia-X trust framework self-descriptions, Manufacturing-X connector interoperability, and [ODRL](https://www.w3.org/TR/odrl-model/) 2.2 policy evaluation.
-- **EU product regulation compliance** — Battery Passport (Regulation 2023/1542, Annex XIII field tiers), ESPR Digital Product Passport (Regulation 2024/1781) creation and registry submission, with machine-readable OSCAL evidence emission.
+- **Multi-ecosystem dataspace support** — Catena-X DSP/DCP protocol implementation, Gaia-X trust framework self-descriptions, Manufacturing-X connector interoperability, and [ODRL](https://www.w3.org/TR/odrl-model/) 2.2 policy evaluation.
+- **EU product regulation tooling** — Battery Passport (Regulation 2023/1542, Annex XIII field tiers), ESPR Digital Product Passport (Regulation 2024/1781) creation and registry submission, with machine-readable OSCAL (Open Security Controls Assessment Language) evidence emission.
 - **Durable workflow orchestration** — Temporal-based business workflows survive infrastructure failures without compensating transaction scaffolding. Workflow code is the runbook.
 - **Tenant isolation and audit** — Keycloak realm-per-tenant model with short-lived JWTs, Vault Transit for signing operations, and PostgreSQL row-level security as the final tenant enforcement layer.
 
@@ -50,6 +50,7 @@ Nine architectural layers, each with a single designated owner. No layer borrows
 ```mermaid
 graph LR
     schemas --> core
+    docs --> core
     core --> procedures
     core --> adapters
     core --> packs
@@ -93,7 +94,7 @@ graph LR
 Each target exercises one architectural layer. These run offline — no live services required.
 
 ```bash
-make test             # all unit tests across every layer
+make test             # unit spine + schema compat + app tests (no live services)
 make test-core        # core/ — unit tests
 make test-schemas     # schemas/ — unit + offline schema validation
 make test-procedures  # procedures/ — unit + replay tests
@@ -107,8 +108,9 @@ make test-docs        # docs/ — markdownlint + Redocly lint + MkDocs strict bu
 ### Linting
 
 ```bash
-make lint             # all linters: ruff + markdownlint + helm lint
+make lint             # all linters: ruff + ESLint + markdownlint + helm lint
 make lint-python      # ruff check across all Python packages
+make lint-node        # ESLint for web-console
 make lint-docs        # markdownlint for docs/
 make lint-infra       # helm lint for infra/helm/
 ```
@@ -154,7 +156,7 @@ task clean            # remove build artifacts
 
 ## Documentation
 
-The documentation site covers architecture ([arc42](https://arc42.org)), architecture decision records, OpenAPI 3.1 API reference, operational runbooks, STRIDE threat model, compliance mappings, and a [glossary](docs/glossary.md) of all domain terms and protocol acronyms.
+The documentation site covers architecture ([arc42](https://arc42.org)), architecture decision records, OpenAPI 3.1 API reference, operational runbooks, STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) threat model, compliance mappings, and a [glossary](docs/glossary.md) of all domain terms and protocol acronyms.
 
 Built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/):
 

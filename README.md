@@ -6,10 +6,10 @@ Implements the [Dataspace Protocol (DSP)](https://docs.internationaldataspaces.o
 
 ## Key Capabilities
 
-- **Multi-ecosystem dataspace support** — Catena-X DSP/DCP protocol implementation, Gaia-X trust framework self-descriptions, Manufacturing-X connector interoperability, and [ODRL](https://www.w3.org/TR/odrl-model/) 2.2 policy evaluation.
+- **Multi-ecosystem dataspace support** — Catena-X DSP/DCP protocol implementation, Gaia-X trust framework self-descriptions, Manufacturing-X connector interoperability, and [Open Digital Rights Language (ODRL)](https://www.w3.org/TR/odrl-model/) 2.2 policy evaluation.
 - **EU product regulation tooling** — Battery Passport (Regulation 2023/1542, Annex XIII field tiers), ESPR Digital Product Passport (Regulation 2024/1781) creation and registry submission, with machine-readable OSCAL (Open Security Controls Assessment Language) evidence emission.
 - **Durable workflow orchestration** — Temporal-based business workflows survive infrastructure failures without compensating transaction scaffolding. Workflow code is the runbook.
-- **Tenant isolation and audit** — Keycloak realm-per-tenant model with short-lived JWTs, Vault Transit for signing operations, and PostgreSQL row-level security as the final tenant enforcement layer.
+- **Tenant isolation and audit** — Keycloak realm-per-tenant model with short-lived JSON Web Tokens (JWTs), Vault Transit for signing operations, and PostgreSQL row-level security as the final tenant enforcement layer.
 
 ## Quick Start
 
@@ -37,12 +37,12 @@ Nine architectural layers, each with a single designated owner. No layer borrows
 |-----------|-------|------|
 | `core/` | Semantic kernel | Canonical domain models, invariants, procedure contracts, audit primitives |
 | `procedures/` | Durable orchestration | Temporal workflows and activities; state machines; evidence emission |
-| `adapters/` | Integration | Protocol normalizers ([EDC](https://github.com/eclipse-edc/Connector), DSP, DCP, Gaia-X, [BaSyx](https://github.com/eclipse-basyx)); infrastructure integrations (Kafka, Vault, Postgres, Keycloak) |
+| `adapters/` | Integration | Protocol normalizers ([Eclipse Dataspace Connector (EDC)](https://github.com/eclipse-edc/Connector), DSP, DCP, Gaia-X, [BaSyx](https://github.com/eclipse-basyx)); infrastructure integrations (Kafka, Vault, Postgres, Keycloak) |
 | `packs/` | Ecosystem overlays | Catena-X, Gaia-X, Manufacturing-X, ESPR-DPP, Battery Passport rule sets |
-| `schemas/` | Artifact registry | Pinned upstream standards ([AAS](https://industrialdigitaltwin.org/), [ODRL](https://www.w3.org/TR/odrl-model/), [W3C Verifiable Credentials](https://www.w3.org/TR/vc-data-model-2.0/)) + authored JSON Schema 2020-12 families (DPP, enterprise-mapping, metering) |
+| `schemas/` | Artifact registry | Pinned upstream standards ([Asset Administration Shell (AAS)](https://industrialdigitaltwin.org/), [ODRL](https://www.w3.org/TR/odrl-model/), and [W3C Verifiable Credentials](https://www.w3.org/TR/vc-data-model-2.0/)) + authored JSON Schema 2020-12 families (DPP, enterprise-mapping, metering) |
 | `apps/` | Runtime surfaces | `control-api` (FastAPI), `temporal-workers`, `web-console`, `edc-extension`, `provisioning-agent` |
-| `tests/` | Verification spine | Unit, integration, e2e, DSP/DCP [TCK](https://en.wikipedia.org/wiki/Technology_Compatibility_Kit) compatibility, tenancy, crypto-boundaries, chaos |
-| `infra/` | Delivery substrate | Helm charts, Terraform modules, Docker images, OTel Collector observability stack |
+| `tests/` | Verification spine | Unit, integration, e2e, DSP/DCP [Technology Compatibility Kit (TCK)](https://en.wikipedia.org/wiki/Technology_Compatibility_Kit) suites, tenancy, crypto-boundaries, chaos |
+| `infra/` | Delivery substrate | Helm charts, Terraform modules, Docker images, OpenTelemetry (OTel) Collector observability stack |
 | `docs/` | Governance | [arc42](https://arc42.org) architecture, ADRs, API contracts, runbooks, threat model, compliance mappings |
 
 ### Dependency flow

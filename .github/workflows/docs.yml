@@ -80,8 +80,10 @@ jobs:
         # here ensures the pytest comparison and redocly diff both pass.
         run: |
           python docs/api/openapi/export_control_api.py
+          # Note: pnpm --dir docs exec changes cwd to docs/, so the output path
+          # is relative to docs/ (not the repo root).
           pnpm --dir docs exec redocly bundle api/openapi/source/control-api.yaml \
-            --output docs/api/openapi/bundled/control-api.yaml
+            --output api/openapi/bundled/control-api.yaml
 
       - name: Run docs verification
         run: make test-docs

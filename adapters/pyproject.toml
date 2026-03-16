@@ -49,3 +49,4 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dataspace_control_plane_adapters"]
+exclude = ["**/tests/**", "**/fixtures/**"]

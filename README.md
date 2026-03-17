@@ -1,5 +1,14 @@
 # dataspace-control-plane
 
+[![Docs CI](https://github.com/hadijannat/dataspace-control-plane/actions/workflows/docs.yml/badge.svg)](https://github.com/hadijannat/dataspace-control-plane/actions/workflows/docs.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Node.js 20+](https://img.shields.io/badge/node.js-20+-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Java 21](https://img.shields.io/badge/java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![uv](https://img.shields.io/badge/uv-0.4+-DE5FE9?logo=uv&logoColor=white)](https://github.com/astral-sh/uv)
+[![Temporal](https://img.shields.io/badge/Temporal-durable_workflows-000000?logo=temporal&logoColor=white)](https://temporal.io)
+[![JSON Schema 2020-12](https://img.shields.io/badge/JSON_Schema-2020--12-F7DF1E)](https://json-schema.org/draft/2020-12/release-notes)
+[![ODRL 2.2](https://img.shields.io/badge/ODRL-2.2-005A9C)](https://www.w3.org/TR/odrl-model/)
+
 A multi-ecosystem control plane for sovereign data exchange between organizations. Manages credential issuance, policy negotiation, Digital Product Passport lifecycle, connector registration, and durable workflow orchestration — under strict tenant isolation and cryptographic audit.
 
 Implements the [Dataspace Protocol (DSP)](https://docs.internationaldataspaces.org/ids-knowledgebase/dataspace-protocol), the [Dataspace Connect Protocol (DCP)](https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-connect-protocol), and ecosystem overlays for Catena-X, Gaia-X, Manufacturing-X, ESPR (Ecodesign for Sustainable Products Regulation) Digital Product Passports, and Battery Passports on a [Temporal](https://temporal.io)-based durable workflow engine.

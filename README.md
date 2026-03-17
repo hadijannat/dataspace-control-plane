@@ -1,5 +1,14 @@
 # dataspace-control-plane
 
+[![Docs CI](https://github.com/hadijannat/dataspace-control-plane/actions/workflows/docs.yml/badge.svg)](https://github.com/hadijannat/dataspace-control-plane/actions/workflows/docs.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Node.js 20+](https://img.shields.io/badge/node.js-20+-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Java 21](https://img.shields.io/badge/java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![uv](https://img.shields.io/badge/uv-0.4+-DE5FE9?logo=uv&logoColor=white)](https://github.com/astral-sh/uv)
+[![Temporal](https://img.shields.io/badge/Temporal-durable_workflows-000000?logo=temporal&logoColor=white)](https://temporal.io)
+[![JSON Schema 2020-12](https://img.shields.io/badge/JSON_Schema-2020--12-F7DF1E)](https://json-schema.org/draft/2020-12/release-notes)
+[![ODRL 2.2](https://img.shields.io/badge/ODRL-2.2-005A9C)](https://www.w3.org/TR/odrl-model/)
+
 A multi-ecosystem control plane for sovereign data exchange between organizations. Manages credential issuance, policy negotiation, Digital Product Passport lifecycle, connector registration, and durable workflow orchestration — under strict tenant isolation and cryptographic audit.
 
 Implements the [Dataspace Protocol (DSP)](https://docs.internationaldataspaces.org/ids-knowledgebase/dataspace-protocol), the [Dataspace Connect Protocol (DCP)](https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-connect-protocol), and ecosystem overlays for Catena-X, Gaia-X, Manufacturing-X, ESPR (Ecodesign for Sustainable Products Regulation) Digital Product Passports, and Battery Passports on a [Temporal](https://temporal.io)-based durable workflow engine.
@@ -178,7 +187,7 @@ For architecture guidebooks, orchestration rules, and the full ownership map, se
 
 ### AI-assisted development
 
-This repository supports [Claude Code](https://claude.ai/code) agent-teams with a 4-wave build model. Agent configuration, subagent definitions, and wave management skills are provisioned locally via `CLAUDE.md` and `.claude/` (both gitignored — not part of the cloned repository). Tracked architecture guides live in [`docs/agents/`](docs/agents/index.md).
+This repository supports [Claude Code](https://claude.ai/code) agent-teams with a 4-wave build model. The root `CLAUDE.md` and `.claude/` directory are gitignored (not part of the cloned repository). Per-directory `CLAUDE.md` files (e.g. `core/CLAUDE.md`) are tracked and contain layer-specific development guidance. Architecture guides live in [`docs/agents/`](docs/agents/index.md).
 
 ## Project Navigation
 
